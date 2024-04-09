@@ -89,13 +89,13 @@ class PostgreSqlCursorPageTest {
                 .position( idPos ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
+        assertThat( firstPage ).isNotNull().hasSize( 10 );
         final var next = firstPage.next();
         assertThat( next ).isPresent();
         final var nextPage = dataRecordRepository.loadPage( next.get().withPageSize( 20 ) );
-        assertThat( nextPage ).isNotNull();
-        assertThat( nextPage.getContent() ).hasSize( 20 );
-        assertThat( nextPage.getContent() ).doesNotContainAnyElementsOf( firstPage.getContent() );
-        assertThat( nextPage.next() ).isNotEmpty();
+        assertThat( nextPage ).isNotNull().hasSize( 20 );
+        assertThat( nextPage ).doesNotContainAnyElementsOf( firstPage );
+        assertThat( nextPage.next() ).isEmpty();
     }
 
     @Test
@@ -119,7 +119,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldUseDefaultPageSize() {
-        final PageRequest<DataRecord> request = PageRequest.attributeAsc( DataRecord_.id ).withPageSize( 42 );
+        final PageRequest<DataRecord> request = PageRequest.attributeAsc( DataRecord_.id );
         assertThat( request.pageSize() ).isEqualTo( PageRequest.DEFAULT_PAGE_SIZE );
     }
 
