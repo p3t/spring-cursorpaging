@@ -1,0 +1,11 @@
+spring:
+  application.name: "cursorpage-testapp"
+  jpa:
+    hibernate.ddl-auto: create
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+    show-sql: false
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "jdbc:postgresql://localhost:5432/cursor-db"
+    username: "admin"
+    password: "secret"
