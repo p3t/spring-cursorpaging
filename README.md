@@ -171,6 +171,22 @@ public void queryData() {
 This will only return `DataRecords` with name "Alpha". It is possible to add multiple filters for different attributes
 or to provide multiple values for one attribute (one must match).
 
+### There is no total count in the Page...
+
+Executing a count operation can be a quite expensive operation! Therefore the total count of records is not part of the
+page response. It is also usually not required to re-count all records with each page request!
+So, if you need to know the total count of records, you can execute a count query on the repository:
+
+```java
+// Simple to optimize by caching...
+@Cacheable( "datarecord.count" )
+public long queryCount() {
+    final long count = dataRecordRepository.count();
+    System.out.println( "Total records: " + count );
+    return count;
+}
+```
+
 # Background: Concept description
 ## Basic idea
 A Cursor is nothing elsa than a position in a list of records.
