@@ -20,6 +20,9 @@ import lombok.experimental.Accessors;
 @Accessors( fluent = true )
 public class Page<E> implements Iterable<E> {
 
+    /**
+     * The content of this page.
+     */
     private final List<E> content;
     
     /**
@@ -32,28 +35,56 @@ public class Page<E> implements Iterable<E> {
      */
     private final PageRequest<E> next;
 
+    /**
+     * Creates a new page.
+     *
+     * @param <E>     the entity type
+     * @param creator the page builder consumer
+     * @return the created page
+     */
     public static <E> Page<E> create( final Consumer<PageBuilder<E>> creator ) {
         final var builder = Page.<E>builder();
         creator.accept( builder );
         return builder.build();
     }
 
+    /**
+     * Get an iterator over the content of this page.
+     *
+     * @return the iterator
+     * @see Iterable#iterator()
+     */
     @Override
     public @NonNull Iterator<E> iterator() {
         return content.iterator();
     }
 
+    /**
+     * Loop over the content of the page
+     *
+     * @param action the action to perform on each element
+     * @see Iterable#forEach(Consumer)
+     */
     @Override
     public void forEach( final Consumer<? super E> action ) {
         content.forEach( action );
     }
 
+    /**
+     * The content of this page.
+     *
+     * @return the content
+     */
     public List<E> getContent() {
         return Collections.unmodifiableList( content );
     }
 
+    /**
+     * The request which can be used to fetching the next page.
+     *
+     * @return the request or an empty {@link Optional} if there is no further page
+     */
     public Optional<PageRequest<E>> next() {
         return Optional.ofNullable( next );
     }
-
 }

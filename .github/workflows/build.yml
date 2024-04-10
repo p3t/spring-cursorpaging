@@ -8,14 +8,26 @@
 name: Java CI with Gradle
 
 on:
+  workflow_call:
+    inputs:
+      release_build:
+        description: 'toggles an release-build, by default false'
+        type: boolean
+        default: false
+        required: false
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
+env:
+  BUILD_VERSION: '0-SNAPSHOT'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  MAVEN_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
+  MAVEN_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read

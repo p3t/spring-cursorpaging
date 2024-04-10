@@ -15,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "cursorpage"
+rootProject.name = "spring-cursorpaging"
 
-include("lib", "testapp")
+include("cursorpaging-jpa", "cursorpaging-testapp")

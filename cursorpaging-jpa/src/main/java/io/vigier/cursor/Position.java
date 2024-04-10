@@ -18,6 +18,14 @@ public class Position<E, V extends Comparable<? super V>> {
     @Builder.Default
     private final Order order = Order.ASC;
 
+    /**
+     * Creates a new {@link Position} with a builder.
+     *
+     * @param creator the customizer for the builder
+     * @param <E>     the entity type
+     * @param <V>     the value/attribute type
+     * @return a new {@link Position}
+     */
     public static <E, V extends Comparable<? super V>> Position<E, V> create(
             final Consumer<PositionBuilder<E, V>> creator ) {
         final var builder = Position.<E, V>builder();
@@ -77,6 +85,12 @@ public class Position<E, V extends Comparable<? super V>> {
         qb.orderBy( attribute, order );
     }
 
+    /**
+     * Will create a new {@link Position} taking over the attribute-values from the given entity.
+     *
+     * @param entity the entity.
+     * @return the new {@link Position}.
+     */
     public Position<E, V> positionOf( final E entity ) {
         return toBuilder().value( attribute.getJavaType().cast( getValue( entity, attribute.getName() ) ) ).build();
     }

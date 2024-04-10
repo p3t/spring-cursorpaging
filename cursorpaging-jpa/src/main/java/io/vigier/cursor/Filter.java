@@ -22,10 +22,25 @@ import lombok.experimental.Accessors;
 @Accessors( fluent = true )
 public class Filter<E, V extends Comparable<? super V>> {
 
+    /**
+     * The attribute to filter on.
+     */
     private final SingularAttribute<E, V> attribute;
+
+    /**
+     * The value to filter on.
+     */
     @With
     private final V value;
 
+    /**
+     * Create a {@linkplain Filter} with a builder.
+     *
+     * @param creator the customizer for the builder
+     * @param <E>     the entity type
+     * @param <V>     the value/attribute type
+     * @return a new {@linkplain Filter}
+     */
     public static <E, V extends Comparable<? super V>> Filter<E, V> create(
             final Consumer<FilterBuilder<E, V>> creator ) {
         final var builder = Filter.<E, V>builder();
@@ -33,24 +48,39 @@ public class Filter<E, V extends Comparable<? super V>> {
         return builder.build();
     }
 
+    /**
+     * Create a {@linkplain Filter} with the given attribute and value (s).
+     *
+     * @param attribute the attribute to filter on
+     * @param values    the value(s) to filter on
+     * @param <E>       the entity type
+     * @param <V>       the value/attribute type
+     * @return a new {@linkplain Filter}
+     */
     @SafeVarargs
-    public static <E, V extends Comparable<? super V>> Filter<E, V> attributeIs( final SingularAttribute<E, V> name,
+    public static <E, V extends Comparable<? super V>> Filter<E, V> attributeIs(
+            final SingularAttribute<E, V> attribute,
             final V... values ) {
-        final FilterBuilder<E, V> builder = Filter.<E, V>builder().attribute( name );
+        final FilterBuilder<E, V> builder = Filter.<E, V>builder().attribute( attribute );
         for ( final V v : values ) {
             builder.value( v );
         }
         return builder.build();
     }
 
-    public void apply( final QueryBuilder<E> c ) {
+    /**
+     * Apply the filter to the query builder
+     *
+     * @param qb the query builder
+     */
+    public void apply( final QueryBuilder<E> qb ) {
 
         if ( attribute.isCollection() ) {
             // TODO: implement
         } else if ( value instanceof Collection<?> ) {
-            c.isIn( attribute, (Collection<?>) value );
+            qb.isIn( attribute, (Collection<?>) value );
         } else {
-            c.isEqual( attribute, value );
+            qb.isEqual( attribute, value );
         }
     }
 }

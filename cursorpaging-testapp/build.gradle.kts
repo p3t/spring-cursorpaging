@@ -2,12 +2,12 @@ plugins {
     java
     id("org.springframework.boot")
     id("io.vigier.java-library-conventions")
-//    id("at.comm_unity.gradle.plugins.jpamodelgen")
 }
-group = "io.vigier.cursorpage.testapp"
+
+group = "io.vigier.cursorpaging"
 
 dependencies {
-    implementation(project(":lib"))
+    implementation(project(":cursorpaging-jpa"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.retry:spring-retry")

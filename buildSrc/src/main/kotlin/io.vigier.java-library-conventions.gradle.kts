@@ -8,8 +8,8 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-group = "io.vigier.cursorpage"
-version = "0.0-SNAPSHOT"
+group = "io.vigier.curcursorpaging"
+version = "0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -28,7 +28,6 @@ spotbugs {
 }
 
 extra["hibernate.version"] = "6.4.4.Final"
-
 
 dependencies {
     val lombokVersion: String by extra("1.18.30")
@@ -51,15 +50,12 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
-//jpaModelgen {
-//    library = "org.hibernate:hibernate-jpamodelgen:6.4.4.Final"
-//    jpaModelgenSourcesDir = "build/generated/sources/jpaModelgen/java"
+
+//configurations {
+//    compileOnly {
+//        extendsFrom(configurations.annotationProcessor.get())
+//    }
 //}
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
-    }
-}
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {

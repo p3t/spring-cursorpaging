@@ -25,14 +25,26 @@ import lombok.experimental.Accessors;
 @Accessors( fluent = true )
 public class PageRequest<E> {
 
-    public static int DEFAULT_PAGE_SIZE = 100;
+    /**
+     * The default size used to fetch the page if non is provided (DEFAULT_PAGE_SIZE = {@value DEFAULT_PAGE_SIZE})
+     */
+    public static final int DEFAULT_PAGE_SIZE = 100;
 
+    /**
+     * The positions used to address the start of a page.
+     */
     @Singular( "position" )
     private final List<Position<E, ? extends Comparable<?>>> positions;
 
+    /**
+     * The filters to apply to the query (removing results)
+     */
     @Singular
     private final List<Filter<E, ? extends Comparable<?>>> filters;
 
+    /**
+     * The size of the page to fetch
+     */
     @With
     @Builder.Default
     private final int pageSize = DEFAULT_PAGE_SIZE;
@@ -91,6 +103,13 @@ public class PageRequest<E> {
         }
     }
 
+    /**
+     * Create a new page-request with a builder
+     *
+     * @param creator the customizer for the builder
+     * @param <E>     Entity type
+     * @return the created page request
+     */
     public static <E> PageRequest<E> create( final Consumer<PageRequestBuilder<E>> creator ) {
         final var builder = PageRequest.<E>builder();
         creator.accept( builder );

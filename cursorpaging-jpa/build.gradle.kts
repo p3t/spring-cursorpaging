@@ -1,7 +1,9 @@
 plugins {
     id("io.vigier.java-library-conventions")
+    id("maven-publish")
 }
 
+group = "io.vigier.cursorpaging-jpa"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
