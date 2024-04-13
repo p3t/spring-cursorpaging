@@ -18,3 +18,25 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+val gitHubPkgUserName = project.findProperty("gitHubPkgUserName") as String?
+val gitHubPkgPassword = project.findProperty("gitHubPkgPassword") as String?
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username = gitHubPkgUserName
+                password = gitHubPkgPassword
+            }
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/p3t/spring-cursorpaging")
+        }
+    }
+    publications {
+        create<MavenPublication>("spring-cursorpaging-jpa") {
+            from(components["java"])
+            groupId = "io.vigier.cursorpaging"
+            artifactId = "spring-cursorpaging-jpa"
+        }
+    }
+}

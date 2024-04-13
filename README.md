@@ -173,7 +173,7 @@ or to provide multiple values for one attribute (one must match).
 
 ### There is no total count in the Page...
 
-Executing a count operation can be a quite expensive operation! Therefore the total count of records is not part of the
+Executing a count operation can be a quite expensive operation! Therefore, the total count of records is not part of the
 page response. It is also usually not required to re-count all records with each page request!
 So, if you need to know the total count of records, you can execute a count query on the repository:
 
