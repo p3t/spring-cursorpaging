@@ -84,7 +84,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFetchNextPage() {
         generateData( 30 );
-        final Position<DataRecord, UUID> idPos = Position.attributeAsc( DataRecord_.id );
+        final Position idPos = Position.attributeAsc( DataRecord_.id );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
                 .position( idPos ) );
 
@@ -140,7 +140,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFilterResultsWithInPredicate() {
         generateData( 100 );
-        final Filter<DataRecord, String> nameIsAlpha = Filter.create(
+        final Filter nameIsAlpha = Filter.create(
                 b -> b.attribute( DataRecord_.name ).value( "Alpha" ).value( "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id )

@@ -1,0 +1,33 @@
+syntax = "proto3";
+option java_package = "io.vigier.cursorpaging.jpa.serial.dto";
+option java_outer_classname = "DtoCursor";
+
+message DtoAttribute {
+  string name = 1;
+}
+
+message DtoValue {
+  string value = 1;
+}
+
+enum DtoOrder {
+  ASC = 0;
+  DESC = 1;
+}
+
+message DtoPosition {
+  DtoAttribute attribute = 1;
+  DtoValue value = 2;
+  DtoOrder order = 3;
+}
+
+message DtoFilter {
+  DtoAttribute attribute = 1;
+  repeated DtoValue values = 2;
+}
+
+message DtoPageRequest {
+  int32 page_size = 1;
+  repeated  DtoPosition positions = 2;
+  repeated  DtoFilter filters = 3;
+}

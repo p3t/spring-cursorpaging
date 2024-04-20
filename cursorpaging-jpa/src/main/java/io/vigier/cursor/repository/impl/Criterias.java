@@ -1,5 +1,6 @@
 package io.vigier.cursor.repository.impl;
 
+import io.vigier.cursor.Attribute;
 import io.vigier.cursor.Order;
 import io.vigier.cursor.QueryBuilder;
 import jakarta.persistence.EntityManager;
@@ -8,7 +9,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +27,7 @@ record Criterias<E>(
         CriteriaQuery<E> query,
         CriteriaBuilder builder,
         Root<E> root,
-        Class<E> entityType ) implements QueryBuilder<E> {
+        Class<E> entityType ) implements QueryBuilder {
 
     public static <T> Criterias<T> selectRoot( final Class<T> entityType, final EntityManager entityManager ) {
         final var builder = entityManager.getCriteriaBuilder();
@@ -38,41 +38,50 @@ record Criterias<E>(
     }
 
     @Override
-    public <V extends Comparable<? super V>> void lessThan( final SingularAttribute<E, V> attribute,
-            final V value ) {
-        addWhere( builder().lessThan( path( attribute ), value ) );
+    public void lessThan( final Attribute attribute,
+            final Comparable<?> value ) {
+        lessThan2( attribute, value );
+    }
+
+    private <V extends Comparable<? super V>> void lessThan2( final Attribute attribute, final Comparable<?> value ) {
+        addWhere( builder().lessThan( path( attribute ), (V) value ) );
     }
 
     @Override
-    public <V extends Comparable<? super V>> void greaterThan( final SingularAttribute<E, V> attribute,
-            final V value ) {
-        addWhere( builder().greaterThan( path( attribute ), value ) );
+    public void greaterThan( final Attribute attribute, final Comparable<?> value ) {
+        greaterThan2( attribute, value );
+    }
+
+    public <V extends Comparable<? super V>> void greaterThan2( final Attribute attribute, final Comparable<?> value ) {
+        addWhere( builder().greaterThan( path( attribute ), (V) value ) );
     }
 
     @Override
-    public <V extends Comparable<? super V>> void orderBy( final SingularAttribute<E, V> attribute,
-            final Order order ) {
+    public void orderBy( final Attribute attribute, final Order order ) {
         final List<jakarta.persistence.criteria.Order> orderSpecs = new LinkedList<>( query().getOrderList() );
         orderSpecs.add( switch ( order ) {
-            case ASC -> builder().asc( root().get( attribute.getName() ) );
-            case DESC -> builder().desc( root().get( attribute.getName() ) );
+            case ASC -> builder().asc( root().get( attribute.name() ) );
+            case DESC -> builder().desc( root().get( attribute.name() ) );
         } );
         query().orderBy( orderSpecs );
     }
 
     @Override
-    public <V extends Comparable<? super V>> void isIn( final SingularAttribute<E, V> attribute,
-            final Collection<?> value ) {
+    public void isIn( final Attribute attribute, final Collection<? extends Comparable<?>> value ) {
         addWhere( path( attribute ).in( value ) );
     }
 
     @Override
-    public <V extends Comparable<? super V>> void isEqual( final SingularAttribute<E, V> attribute, final V value ) {
+    public void isEqual( final Attribute attribute, final Comparable<?> value ) {
         addWhere( builder().equal( path( attribute ), value ) );
     }
 
-    private <V extends Comparable<? super V>> Expression<V> path( final SingularAttribute<E, V> attribute ) {
-        return this.root().get( attribute.getName() ).as( attribute.getJavaType() );
+    private <V extends Comparable<? super V>> Expression<V> path( final Attribute attribute ) {
+        return (Expression<V>) this.root().get( attribute.name() ).as( attribute.type() );
+    }
+
+    private <V extends Comparable<? super V>> V value( final Comparable<?> value ) {
+        return (V) value;
     }
 
     private void addWhere( final Predicate predicate ) {

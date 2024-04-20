@@ -3,18 +3,18 @@ package io.vigier.cursor;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.function.Consumer;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
 
 @Builder( toBuilder = true )
 @Getter
 @Accessors( fluent = true )
-public class Position<E, V extends Comparable<? super V>> {
+@EqualsAndHashCode
+public class Position {
 
-    private final SingularAttribute<E, V> attribute;
-    private final V value;
+    private final Attribute attribute;
+    private final Comparable<?> value;
     @Builder.Default
     private final Order order = Order.ASC;
 
@@ -22,13 +22,10 @@ public class Position<E, V extends Comparable<? super V>> {
      * Creates a new {@link Position} with a builder.
      *
      * @param creator the customizer for the builder
-     * @param <E>     the entity type
-     * @param <V>     the value/attribute type
      * @return a new {@link Position}
      */
-    public static <E, V extends Comparable<? super V>> Position<E, V> create(
-            final Consumer<PositionBuilder<E, V>> creator ) {
-        final var builder = Position.<E, V>builder();
+    public static Position create( final Consumer<PositionBuilder> creator ) {
+        final var builder = Position.builder();
         creator.accept( builder );
         return builder.build();
     }
@@ -38,13 +35,10 @@ public class Position<E, V extends Comparable<? super V>> {
      * and which will follow the attribute in ascending order.
      *
      * @param attribute the attribute.
-     * @param <E>       the entity type.
-     * @param <V>       the value type.
      * @return the new {@link Position}.
      */
-    public static <E, V extends Comparable<? super V>> Position<E, V> attributeAsc(
-            final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.attribute( attribute ).order( Order.ASC ) );
+    public static Position attributeAsc( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
+        return create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.ASC ) );
     }
 
     /**
@@ -52,13 +46,10 @@ public class Position<E, V extends Comparable<? super V>> {
      * follow the attribute in descending order.
      *
      * @param attribute the attribute.
-     * @param <E>       the entity type.
-     * @param <V>       the value type.
      * @return the new {@link Position}.
      */
-    public static <E, V extends Comparable<? super V>> Position<E, V> attributeDesc(
-            final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.attribute( attribute ).order( Order.DESC ) );
+    public static Position attributeDesc( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
+        return create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.DESC ) );
     }
 
     /**
@@ -73,9 +64,9 @@ public class Position<E, V extends Comparable<? super V>> {
     /**
      * Will apply the position information to the given {@link QueryBuilder}.
      *
-     * @param qb
+     * @param qb builder where position information will be applied.
      */
-    public void apply( final QueryBuilder<E> qb ) {
+    public void apply( final QueryBuilder qb ) {
         if ( !isFirst() ) {
             switch ( order ) {
                 case ASC -> qb.greaterThan( attribute, value );
@@ -91,12 +82,8 @@ public class Position<E, V extends Comparable<? super V>> {
      * @param entity the entity.
      * @return the new {@link Position}.
      */
-    public Position<E, V> positionOf( final E entity ) {
-        return toBuilder().value( attribute.getJavaType().cast( getValue( entity, attribute.getName() ) ) ).build();
-    }
-
-    private Object getValue( final E entity, final String attributeName ) {
-        final BeanWrapper beanWrapper = new DirectFieldAccessFallbackBeanWrapper( entity );
-        return beanWrapper.getPropertyValue( attributeName );
+    public Position positionOf( final Object entity ) {
+        return toBuilder().value( attribute.valueOf( entity ) )
+                .build();
     }
 }

@@ -1,10 +1,12 @@
 package io.vigier.cursor;
 
 import jakarta.persistence.metamodel.SingularAttribute;
-import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Singular;
 import lombok.With;
 import lombok.experimental.Accessors;
 
@@ -13,37 +15,47 @@ import lombok.experimental.Accessors;
  * <p>
  * Currently only simple attributes can be filtered (no collections, or nested properties). If the provided filter value
  * is a collection a one-must-match ("attribute in my-filter-values") logic applies.
- *
- * @param <E> the entity type
- * @param <V> the type of the attribute-value
  */
 @Builder( toBuilder = true )
 @Getter
 @Accessors( fluent = true )
-public class Filter<E, V extends Comparable<? super V>> {
+@EqualsAndHashCode
+public class Filter {
 
     /**
      * The attribute to filter on.
      */
-    private final SingularAttribute<E, V> attribute;
+    private final Attribute attribute;
 
     /**
      * The value to filter on.
      */
     @With
-    private final V value;
+    @Singular
+    private final List<? extends Comparable<?>> values;
 
+    public static class FilterBuilder {
+
+        private Attribute attribute;
+
+        public FilterBuilder attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
+            this.attribute = Attribute.of( attribute );
+            return this;
+        }
+
+        public FilterBuilder attribute( final Attribute attribute ) {
+            this.attribute = attribute;
+            return this;
+        }
+    }
     /**
      * Create a {@linkplain Filter} with a builder.
      *
      * @param creator the customizer for the builder
-     * @param <E>     the entity type
-     * @param <V>     the value/attribute type
      * @return a new {@linkplain Filter}
      */
-    public static <E, V extends Comparable<? super V>> Filter<E, V> create(
-            final Consumer<FilterBuilder<E, V>> creator ) {
-        final var builder = Filter.<E, V>builder();
+    public static Filter create( final Consumer<FilterBuilder> creator ) {
+        final var builder = Filter.builder();
         creator.accept( builder );
         return builder.build();
     }
@@ -53,16 +65,13 @@ public class Filter<E, V extends Comparable<? super V>> {
      *
      * @param attribute the attribute to filter on
      * @param values    the value(s) to filter on
-     * @param <E>       the entity type
-     * @param <V>       the value/attribute type
      * @return a new {@linkplain Filter}
      */
-    @SafeVarargs
-    public static <E, V extends Comparable<? super V>> Filter<E, V> attributeIs(
-            final SingularAttribute<E, V> attribute,
-            final V... values ) {
-        final FilterBuilder<E, V> builder = Filter.<E, V>builder().attribute( attribute );
-        for ( final V v : values ) {
+    public static Filter attributeIs( final SingularAttribute<?, ? extends Comparable<?>> attribute,
+            final Comparable<?>... values ) {
+        final Attribute attr = Attribute.of( attribute );
+        final FilterBuilder builder = Filter.builder().attribute( attr );
+        for ( final Comparable<?> v : values ) {
             builder.value( v );
         }
         return builder.build();
@@ -73,14 +82,11 @@ public class Filter<E, V extends Comparable<? super V>> {
      *
      * @param qb the query builder
      */
-    public void apply( final QueryBuilder<E> qb ) {
-
-        if ( attribute.isCollection() ) {
-            // TODO: implement
-        } else if ( value instanceof Collection<?> ) {
-            qb.isIn( attribute, (Collection<?>) value );
+    public void apply( final QueryBuilder qb ) {
+        if ( values.size() > 1 ) {
+            qb.isIn( attribute, values );
         } else {
-            qb.isEqual( attribute, value );
+            qb.isEqual( attribute, values.get( 0 ) );
         }
     }
 }

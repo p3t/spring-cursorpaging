@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.With;
@@ -23,6 +24,7 @@ import lombok.experimental.Accessors;
 @Builder( toBuilder = true )
 @Getter
 @Accessors( fluent = true )
+@EqualsAndHashCode
 public class PageRequest<E> {
 
     /**
@@ -34,13 +36,13 @@ public class PageRequest<E> {
      * The positions used to address the start of a page.
      */
     @Singular( "position" )
-    private final List<Position<E, ? extends Comparable<?>>> positions;
+    private final List<Position> positions;
 
     /**
      * The filters to apply to the query (removing results)
      */
     @Singular
-    private final List<Filter<E, ? extends Comparable<?>>> filters;
+    private final List<Filter> filters;
 
     /**
      * The size of the page to fetch
@@ -61,11 +63,9 @@ public class PageRequest<E> {
          * ascending order.
          *
          * @param attribute the attribute used to create a position (ascending ordered)
-         * @param <V>       the type of the attribute-value
          * @return the builder
          */
-        public <V extends Comparable<? super V>> PageRequestBuilder<E> attributeAsc(
-                final SingularAttribute<E, V> attribute ) {
+        public PageRequestBuilder<E> attributeAsc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
             return firstPage( attribute, Order.ASC );
         }
 
@@ -74,11 +74,9 @@ public class PageRequest<E> {
          * descending order.
          *
          * @param attribute the attribute used to create a position (ascending ordered)
-         * @param <V>       the type of the attribute-value
          * @return the builder
          */
-        public <V extends Comparable<? super V>> PageRequestBuilder<E> attributeDesc(
-                final SingularAttribute<E, V> attribute ) {
+        public PageRequestBuilder<E> attributeDesc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
             return firstPage( attribute, Order.DESC );
         }
 
@@ -86,15 +84,14 @@ public class PageRequest<E> {
          * Shortcut for creating a position for an attribute given a certain order
          *
          * @param attribute the attribute used to create a position (ascending ordered)
-         * @param <V>       the type of the attribute-value
          * @return the builder
          */
-        public <V extends Comparable<? super V>> PageRequestBuilder<E> firstPage(
-                final SingularAttribute<E, V> attribute, final Order order ) {
-            return addPosition( Position.<E, V>create( b -> b.attribute( attribute ).order( order ) ) );
+        public PageRequestBuilder<E> firstPage( final SingularAttribute<E, ? extends Comparable<?>> attribute,
+                final Order order ) {
+            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
         }
 
-        private <V extends Comparable<? super V>> PageRequestBuilder<E> addPosition( final Position<E, V> pos ) {
+        private PageRequestBuilder<E> addPosition( final Position pos ) {
             if ( this.positions == null ) {
                 this.positions = new ArrayList<>( 3 );
             }
