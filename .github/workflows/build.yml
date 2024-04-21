@@ -8,6 +8,7 @@
 name: Java CI with Gradle
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       release_build:
