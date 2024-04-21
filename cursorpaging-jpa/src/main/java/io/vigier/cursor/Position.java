@@ -7,14 +7,31 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+/**
+ * A position, which can be used to address the start of a page.
+ * <p>
+ * The position uses an attribute and a value to address the start of a page. The order defines if the results should be
+ * queried in ascending or descending order.
+ */
 @Builder( toBuilder = true )
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
 public class Position {
 
+    /**
+     * Attribute used to create a position for an entity
+     */
     private final Attribute attribute;
+
+    /**
+     * The current position from where on the results should be queried
+     */
     private final Comparable<?> value;
+
+    /**
+     * The order in which the results should be queried
+     */
     @Builder.Default
     private final Order order = Order.ASC;
 

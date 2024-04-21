@@ -25,8 +25,15 @@ dependencies {
 
 }
 
-tasks.withType<Test> {
-	useJUnitPlatform()
+tasks {
+	withType<Test> {
+		useJUnitPlatform()
+	}
+	javadoc {
+		options {
+			(this as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
+		}
+	}
 }
 protobuf {
 	protoc {
