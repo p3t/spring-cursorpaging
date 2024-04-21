@@ -19,16 +19,15 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val GITHUBPKG_USERNAME: String by project
-val GITHUBPKG_PASSWORD: String by project
+//val GITHUBPKG_USERNAME: String? by project
+//val GITHUBPKG_PASSWORD: String? by project
 
-println(GITHUBPKG_PASSWORD)
 publishing {
     repositories {
         maven {
             credentials {
-                username = GITHUBPKG_USERNAME
-                password = GITHUBPKG_PASSWORD
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/p3t/spring-cursorpaging")
