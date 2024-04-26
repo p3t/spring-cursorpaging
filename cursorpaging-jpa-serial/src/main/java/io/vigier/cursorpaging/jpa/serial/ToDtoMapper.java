@@ -2,12 +2,7 @@ package io.vigier.cursorpaging.jpa.serial;
 
 import io.vigier.cursor.Attribute;
 import io.vigier.cursor.PageRequest;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoAttribute;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoFilter;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoOrder;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoPageRequest;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoPosition;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoValue;
+import io.vigier.cursorpaging.jpa.serial.dto.Cursor;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 
@@ -16,47 +11,46 @@ public class ToDtoMapper<E> {
 
     private final PageRequest<E> pageRequest;
 
-    public DtoPageRequest map() {
-
-        return DtoPageRequest.newBuilder().addAllPositions( positions() ).setPageSize( pageRequest.pageSize() )
+    public Cursor.PageRequest map() {
+        return Cursor.PageRequest.newBuilder().addAllPositions( positions() ).setPageSize( pageRequest.pageSize() )
                 .addAllFilters( filters() )
                 .build();
     }
 
 
-    private Iterable<DtoFilter> filters() {
+    private Iterable<Cursor.Filter> filters() {
         return pageRequest.filters().stream()
-                .map( f -> DtoFilter.newBuilder().setAttribute( attributeOf( f.attribute() ) )
+                .map( f -> Cursor.Filter.newBuilder().setAttribute( attributeOf( f.attribute() ) )
                         .addAllValues( f.values().stream().map( this::valueOf ).toList() )
                         .build() ).toList();
     }
 
-    private Iterable<DtoPosition> positions() {
+    private Iterable<Cursor.Position> positions() {
         return pageRequest.positions().stream()
-                .map( p -> DtoPosition.newBuilder().setAttribute( attributeOf( p.attribute() ) )
+                .map( p -> Cursor.Position.newBuilder().setAttribute( attributeOf( p.attribute() ) )
                         .setValue( valueOf( p.value() ) ).setOrder( switch ( p.order() ) {
-                            case ASC -> DtoOrder.ASC;
-                            case DESC -> DtoOrder.DESC;
+                            case ASC -> Cursor.Order.ASC;
+                            case DESC -> Cursor.Order.DESC;
                         } )
                         .build() ).toList();
     }
 
 
-    private static DtoAttribute attributeOf( final Attribute attribute ) {
-        return DtoAttribute.newBuilder().setName( attribute.name() )
+    private static Cursor.Attribute attributeOf( final Attribute attribute ) {
+        return Cursor.Attribute.newBuilder().setName( attribute.name() )
                 .build();
     }
 
-    private DtoValue valueOf( final Comparable<?> value ) {
+    private Cursor.Value valueOf( final Comparable<?> value ) {
         if ( value == null ) {
-            return DtoValue.newBuilder().setValue( "" )
+            return Cursor.Value.newBuilder().setValue( "" )
                     .build();
         }
         if ( value instanceof final Instant i ) {
-            return DtoValue.newBuilder().setValue( "" + i.toEpochMilli() )
+            return Cursor.Value.newBuilder().setValue( "" + i.toEpochMilli() )
                     .build();
         }
-        return DtoValue.newBuilder().setValue( value.toString() )
+        return Cursor.Value.newBuilder().setValue( value.toString() )
                 .build();
 
     }

@@ -5,12 +5,7 @@ import io.vigier.cursor.Filter;
 import io.vigier.cursor.Order;
 import io.vigier.cursor.PageRequest;
 import io.vigier.cursor.Position;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoAttribute;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoFilter;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoPageRequest;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoPosition;
-import io.vigier.cursorpaging.jpa.serial.dto.DtoCursor.DtoValue;
-import jakarta.persistence.metamodel.SingularAttribute;
+import io.vigier.cursorpaging.jpa.serial.dto.Cursor;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,16 +16,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor( staticName = "of" )
 public class FromDtoMapper<E> {
 
-    private final DtoPageRequest request;
-    private final Map<String, SingularAttribute<E, ? extends Comparable<?>>> attributesByName = new HashMap<>();
+    private final Cursor.PageRequest request;
+    private final Map<String, Attribute> attributesByName = new HashMap<>();
 
     public PageRequest<E> map() {
-        return PageRequest.<E>builder().positions( positions() ).filters( filters() )
+        return PageRequest.<E>builder().positions( positions() ).filters( filters() ).pageSize( request.getPageSize() )
                 .build();
     }
 
-    public FromDtoMapper<E> using( final Collection<SingularAttribute<E, ? extends Comparable<?>>> attributes ) {
-        attributes.forEach( a -> attributesByName.put( a.getName(), a ) );
+    public FromDtoMapper<E> using( final Map<String, Attribute> attributes ) {
+        attributesByName.putAll( attributes );
         return this;
     }
 
@@ -42,19 +37,19 @@ public class FromDtoMapper<E> {
         return request.getFiltersList().stream().map( this::filterOf ).toList();
     }
 
-    private Filter filterOf( final DtoFilter filter ) {
+    private Filter filterOf( final Cursor.Filter filter ) {
         final var attribute = attributeOf( filter.getAttribute() );
         return Filter.create(
                 b -> b.attribute( attribute ).values( valueListOf( attribute, filter.getValuesList() ) ) );
     }
 
-    private List<? extends Comparable<?>> valueListOf( final io.vigier.cursor.Attribute attribute,
-            final List<DtoValue> valuesList ) {
+    private List<? extends Comparable<?>> valueListOf( final Attribute attribute,
+            final List<Cursor.Value> valuesList ) {
         return valuesList.stream().map( v -> valueOf( attribute, v ) ).toList();
     }
 
-    private Comparable<?> valueOf( final Attribute attribute, final DtoValue value ) {
-        if ( "".equals( value.getValue() ) ) {
+    private Comparable<?> valueOf( final Attribute attribute, final Cursor.Value value ) {
+        if ( value.getValue().isEmpty() ) {
             return null;
         }
         if ( attribute.type().equals( Boolean.class ) ) {
@@ -78,7 +73,7 @@ public class FromDtoMapper<E> {
         throw new IllegalArgumentException( "Unsupported attribute type: " + attribute.type().getName() );
     }
 
-    private Position positionOf( final DtoPosition position ) {
+    private Position positionOf( final Cursor.Position position ) {
         final var attribute = attributeOf( position.getAttribute() );
 
         return Position.create( b -> b.attribute( attribute ).value( valueOf( attribute, position.getValue() ) )
@@ -89,12 +84,12 @@ public class FromDtoMapper<E> {
                 } ) );
     }
 
-    private io.vigier.cursor.Attribute attributeOf( final DtoAttribute attribute ) {
-        final var singularAttribute = attributesByName.get( attribute.getName() );
-        if ( singularAttribute == null ) {
+    private Attribute attributeOf( final Cursor.Attribute attribute ) {
+        final var cursorAttribute = attributesByName.get( attribute.getName() );
+        if ( cursorAttribute == null ) {
             throw new IllegalArgumentException( "No attribute found for name: " + attribute.getName() );
         }
-        return io.vigier.cursor.Attribute.of( singularAttribute );
+        return cursorAttribute;
     }
 
 }

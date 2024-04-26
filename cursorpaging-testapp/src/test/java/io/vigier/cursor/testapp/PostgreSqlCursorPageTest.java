@@ -2,10 +2,12 @@ package io.vigier.cursor.testapp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.vigier.cursor.Attribute;
 import io.vigier.cursor.Filter;
 import io.vigier.cursor.PageRequest;
-import io.vigier.cursor.Position;
 import io.vigier.cursor.repository.bootstrap.CursorPageRepositoryFactoryBean;
+import io.vigier.cursor.testapp.model.AuditInfo;
+import io.vigier.cursor.testapp.model.AuditInfo_;
 import io.vigier.cursor.testapp.model.DataRecord;
 import io.vigier.cursor.testapp.model.DataRecord_;
 import io.vigier.cursor.testapp.repository.DataRecordRepository;
@@ -47,8 +49,8 @@ class PostgreSqlCursorPageTest {
         for ( int i = 0; i < count; i++ ) {
             created = created.plus( 1, ChronoUnit.DAYS );
             dataRecordRepository.save( DataRecord.builder()
-                    .createdAt( created )
                     .name( nextName( i ) )
+                    .auditInfo( AuditInfo.create( created, created.plus( 10, ChronoUnit.MINUTES ) ) )
                     .build() );
         }
         log.info( "Generated {} test data-records", dataRecordRepository.count() );
@@ -68,8 +70,7 @@ class PostgreSqlCursorPageTest {
         generateData( 100 );
         final var all = dataRecordRepository.findAll();
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
-                .attributeAsc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull();
@@ -84,9 +85,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFetchNextPage() {
         generateData( 30 );
-        final Position idPos = Position.attributeAsc( DataRecord_.id );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
-                .position( idPos ) );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull().hasSize( 10 );
@@ -100,17 +99,19 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchPagesOrderedByCreatedDesc() {
-        generateData( 100 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id ) );
+        generateData( 5 );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                .asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
         assertThat( firstPage ).isNotNull();
-        assertThat( firstPage.getContent() ).hasSize( 100 );
+        assertThat( firstPage.getContent() ).hasSize( 5 );
 
         final var all = dataRecordRepository.findAll().stream()
-                .sorted( Comparator.comparing( DataRecord::getCreatedAt ).reversed()
+                .sorted( Comparator.comparing( DataRecord::getAuditInfo ).reversed()
                         .thenComparing( r -> r.getId().toString() ) ).toList();
 
         assertThat( firstPage.getContent() ).containsExactlyElementsOf( all );
@@ -119,7 +120,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldUseDefaultPageSize() {
-        final PageRequest<DataRecord> request = PageRequest.attributeAsc( DataRecord_.id );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.asc( DataRecord_.id ) );
         assertThat( request.pageSize() ).isEqualTo( PageRequest.DEFAULT_PAGE_SIZE );
     }
 
@@ -127,7 +128,8 @@ class PostgreSqlCursorPageTest {
     void shouldFilterResults() {
         generateData( 100 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
                 .filter( Filter.attributeIs( DataRecord_.name, "Alpha" ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
@@ -143,7 +145,8 @@ class PostgreSqlCursorPageTest {
         final Filter nameIsAlpha = Filter.create(
                 b -> b.attribute( DataRecord_.name ).value( "Alpha" ).value( "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
                 .filter( nameIsAlpha ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );

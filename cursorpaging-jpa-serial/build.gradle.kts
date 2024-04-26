@@ -34,6 +34,10 @@ tasks {
 			(this as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
 		}
 	}
+	processResources {
+		// On GitHub actions the proto file seems to be copied twice
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
 }
 protobuf {
 	protoc {
@@ -41,15 +45,15 @@ protobuf {
 		artifact = "com.google.protobuf:protoc:4.26.1"
 	}
 	generateProtoTasks {
-//		all().configureEach { task ->
-//			task.builtins {
-//				java {
-////					option "lite"
-//				}
-//			}
-//		}
 		java{
+		}
+	}
+}
 
+sourceSets {
+	main {
+		proto {
+			srcDir("src/main/proto")
 		}
 	}
 }

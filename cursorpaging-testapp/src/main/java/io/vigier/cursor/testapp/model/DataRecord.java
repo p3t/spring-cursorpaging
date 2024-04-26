@@ -4,8 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -35,7 +35,12 @@ public class DataRecord {
     private String name;
 
     @Builder.Default
-    @Column( name = "createdat" )
-    private Instant createdAt = Instant.now();
+    private AuditInfo auditInfo = new AuditInfo();
+
+    public static DataRecord create( final Consumer<DataRecordBuilder> c ) {
+        final DataRecordBuilder b = DataRecord.builder();
+        c.accept( b );
+        return b.build();
+    }
 
 }

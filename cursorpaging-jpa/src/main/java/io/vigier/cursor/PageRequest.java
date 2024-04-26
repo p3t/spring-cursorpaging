@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
+import lombok.ToString;
 import lombok.With;
 import lombok.experimental.Accessors;
 
@@ -25,10 +26,11 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
+@ToString
 public class PageRequest<E> {
 
     /**
-     * The default size used to fetch the page if non is provided (DEFAULT_PAGE_SIZE = {@value DEFAULT_PAGE_SIZE})
+     * The default size used to fetch the page if non is provided
      */
     public static final int DEFAULT_PAGE_SIZE = 100;
 
@@ -59,35 +61,13 @@ public class PageRequest<E> {
     public static class PageRequestBuilder<E> {
 
         /**
-         * Shortcut for creating a page request for the first page, having a position using the provided attribute in
-         * ascending order.
-         *
-         * @param attribute the attribute used to create a position (ascending ordered)
-         * @return the builder
-         */
-        public PageRequestBuilder<E> attributeAsc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
-            return firstPage( attribute, Order.ASC );
-        }
-
-        /**
-         * Shortcut for creating a page request for the first page, having a position using the provided attribute in
-         * descending order.
-         *
-         * @param attribute the attribute used to create a position (ascending ordered)
-         * @return the builder
-         */
-        public PageRequestBuilder<E> attributeDesc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
-            return firstPage( attribute, Order.DESC );
-        }
-
-        /**
          * Shortcut for creating a position for an attribute given a certain order
          *
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> firstPage( final SingularAttribute<E, ? extends Comparable<?>> attribute,
-                final Order order ) {
+        public PageRequestBuilder<E> firstPage( final Order order,
+                final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
         }
 
@@ -97,6 +77,22 @@ public class PageRequest<E> {
             }
             this.positions.add( pos );
             return this;
+        }
+
+        public PageRequestBuilder<E> asc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
+            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.ASC ) ) );
+        }
+
+        public PageRequestBuilder<E> desc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
+            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.DESC ) ) );
+        }
+
+        public PageRequestBuilder<E> asc( final Attribute attribute ) {
+            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.ASC ) ) );
+        }
+
+        public PageRequestBuilder<E> desc( final Attribute attribute ) {
+            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
         }
     }
 
@@ -119,11 +115,11 @@ public class PageRequest<E> {
      * @param attribute the attribute to define a position
      * @param <E>       Entity type
      * @param <V>       Value type of attribute
-     * @return A new page request
+     * @return A new page request, for the first page
      */
-    public static <E, V extends Comparable<? super V>> PageRequest<E> attributeAsc(
+    public static <E, V extends Comparable<? super V>> PageRequest<E> firstAsc(
             final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.attributeAsc( attribute ) );
+        return create( b -> b.asc( attribute ) );
     }
 
     /**
@@ -132,11 +128,11 @@ public class PageRequest<E> {
      * @param attribute the attribute to define a position
      * @param <E>       Entity type
      * @param <V>       Value type of attribute
-     * @return A new page request
+     * @return A new page request, for the first page
      */
     public static <E, V extends Comparable<? super V>> PageRequest<E> firstDesc(
             final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.attributeDesc( attribute ) );
+        return create( b -> b.desc( attribute ) );
     }
 
 

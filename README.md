@@ -4,8 +4,10 @@
 Library supporting cursor based paging for Spring Data Repositories.
 
 # Introduction
-Cursor based paging is an alternative to the Page/Pagerequest based paging provided by Spring.
-It eliminates the need to provide an offset or a page-number which can cause a lot of load on a database in case of very large amount of records in a table.
+
+Cursor based paging is an alternative to the page/offset based paging provided by Spring.
+It eliminates the need to provide an offset or a page-number which can cause a lot of load on a database in case of very
+large amount of records in a table. It also avoids the often not needed total count query per page.
 
 # Considered Requirements
 - The implementation should follow the repository concept from spring.
@@ -13,14 +15,13 @@ It eliminates the need to provide an offset or a page-number which can cause a l
 - A filtering mechanism should be provided
 - Total count of records is not part of the page response and not executed while retrieving the page
 - No SQL limit/offset and no DB-cursor should be used
-- State is send to the client and returned to the server for the next page
+- State is/can send to the client and returned to the server for the next page (stateless behaviour)
 
 # Quickstart / how to use it
 under construction / todo
 - [ ] Describe how to include dependency in maven.pom / build.gradle
-- [ ] Different options to use repository interface(s)
 
-Until done, please check the testapp sourcecode.
+Please check the testapp sourcecode for latest examples and usage.
 
 ## Include the cursorpaging library in you maven pom / build.gradle
 
@@ -28,7 +29,7 @@ TODO (not yet published)
 
 ## Generate the JPA meta-model
 
-The cursorpaging library is using the JPA meta-model to generate the queries.
+The cursorpaging library is easier to use, when the JPA meta-model is generate to define the available attributes.
 This is done by the `hibernate-jpamodelgen` annotation processor (in case you are using eclipse-link or another ORM
 there should be a similar one available.
 
@@ -66,13 +67,20 @@ dependencies {
 }
 ```
 
+### Not using the JPA metamodel
+
+The definition of the attributes should be possible as name/type combination. It might be a help to use
+lombok's `@FieldNameConstants` annotation to get the attribute names as constants. Still the attributes type information
+has to be added manually.
+
+Currently, this has not really been tested, so there might be places which need adoption to support this fully.
+
 ## Register the CursorPageRepositoryFactoryBean
 
 In order to use the repository interface an modified `JpaRepFactoryBean` is needed.
 This is done via `@EnableJpaRepositories` annotation in the Spring Boot Application class.
 
 ```java
-
 @SpringBootApplication
 @EnableJpaRepositories( repositoryFactoryBeanClass = CursorPageRepositoryFactoryBean.class )
 public class TestApplication {
@@ -83,7 +91,7 @@ public class TestApplication {
 }
 ```
 
-This implementation checks, whether the a fragment interface of the repository to be instantiated is
+This implementation checks, whether there is a fragment interface of the repository to be instantiated is
 a `CursorPageRepository` and if so, it will create a `CursorPageRepositoryImpl` instead of the default.
 
 An alternative, which works without an extra factory implementation, would be to derive for each entity an additional
@@ -114,7 +122,7 @@ There are various shortcut APIs available to make the creation of the requests a
 
 ```java
 public void queryData() {
-    final PageRequest<DataRecord> request = PageRequest.attributeAsc( DataRecord_.id );
+    final PageRequest<DataRecord> request = PageRequest.firstAsc( DataRecord_.id );
     final Page<DataRecord> page = dataRecordRepository.findPage( request );
     page.forEach( System.out::println );
 
@@ -137,12 +145,14 @@ public void queryData() {
 }
 ```
 
-### Example: Use creation time, order records descending
+### Example: Multiple order defintions, sort by embedded entity attributes
 
 ```java
 public void queryData() {
-    final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-            .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id ) );
+    final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+            .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+            .asc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+            .asc( DataRecord_.id ) );
 
     final Page<DataRecord> page = dataRecordRepository.findPage( request );
     page.forEach( System.out::println );
@@ -160,7 +170,8 @@ attribute, if you want to get the records ordered e.g. by a name or creation dat
 ```java
 public void queryData() {
     final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-            .attributeDesc( DataRecord_.createdAt ).attributeAsc( DataRecord_.id )
+            .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+            .asc( DataRecord_.id )
             .filter( Filter.attributeIs( DataRecord_.name, "Alpha" ) ) );
 
     final Page<DataRecord> page = dataRecordRepository.findPage( request );
@@ -184,6 +195,30 @@ public long queryCount() {
     final long count = dataRecordRepository.count();
     System.out.println( "Total records: " + count );
     return count;
+}
+```
+
+## Passing the cursor to a client
+
+(under construction/unfinished implementation)
+
+The information in the page request(s) needs to be serialized and encrypted in order to be passed to a client.
+Encryption is needed to avoid un-wanted insights to the implementation and to protects from injection attacks.
+Within the sub-project `cursorpaging-jpa-serial` there is a serializer available generated respective page-links, e.g.
+for a web-client.
+
+```java
+// TODO base64 encoding - Demo APP Controller implementation...
+public String getNextLink( PageRequest<DataRecord> request ) {
+    final var serializer = Serializer.of( DataRecord.class, Encrypter.getInstance() )
+            .use( DataRecord_.name )
+            .use( DataRecord_.auditInfo )
+            .use( AuditInfo_.createdAt )
+            .use( AuditInfo_.modifiedAt );
+    final var serializedRequest = serializer.toBytes( pageRequest );
+
+    return "http://localhost:8080/datarecords/next?cursor=" + URLEncoder.encode( serializedRequest,
+            StandardCharsets.UTF_8 );
 }
 ```
 

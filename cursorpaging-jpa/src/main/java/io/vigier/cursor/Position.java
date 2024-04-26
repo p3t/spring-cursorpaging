@@ -1,10 +1,10 @@
 package io.vigier.cursor;
 
-import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 /**
@@ -17,6 +17,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
+@ToString
 public class Position {
 
     /**
@@ -45,28 +46,6 @@ public class Position {
         final var builder = Position.builder();
         creator.accept( builder );
         return builder.build();
-    }
-
-    /**
-     * Creates a new {@link Position} with the given attribute pointing to the start of the first page
-     * and which will follow the attribute in ascending order.
-     *
-     * @param attribute the attribute.
-     * @return the new {@link Position}.
-     */
-    public static Position attributeAsc( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
-        return create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.ASC ) );
-    }
-
-    /**
-     * Creates a new {@link Position} with the given attribute pointing to the start of the first page and which will
-     * follow the attribute in descending order.
-     *
-     * @param attribute the attribute.
-     * @return the new {@link Position}.
-     */
-    public static Position attributeDesc( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
-        return create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.DESC ) );
     }
 
     /**

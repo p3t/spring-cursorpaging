@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.support.JpaEntityInformationSuppo
  */
 public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
+    private static final int ADDED_TO_PAGE_SIZE = 1;
     private final JpaEntityInformation<E, ?> entityInformation;
     private final EntityManager entityManager;
 
@@ -43,7 +44,7 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     @Override
     public Page<E> loadPage( final PageRequest<E> request ) {
-        final Criterias<E> c = Criterias.selectRoot( entityInformation.getJavaType(), entityManager );
+        final Criterias<E> c = Criterias.fromEntity( entityInformation.getJavaType(), entityManager );
 
         request.positions().forEach( position -> position.apply( c ) );
         request.filters().forEach( filter -> filter.apply( c ) );
@@ -59,7 +60,7 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     private int getMaxResultSize( final PageRequest<E> request ) {
         // we add one to check if there are more pages
-        return request.pageSize() + 1;
+        return request.pageSize() + ADDED_TO_PAGE_SIZE;
     }
 
     /**
@@ -77,12 +78,15 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         return results.subList( 0, request.pageSize() );
     }
 
-    private static <E> PageRequest<E> toNextRequest( final List<E> results, final PageRequest<E> request ) {
+    private PageRequest<E> toNextRequest( final List<E> results, final PageRequest<E> request ) {
         if ( results.size() <= request.pageSize() ) {
             return null;
         }
-        final var last = results.get( request.pageSize() - 1 );
-        return request.positionOf( last );
+        return request.positionOf( getLast( results ) );
+    }
+
+    private E getLast( final List<E> results ) {
+        return results.get( results.size() - 1 - ADDED_TO_PAGE_SIZE );
     }
 
 }

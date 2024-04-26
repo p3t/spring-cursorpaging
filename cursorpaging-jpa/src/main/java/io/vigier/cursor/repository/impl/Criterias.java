@@ -6,7 +6,6 @@ import io.vigier.cursor.QueryBuilder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.Collection;
@@ -29,7 +28,7 @@ record Criterias<E>(
         Root<E> root,
         Class<E> entityType ) implements QueryBuilder {
 
-    public static <T> Criterias<T> selectRoot( final Class<T> entityType, final EntityManager entityManager ) {
+    public static <T> Criterias<T> fromEntity( final Class<T> entityType, final EntityManager entityManager ) {
         final var builder = entityManager.getCriteriaBuilder();
         final var query = builder.createQuery( entityType );
         final var root = query.from( entityType );
@@ -38,13 +37,12 @@ record Criterias<E>(
     }
 
     @Override
-    public void lessThan( final Attribute attribute,
-            final Comparable<?> value ) {
+    public void lessThan( final Attribute attribute, final Comparable<?> value ) {
         lessThan2( attribute, value );
     }
 
     private <V extends Comparable<? super V>> void lessThan2( final Attribute attribute, final Comparable<?> value ) {
-        addWhere( builder().lessThan( path( attribute ), (V) value ) );
+        addWhere( builder().lessThan( attribute.path( root ), (V) value ) );
     }
 
     @Override
@@ -53,35 +51,27 @@ record Criterias<E>(
     }
 
     public <V extends Comparable<? super V>> void greaterThan2( final Attribute attribute, final Comparable<?> value ) {
-        addWhere( builder().greaterThan( path( attribute ), (V) value ) );
+        addWhere( builder().greaterThan( attribute.path( root ), (V) value ) );
     }
 
     @Override
     public void orderBy( final Attribute attribute, final Order order ) {
         final List<jakarta.persistence.criteria.Order> orderSpecs = new LinkedList<>( query().getOrderList() );
         orderSpecs.add( switch ( order ) {
-            case ASC -> builder().asc( root().get( attribute.name() ) );
-            case DESC -> builder().desc( root().get( attribute.name() ) );
+            case ASC -> builder().asc( attribute.path( root ) );
+            case DESC -> builder().desc( attribute.path( root ) );
         } );
         query().orderBy( orderSpecs );
     }
 
     @Override
     public void isIn( final Attribute attribute, final Collection<? extends Comparable<?>> value ) {
-        addWhere( path( attribute ).in( value ) );
+        addWhere( attribute.path( root ).in( value ) );
     }
 
     @Override
     public void isEqual( final Attribute attribute, final Comparable<?> value ) {
-        addWhere( builder().equal( path( attribute ), value ) );
-    }
-
-    private <V extends Comparable<? super V>> Expression<V> path( final Attribute attribute ) {
-        return (Expression<V>) this.root().get( attribute.name() ).as( attribute.type() );
-    }
-
-    private <V extends Comparable<? super V>> V value( final Comparable<?> value ) {
-        return (V) value;
+        addWhere( builder().equal( attribute.path( root ), value ) );
     }
 
     private void addWhere( final Predicate predicate ) {

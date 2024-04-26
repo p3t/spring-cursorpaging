@@ -34,6 +34,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      maven_artifactId: ${{ steps.maven_artifactId.outputs.artifactId }}
+      maven_groupId: ${{ steps.maven_groupId.outputs.groupId }}
+      maven_version: ${{ steps.maven_version.outputs.version }}
+      cache_key: ${{ steps.cache.outputs.cache_key }}
 
     steps:
     - uses: actions/checkout@v4
