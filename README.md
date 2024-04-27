@@ -208,19 +208,21 @@ Within the sub-project `cursorpaging-jpa-serial` there is a serializer available
 for a web-client.
 
 ```java
-// TODO base64 encoding - Demo APP Controller implementation...
-public String getNextLink( PageRequest<DataRecord> request ) {
-    final var serializer = Serializer.of( DataRecord.class, Encrypter.getInstance() )
-            .use( DataRecord_.name )
-            .use( DataRecord_.auditInfo )
-            .use( AuditInfo_.createdAt )
-            .use( AuditInfo_.modifiedAt );
-    final var serializedRequest = serializer.toBytes( pageRequest );
+// Serializer should be reused and not created for each request
+final private Serialzer serializer = Serializer.create();
 
-    return "http://localhost:8080/datarecords/next?cursor=" + URLEncoder.encode( serializedRequest,
-            StandardCharsets.UTF_8 );
+public String getNextLink( PageRequest<DataRecord> request ) {
+    final var serializedRequest = serializer.toBase64( request );
+
+    return "http://localhost:8080/datarecords/next?cursor=" + serializedRequest;
 }
 ```
+
+- The serializer is learning the types of the attributes when he is serializing Requests. In case that it can happen,
+  that he gets requests created before he had the chance to "learn", the attributes must be configured explicitly.
+- The encrypter uses internally a random secret. In case that the service is behind a load-balancer, the secret must be
+  the same for all
+  instances. The secret and should be configured explicitly.
 
 # Background: Concept description
 ## Basic idea
