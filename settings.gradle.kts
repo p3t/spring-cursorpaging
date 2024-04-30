@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "spring-cursorpaging"
 
-include("cursorpaging-jpa", "cursorpaging-jpa-serial", "cursorpaging-testapp")
+include("cursorpaging-jpa", "cursorpaging-jpa-serializer", "cursorpaging-testapp")

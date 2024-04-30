@@ -1,0 +1,33 @@
+syntax = "proto3";
+option java_package = "io.vigier.cursor.jpa.serializer.dto";
+option java_outer_classname = "Cursor";
+
+message Attribute {
+  string name = 1;
+}
+
+message Value {
+  string value = 1;
+}
+
+enum Order {
+  ASC = 0;
+  DESC = 1;
+}
+
+message Position {
+  Attribute attribute = 1;
+  Value value = 2;
+  Order order = 3;
+}
+
+message Filter {
+  Attribute attribute = 1;
+  repeated Value values = 2;
+}
+
+message PageRequest {
+  int32 page_size = 1;
+  repeated  Position positions = 2;
+  repeated  Filter filters = 3;
+}

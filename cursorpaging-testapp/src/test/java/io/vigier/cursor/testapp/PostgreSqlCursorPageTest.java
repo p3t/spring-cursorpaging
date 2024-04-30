@@ -2,10 +2,10 @@ package io.vigier.cursor.testapp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.vigier.cursor.Attribute;
-import io.vigier.cursor.Filter;
-import io.vigier.cursor.PageRequest;
-import io.vigier.cursor.repository.bootstrap.CursorPageRepositoryFactoryBean;
+import io.vigier.cursor.jpa.Attribute;
+import io.vigier.cursor.jpa.Filter;
+import io.vigier.cursor.jpa.PageRequest;
+import io.vigier.cursor.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursor.testapp.model.AuditInfo;
 import io.vigier.cursor.testapp.model.AuditInfo_;
 import io.vigier.cursor.testapp.model.DataRecord;
