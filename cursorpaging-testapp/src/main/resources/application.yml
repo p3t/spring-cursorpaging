@@ -9,3 +9,6 @@ spring:
     url: "jdbc:postgresql://localhost:5432/cursor-db"
     username: "admin"
     password: "secret"
+logging:
+  level:
+    io.vigier: DEBUG

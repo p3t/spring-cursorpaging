@@ -1,5 +1,5 @@
 syntax = "proto3";
-option java_package = "io.vigier.cursor.jpa.serializer.dto";
+option java_package = "io.vigier.cursorpaging.jpa.serializer.dto";
 option java_outer_classname = "Cursor";
 
 message Attribute {

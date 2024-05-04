@@ -19,8 +19,10 @@ repositories {
 dependencies {
 	implementation(project(":cursorpaging-jpa"))
 	implementation("com.google.protobuf:protobuf-java:4.26.1")
-//	implementation("jakarta.inject:jakarta.inject-api:2.0.0")
 	implementation("org.springframework:spring-core")
+	implementation("jakarta.validation:jakarta.validation-api")
+	implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
+
 	testImplementation("org.mockito:mockito-core:5.11.0")
 	testImplementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

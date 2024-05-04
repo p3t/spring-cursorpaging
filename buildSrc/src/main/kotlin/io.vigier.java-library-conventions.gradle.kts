@@ -8,7 +8,7 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-group = "io.vigier.curcursorpaging"
+group = "io.vigier.cursorpaging"
 version = "0-SNAPSHOT"
 
 repositories {
@@ -32,7 +32,7 @@ extra["hibernate.version"] = "6.4.4.Final"
 
 
 dependencies {
-    val lombokVersion: String by extra("1.18.30")
+    val lombokVersion: String by extra("1.18.32")
     val junitVersion: String by extra("5.10.2")
     val assertjVersion: String by extra("3.25.3")
 
@@ -41,9 +41,10 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.3"))
     implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
     compileOnly("org.projectlombok:lombok:${lombokVersion}")
-    compileOnly("org.hibernate:hibernate-jpamodelgen:6.4.4.Final")
+    testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
 
     annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+    testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 
     // Testing
     testImplementation("org.assertj:assertj-core:${assertjVersion}")
@@ -54,6 +55,7 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
+
 
 //configurations {
 //    compileOnly {

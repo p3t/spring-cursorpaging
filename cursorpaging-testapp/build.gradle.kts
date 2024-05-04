@@ -19,6 +19,7 @@ dependencies {
     implementation("org.springframework.retry:spring-retry")
     implementation("org.springframework:spring-aspects")
     implementation("org.apache.commons:commons-lang3")
+//    compileOnly("javax.xml.bind:jaxb-api")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
     implementation("org.mapstruct:mapstruct:${mapstructVersion}")
@@ -59,4 +60,5 @@ tasks {
     test {
         useJUnitPlatform()
     }
+
 }
