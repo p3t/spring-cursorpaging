@@ -1,10 +1,10 @@
 plugins {
     id("io.vigier.java-library-conventions")
     id("io.vigier.java-publish-conventions")
-    id("maven-publish")
 }
 
 group = "io.vigier.cursorpaging-jpa"
+version = "0-SNAPSHOT"
 
 ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
 

@@ -1,12 +1,17 @@
 plugins {
     id("maven-publish")
 }
-
 ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
+ext["releaseVersion"] = findProperty("VERSION")  //
+    ?: System.getenv("VERSION") //
+            ?: file(rootDir.path + "/version.txt").readText().trim()
 
 publishing {
     var artifactId: String? by ext("")
-
+    val propVersion = findProperty("VERSION")
+    val envVersion = System.getenv("VERSION")
+    val fileVersion = file(rootDir.path + "/version.txt").readText().trim()
+    val releaseVersion = propVersion ?: envVersion ?: fileVersion
     repositories {
         maven {
             credentials {
@@ -29,6 +34,7 @@ publishing {
         }
         withType<MavenPublication> {
             pom {
+                version = releaseVersion.toString()
                 packaging = "jar"
                 name.set("spring-cursorpaging-jpa")
                 description.set("Spring cursor paging for JPA")
