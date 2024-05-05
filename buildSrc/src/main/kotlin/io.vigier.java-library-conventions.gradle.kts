@@ -28,8 +28,8 @@ spotbugs {
     ignoreFailures = true
 }
 
-extra["hibernate.version"] = "6.4.4.Final"
-
+ext["hibernate.version"] = "6.4.4.Final"
+ext["junitVersion"] = findProperty("junitVersion") ?: "5.10.2"
 
 dependencies {
     val lombokVersion: String by extra("1.18.32")

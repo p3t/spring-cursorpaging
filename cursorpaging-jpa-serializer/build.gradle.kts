@@ -1,10 +1,11 @@
 plugins {
 	id("io.vigier.java-library-conventions")
-	id("maven-publish")
+	id("io.vigier.java-publish-conventions")
 	id("com.google.protobuf")
 }
 
 group = "io.vigier.cursorpaging.jpa.serializer"
+ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa-serializer"
 
 configurations {
 	compileOnly {
