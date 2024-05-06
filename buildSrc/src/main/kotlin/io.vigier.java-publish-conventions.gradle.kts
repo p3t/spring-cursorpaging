@@ -9,7 +9,7 @@ ext["releaseVersion"] = findProperty("VERSION")  //
 publishing {
     var artifactId: String? by ext("")
     val propVersion = findProperty("VERSION")
-    val envVersion = System.getenv("VERSION")
+    val envVersion = System.getenv("BUILD_VERSION")
     val fileVersion = file(rootDir.path + "/version.txt").readText().trim()
     val releaseVersion = propVersion ?: envVersion ?: fileVersion
     repositories {

@@ -11,6 +11,8 @@ on:
   workflow_dispatch:
   release:
     types: [created]
+env:
+  BUILD_VERSION: '0-SNAPSHOT'
 
 jobs:
   publish:
