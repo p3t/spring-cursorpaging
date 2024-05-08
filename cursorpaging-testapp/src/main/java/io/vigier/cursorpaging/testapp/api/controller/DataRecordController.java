@@ -5,16 +5,24 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
+import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
 import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
 import io.vigier.cursorpaging.jpa.validation.MaxSize;
+import io.vigier.cursorpaging.testapp.api.model.DataRecordAttribute;
 import io.vigier.cursorpaging.testapp.api.model.DtoDataRecord;
 import io.vigier.cursorpaging.testapp.api.model.mapper.DtoDataRecordMapper;
 import io.vigier.cursorpaging.testapp.model.DataRecord;
 import io.vigier.cursorpaging.testapp.model.DataRecord_;
 import io.vigier.cursorpaging.testapp.repository.DataRecordRepository;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +30,14 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.LinkRelation;
+import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -45,11 +59,11 @@ public class DataRecordController {
 
 
     @Operation( summary = "Get data records, page by page" )
-    @GetMapping
+    @GetMapping( "/page" )
     @ResponseStatus( HttpStatus.OK )
     public CollectionModel<DtoDataRecord> getAllDataRecords( //
             @Parameter @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
-            @Parameter @RequestParam( "cursor" ) final Optional<Base64String> cursor ) {
+            @Parameter( description = "Serialized cursor, for requesting the desired page", content = @Content( mediaType = MediaType.TEXT_PLAIN_VALUE ) ) @RequestParam( "cursor" ) final Optional<Base64String> cursor ) {
 
         cursor.ifPresent( c -> log.debug( "Cursor = {}", c ) );
 
@@ -64,6 +78,72 @@ public class DataRecordController {
                 .addIf( page.next().isPresent(),
                         () -> getLink( pageSize, page.next().orElseThrow(), IanaLinkRelations.NEXT ) );
     }
+
+    /**
+     * Just a  example how a GET request might be mapped to transport all necessary information. Note that the
+     * parameters are just there to be visible in swagger - all of them do more or less contain the same content.
+     *
+     * @param orderBy  order bx
+     * @param filterBy filter by
+     * @param pageSize page size
+     * @param request  all request parameters - shouldn't be visible in swagger
+     * @return
+     */
+    @Operation( summary = "Get data records, (first page), specifying all order and filter parameters" )
+    @GetMapping( name = "/first", produces = "application/json" )
+    @ResponseStatus( HttpStatus.OK )
+    public CollectionModel<DtoDataRecord> getDataRecords( //
+            @Parameter( style = ParameterStyle.DEEPOBJECT, example = """
+                    {
+                      "NAME": "ASC",
+                      "ID": "ASC"
+                    }""" ) @RequestParam final Map<DataRecordAttribute, Order> orderBy,
+            @Parameter( style = ParameterStyle.DEEPOBJECT, example = """
+                    {
+                      "NAME": [
+                        "Alpha", "Bravo"
+                      ]
+                    }""" ) @RequestParam final MultiValueMap<DataRecordAttribute, String> filterBy,
+            @Parameter( style = ParameterStyle.DEEPOBJECT ) @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
+            @RequestParam( required = false ) final MultiValueMap<String, String> request ) {
+        log.debug( "request = {}, ", request );
+        log.debug( "order = {}, ", orderBy );
+        log.debug( "filter = {}", filterBy );
+        log.debug( "pageSize = {}", pageSize );
+        return CollectionModel.of( List.of() );
+    }
+
+    @Operation( summary = "Get a cursor on the first page of records" )
+    @PostMapping( "/page" )
+    @ResponseStatus( HttpStatus.CREATED )
+    public RepresentationModel<?> getCursor(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody( content = @Content( //
+                    mediaType = MediaType.APPLICATION_JSON_VALUE, //
+                    contentSchema = @Schema( implementation = DtoPageRequest.class, example = """
+                            {
+                               "orderBy": {
+                                 "NAME": "ASC"
+                               },
+                               "filterBy": {
+                                 "NAME": [
+                                   "Bravo", "Tango"
+                                 ]
+                               },
+                               "pageSize": 100
+                             }""" ) ) ) //
+            @RequestBody final DtoPageRequest request ) {
+        request.addOrderByIfNotPresent( DataRecord_.ID, Order.ASC );
+        final PageRequest<DataRecord> pageRequest = request.toPageRequest(
+                name -> DataRecordAttribute.valueOf( name.toUpperCase() ).getAttribute() );
+        return RepresentationModel.of( request )
+                .add( getLink( Optional.of( request.getPageSize() ), pageRequest, IanaLinkRelations.FIRST ) );
+    }
+
+    @GetMapping( "/count" )
+    public ResponseEntity<Long> getCount() {
+        return ResponseEntity.ok( dataRecordRepository.count() );
+    }
+
 
     private Link getLink( final Optional<Integer> pageSize, final PageRequest<DataRecord> request,
             final LinkRelation rel ) {

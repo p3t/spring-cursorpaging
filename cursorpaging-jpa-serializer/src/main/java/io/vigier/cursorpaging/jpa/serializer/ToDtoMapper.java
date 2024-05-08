@@ -7,7 +7,7 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor( staticName = "of" )
-public class ToDtoMapper<E> {
+class ToDtoMapper<E> {
 
     private final PageRequest<E> pageRequest;
 

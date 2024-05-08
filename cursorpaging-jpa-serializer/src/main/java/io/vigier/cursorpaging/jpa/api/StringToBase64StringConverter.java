@@ -1,5 +1,6 @@
-package io.vigier.cursorpaging.jpa.serializer;
+package io.vigier.cursorpaging.jpa.api;
 
+import io.vigier.cursorpaging.jpa.serializer.Base64String;
 import org.springframework.core.convert.converter.Converter;
 
 public class StringToBase64StringConverter implements Converter<String, Base64String> {

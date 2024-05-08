@@ -17,7 +17,7 @@ import org.springframework.core.convert.ConversionService;
 
 @Builder
 @RequiredArgsConstructor( staticName = "of" )
-public class FromDtoMapper<E> {
+class FromDtoMapper<E> {
 
     private final Cursor.PageRequest request;
     @Builder.Default

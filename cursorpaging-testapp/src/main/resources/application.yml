@@ -9,6 +9,12 @@ spring:
     url: "jdbc:postgresql://localhost:5432/cursor-db"
     username: "admin"
     password: "secret"
+server:
+  tomcat:
+    relaxed-query-chars: "[,]"
 logging:
   level:
     io.vigier: DEBUG
+    org:
+      springframework:
+        web: DEBUG
