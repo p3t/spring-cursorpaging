@@ -83,5 +83,5 @@ jobs:
         DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: '.*[Tt]est(Compile|Runtime)Classpath'
       with:
         build-scan-publish: true
-        build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
-        build-scan-terms-of-use-agree: "yes"
+        build-scan-terms-of-service-url: "https://gradle.com/help/legal-terms-of-use"
+        build-scan-terms-of-service-agree: "yes"
