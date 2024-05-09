@@ -28,21 +28,23 @@ properties:
 
 ```java
 
+import java.util.LinkedHashMap;
+
 @Data
 @NoArgsConstructor
 public class DataRecordPageRequest {
 
-    private Map<DataRecordAttribute, Order> orderBy = Map.of( DataRecordAttribute.ID, Order.ASC )
+  private Map<DataRecordAttribute, Order> orderBy = new LinkedHashMap<>();
 
-    private MultiValueMap<DataRecordAttribute, String> filterBy = new LinkedMultiValueMap<>();
+  private MultiValueMap<DataRecordAttribute, String> filterBy = new LinkedMultiValueMap<>();
 
-    @Min( 1 )
-    @Max( 100 )
-    private int pageSize = 100;
+  @Min( 1 )
+  @Max( 100 )
+  private int pageSize = 100;
 
-    public static DataRecordPageRequest valueOf( final String value ) {
-        return new DataRecordPageRequest();
-    }
+  public static DataRecordPageRequest valueOf( final String value ) {
+    return new DataRecordPageRequest();
+  }
 }
 ```
 
