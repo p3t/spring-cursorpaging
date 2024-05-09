@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.serializer;
 
 import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.NotNull;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.stream.IntStream;
@@ -37,6 +38,9 @@ public class Base64String implements CharSequence {
         return base64String;
     }
 
+    /**
+     * @return the decoded byte array of the base64 string
+     */
     public byte[] decoded() {
         return decode( base64String );
     }
@@ -61,25 +65,32 @@ public class Base64String implements CharSequence {
     }
 
     @Override
-    public CharSequence subSequence( final int start, final int end ) {
+    public @NotNull CharSequence subSequence( final int start, final int end ) {
         return base64String.subSequence( start, end );
     }
 
     @Override
-    public IntStream chars() {
+    public @NotNull IntStream chars() {
         return base64String.chars();
     }
 
     @Override
-    public IntStream codePoints() {
+    public @NotNull IntStream codePoints() {
         return base64String.codePoints();
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return base64String;
     }
 
+    /**
+     * Modify the encoded string and get a new {@link Base64String} instance.
+     *
+     * @param target      the sequence to be replaced
+     * @param replacement the replacement sequence
+     * @return a new Base64String with the replaced sequence
+     */
     public Base64String replace( final String target, final String replacement ) {
         return new Base64String( base64String.replace( target, replacement ) );
     }

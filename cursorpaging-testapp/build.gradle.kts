@@ -10,7 +10,7 @@ dependencies {
     val mapstructVersion: String by extra("1.5.5.Final")
 
     implementation(project(":cursorpaging-jpa"))
-    implementation(project(":cursorpaging-jpa-serializer"))
+    implementation(project(":cursorpaging-jpa-api"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")

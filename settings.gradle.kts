@@ -23,7 +23,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "spring-cursorpaging"
 
-include("cursorpaging-jpa", "cursorpaging-jpa-serializer", "cursorpaging-testapp")
+include("cursorpaging-jpa", "cursorpaging-jpa-api", "cursorpaging-testapp")
 
 develocity {
     buildScan {
