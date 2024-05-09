@@ -24,6 +24,11 @@ dependencyManagement {
 tasks.named<Jar>("bootJar") {
     enabled = false
 }
+tasks {
+    delombok {
+        enabled = false
+    }
+}
 spotbugs {
     ignoreFailures = true
 }

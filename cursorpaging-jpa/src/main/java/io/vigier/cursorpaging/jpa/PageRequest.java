@@ -79,18 +79,42 @@ public class PageRequest<E> {
             return this;
         }
 
+        /**
+         * Shortcut for adding a position spec of an attribute in ascending  order
+         *
+         * @param attribute the attribute used to create a position (ascending ordered)
+         * @return the builder
+         */
         public PageRequestBuilder<E> asc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.ASC ) ) );
         }
 
+        /**
+         * Shortcut for adding a position spec of an attribute in descending  order
+         *
+         * @param attribute the attribute used to create a position (descending ordered)
+         * @return the builder
+         */
         public PageRequestBuilder<E> desc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.DESC ) ) );
         }
 
+        /**
+         * Shortcut for adding a position spec of an attribute in ascending  order
+         *
+         * @param attribute the attribute used to create a position (ascending ordered)
+         * @return the builder
+         */
         public PageRequestBuilder<E> asc( final Attribute attribute ) {
             return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.ASC ) ) );
         }
 
+        /**
+         * Shortcut for adding a position spec of an attribute in descending  order
+         *
+         * @param attribute the attribute used to create a position (descending ordered)
+         * @return the builder
+         */
         public PageRequestBuilder<E> desc( final Attribute attribute ) {
             return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
         }
@@ -108,33 +132,6 @@ public class PageRequest<E> {
         creator.accept( builder );
         return builder.build();
     }
-
-    /**
-     * Shortcut to create a page-request with a single position, sorting ascending
-     *
-     * @param attribute the attribute to define a position
-     * @param <E>       Entity type
-     * @param <V>       Value type of attribute
-     * @return A new page request, for the first page
-     */
-    public static <E, V extends Comparable<? super V>> PageRequest<E> firstAsc(
-            final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.asc( attribute ) );
-    }
-
-    /**
-     * Shortcut to create a page-request with a single position, sorting descending
-     *
-     * @param attribute the attribute to define a position
-     * @param <E>       Entity type
-     * @param <V>       Value type of attribute
-     * @return A new page request, for the first page
-     */
-    public static <E, V extends Comparable<? super V>> PageRequest<E> firstDesc(
-            final SingularAttribute<E, V> attribute ) {
-        return create( b -> b.desc( attribute ) );
-    }
-
 
     /**
      * Create a new {@linkplain PageRequest} pointing to the position defined through the attributes of the provided

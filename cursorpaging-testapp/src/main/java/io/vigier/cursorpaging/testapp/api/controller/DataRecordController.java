@@ -1,8 +1,5 @@
 package io.vigier.cursorpaging.testapp.api.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterStyle;
@@ -33,7 +30,6 @@ import org.springframework.hateoas.LinkRelation;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +39,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RequiredArgsConstructor
 @RestController
 @Tag( name = "demo-api" )
@@ -51,19 +50,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataRecordController {
 
     public static final String PATH = "/api/v1/datarecord";
+    public static final String COUNT = "/count";
 
     // Skipping the service layer ;-)
     private final DataRecordRepository dataRecordRepository;
     private final DtoDataRecordMapper dtoDataRecordMapper;
     private final EntitySerializer<DataRecord> serializer;
 
-
     @Operation( summary = "Get data records, page by page" )
-    @GetMapping( "/page" )
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE )
     @ResponseStatus( HttpStatus.OK )
-    public CollectionModel<DtoDataRecord> getAllDataRecords( //
-            @Parameter @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
-            @Parameter( description = "Serialized cursor, for requesting the desired page", content = @Content( mediaType = MediaType.TEXT_PLAIN_VALUE ) ) @RequestParam( "cursor" ) final Optional<Base64String> cursor ) {
+    public CollectionModel<DtoDataRecord> getDataRecordPage( //
+            @Parameter @RequestParam @MaxSize(20 ) final Optional<Integer> pageSize, @Parameter(
+            description = "Serialized cursor, for requesting the desired page",
+            content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE ) ) @RequestParam("cursor" ) final Optional<Base64String> cursor ) {
 
         cursor.ifPresent( c -> log.debug( "Cursor = {}", c ) );
 
@@ -87,10 +87,10 @@ public class DataRecordController {
      * @param filterBy filter by
      * @param pageSize page size
      * @param request  all request parameters - shouldn't be visible in swagger
-     * @return
+     * @return a page of data records
      */
     @Operation( summary = "Get data records, (first page), specifying all order and filter parameters" )
-    @GetMapping( name = "/first", produces = "application/json" )
+    @GetMapping(path = "/first", name = "first", produces = "application/json" )
     @ResponseStatus( HttpStatus.OK )
     public CollectionModel<DtoDataRecord> getDataRecords( //
             @Parameter( style = ParameterStyle.DEEPOBJECT, example = """
@@ -114,12 +114,14 @@ public class DataRecordController {
     }
 
     @Operation( summary = "Get a cursor on the first page of records" )
-    @PostMapping( "/page" )
+    @PostMapping(
+            value = "/page", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE )
     @ResponseStatus( HttpStatus.CREATED )
     public RepresentationModel<?> getCursor(
             @io.swagger.v3.oas.annotations.parameters.RequestBody( content = @Content( //
                     mediaType = MediaType.APPLICATION_JSON_VALUE, //
-                    contentSchema = @Schema( implementation = DtoPageRequest.class, example = """
+                    schema = @Schema(
+                            implementation = DtoPageRequest.class, example = """
                             {
                                "orderBy": {
                                  "NAME": "ASC"
@@ -139,15 +141,22 @@ public class DataRecordController {
                 .add( getLink( Optional.of( request.getPageSize() ), pageRequest, IanaLinkRelations.FIRST ) );
     }
 
-    @GetMapping( "/count" )
-    public ResponseEntity<Long> getCount() {
-        return ResponseEntity.ok( dataRecordRepository.count() );
+    @GetMapping(COUNT )
+    @ResponseStatus(HttpStatus.OK )
+    public RepresentationModel<?> getCount( @Parameter(
+            description = "Serialized cursor, for requesting the page and defining filter",
+            content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE ) ) //
+    @RequestParam("cursor" ) final Optional<Base64String> cursor ) {
+        return RepresentationModel.of( Map.of( "totalElements", cursor.map( serializer::toPageRequest )
+                        .map( dataRecordRepository::count )
+                        .orElseGet( dataRecordRepository::count ) ) ) //
+                .add( linkTo( methodOn( DataRecordController.class ).getCount( cursor ) ).withSelfRel() );
     }
 
 
     private Link getLink( final Optional<Integer> pageSize, final PageRequest<DataRecord> request,
             final LinkRelation rel ) {
-        return linkTo( methodOn( DataRecordController.class ).getAllDataRecords( pageSize,
+        return linkTo( methodOn( DataRecordController.class ).getDataRecordPage( pageSize,
                 Optional.of( serializer.toBase64( request ) ) ) ).withRel( rel ).expand();
     }
 }

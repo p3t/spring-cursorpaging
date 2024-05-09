@@ -6,6 +6,7 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.repository.CursorPageRepository;
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
 
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.support.JpaEntityInformationSuppo
  *
  * @param <E> the type of the data.
  */
+@Slf4j
 public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     private static final int ADDED_TO_PAGE_SIZE = 1;
@@ -44,7 +46,8 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     @Override
     public Page<E> loadPage( final PageRequest<E> request ) {
-        final Criterias<E> c = Criterias.fromEntity( entityInformation.getJavaType(), entityManager );
+        final CriteriaQueryBuilder<E, E> c = CriteriaQueryBuilder.forEntity( entityInformation.getJavaType(),
+                entityManager );
 
         request.positions().forEach( position -> position.apply( c ) );
         request.filters().forEach( filter -> filter.apply( c ) );
@@ -56,6 +59,16 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         return Page.create( b -> b.content( toContent( results, request ) )
                 .self( request )
                 .next( toNextRequest( results, request ) ) );
+    }
+
+    @Override
+    public long count( final PageRequest<E> request ) {
+        final CriteriaQueryBuilder<E, Long> c = CriteriaQueryBuilder.forCount( entityInformation.getJavaType(),
+                entityManager );
+        
+        request.filters().forEach( filter -> filter.apply( c ) );
+
+        return entityManager.createQuery( c.query() ).getSingleResult();
     }
 
     private int getMaxResultSize( final PageRequest<E> request ) {

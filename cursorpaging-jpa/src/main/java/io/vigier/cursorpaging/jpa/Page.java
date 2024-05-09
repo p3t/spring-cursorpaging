@@ -89,6 +89,13 @@ public class Page<E> implements Iterable<E> {
         return Optional.ofNullable( next );
     }
 
+    /**
+     * Map the content with the given function an get the result
+     *
+     * @param mapper the function to be applied on each element of the page
+     * @param <T>    the result type of the mapping function
+     * @return the mapped content
+     */
     public <T> List<T> content( final Function<E, T> mapper ) {
         return content.stream().map( mapper ).toList();
     }

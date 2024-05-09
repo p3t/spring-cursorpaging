@@ -11,29 +11,47 @@ import jakarta.persistence.criteria.Root;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
 /**
  * Wrapper of CriteriaQuery, CriteriaBuilder, Root and EntityType, and also adds some methods to build the
  * position-queries
  *
- * @param query
- * @param builder
- * @param root
- * @param entityType
  * @param <E>        EntityType
+ * @param <R>        ResultType
  */
-record Criterias<E>(
-        CriteriaQuery<E> query,
-        CriteriaBuilder builder,
-        Root<E> root,
-        Class<E> entityType ) implements QueryBuilder {
+@Getter
+@Accessors( fluent = true )
+@Builder
+@RequiredArgsConstructor
+public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
-    public static <T> Criterias<T> fromEntity( final Class<T> entityType, final EntityManager entityManager ) {
-        final var builder = entityManager.getCriteriaBuilder();
-        final var query = builder.createQuery( entityType );
+    private final CriteriaQuery<R> query;
+    private final CriteriaBuilder cb;
+    private final Root<E> root;
+    private final Class<E> entityType;
+
+    public static <T> CriteriaQueryBuilder<T, T> forEntity( final Class<T> entityType,
+            final EntityManager entityManager ) {
+        final var cb = entityManager.getCriteriaBuilder();
+        final var query = cb.createQuery( entityType );
         final var root = query.from( entityType );
         query.select( root );
-        return new Criterias<>( query, builder, root, entityType );
+        return CriteriaQueryBuilder.<T, T>builder().query( query ).cb( cb ).root( root ).entityType( entityType )
+                .build();
+    }
+
+    public static <E> CriteriaQueryBuilder<E, Long> forCount( final Class<E> entityType,
+            final EntityManager entityManager ) {
+        final var cb = entityManager.getCriteriaBuilder();
+        final var query = cb.createQuery( Long.class );
+        final var root = query.from( entityType );
+        query.select( cb.count( root ) );
+        return CriteriaQueryBuilder.<E, Long>builder().query( query ).cb( cb ).root( root ).entityType( entityType )
+                .build();
     }
 
     @Override
@@ -42,7 +60,7 @@ record Criterias<E>(
     }
 
     private <V extends Comparable<? super V>> void whereLessThan( final Attribute attribute, final V value ) {
-        addWhere( builder().lessThan( attribute.path( root ), value ) );
+        addWhere( cb().lessThan( attribute.path( root ), value ) );
     }
 
     @Override
@@ -51,15 +69,15 @@ record Criterias<E>(
     }
 
     private <V extends Comparable<? super V>> void whereGreaterThan( final Attribute attribute, final V value ) {
-        addWhere( builder().greaterThan( attribute.path( root ), value ) );
+        addWhere( cb().greaterThan( attribute.path( root ), value ) );
     }
 
     @Override
     public void orderBy( final Attribute attribute, final Order order ) {
         final List<jakarta.persistence.criteria.Order> orderSpecs = new LinkedList<>( query().getOrderList() );
         orderSpecs.add( switch ( order ) {
-            case ASC -> builder().asc( attribute.path( root ) );
-            case DESC -> builder().desc( attribute.path( root ) );
+            case ASC -> cb().asc( attribute.path( root ) );
+            case DESC -> cb().desc( attribute.path( root ) );
         } );
         query().orderBy( orderSpecs );
     }
@@ -71,7 +89,7 @@ record Criterias<E>(
 
     @Override
     public void isEqual( final Attribute attribute, final Comparable<?> value ) {
-        addWhere( builder().equal( attribute.path( root ), value ) );
+        addWhere( cb().equal( attribute.path( root ), value ) );
     }
 
     private void addWhere( final Predicate predicate ) {

@@ -45,6 +45,8 @@ class PostgreSqlCursorPageTest {
     }
 
     void generateData( final int count ) {
+        dataRecordRepository.deleteAll();
+        dataRecordRepository.flush();
         Instant created = Instant.parse( "1999-01-02T10:15:30.00Z" );
         for ( int i = 0; i < count; i++ ) {
             created = created.plus( 1, ChronoUnit.DAYS );
@@ -155,6 +157,44 @@ class PostgreSqlCursorPageTest {
 
         assertThat( firstPage.getContent() ).allMatch(
                 e -> e.getName().equals( "Alpha" ) || e.getName().equals( "Bravo" ) );
+    }
+
+    @Test
+    void shouldReturnTotalCountWhenNoFilterPresent() {
+        generateData( 42 );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id ) );
+
+        final var count = dataRecordRepository.count( request );
+
+        assertThat( count ).isEqualTo( 42 );
+    }
+
+    @Test
+    void shouldReturnZeroCountWhenNoRecordsMatches() {
+        generateData( 42 );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( DataRecord_.name, "name-does-not-exist" ) ) );
+
+        final var count = dataRecordRepository.count( request );
+
+        assertThat( count ).isEqualTo( 0 );
+    }
+
+    @Test
+    void shouldReturnFilteredEntityCountWhenFilterPresent() {
+        generateData( NAMES.length );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
+                .filter( Filter.create( fb -> fb.attribute( DataRecord_.name ).value( "Alpha" ) ) ) );
+
+        final var count = dataRecordRepository.count( request );
+
+        assertThat( count ).isEqualTo( 1 );
     }
 }
 

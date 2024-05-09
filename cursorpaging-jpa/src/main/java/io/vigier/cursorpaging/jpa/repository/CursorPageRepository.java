@@ -20,4 +20,12 @@ public interface CursorPageRepository<T> {
      */
     Page<T> loadPage( final PageRequest<T> request );
 
+    /**
+     * Count the number of records on all pages, considering the defined filters.
+     *
+     * @param request the page request containing filter definitions
+     * @return the number of records.
+     */
+    long count( PageRequest<T> request );
+
 }

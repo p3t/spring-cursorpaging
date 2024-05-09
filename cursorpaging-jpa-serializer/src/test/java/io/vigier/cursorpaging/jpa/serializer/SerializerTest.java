@@ -34,7 +34,7 @@ public class SerializerTest {
 
     @Test
     public void shouldSerializePageRequests() {
-        final PageRequest<TestEntity> pageRequest = PageRequest.firstDesc( TestEntity_.name );
+        final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.desc( TestEntity_.name ) );
 
         final EntitySerializer<TestEntity> serializer = EntitySerializer.create( b -> b.use( Attribute.of( TestEntity_.name ) ) );
         final var serializedRequest = serializer.toBytes( pageRequest );
