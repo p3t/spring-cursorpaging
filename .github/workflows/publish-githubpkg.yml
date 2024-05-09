@@ -30,8 +30,8 @@ jobs:
 
     steps:
       - name: "Release Version"
-        run:
-          echo "Release Version: $BUILD_VERSION"
+        run: |
+          echo "::notice titel='Publishing release'::Release Version: $BUILD_VERSION"
       - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
