@@ -31,10 +31,10 @@ jobs:
       - name: "Release Version"
         id: release_version
         run: |
-          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> $GITHUB_ENV
-          echo "::notice titel='Publishing release'::Release Version is '$BUILD_VERSION'"
+          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "::notice title='Publishing release'::Release Version is ${RELEASE_TAG#v}"
           cat $GITHUB_ENV
-          echo "::set-output name=version::${BUILD_VERSION}"
       - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
