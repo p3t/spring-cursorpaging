@@ -17,8 +17,7 @@ on:
   release:
     types: [created]
 env:
-  TAG: ${{ github.event.release.tag_name }}
-  BUILD_VERSION: "${TAG#v}"
+  RELEASE_TAG: ${{ github.event.release.tag_name }}
 
 jobs:
   publish:
@@ -30,9 +29,12 @@ jobs:
 
     steps:
       - name: "Release Version"
+        id: release_version
         run: |
-          echo "BUILD_VERSION=${TAG#v}" >> $GITHUB_ENV
+          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> $GITHUB_ENV
           echo "::notice titel='Publishing release'::Release Version is '$BUILD_VERSION'"
+          cat $GITHUB_ENV
+          echo "::set-output name=version::${BUILD_VERSION}"
       - uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
