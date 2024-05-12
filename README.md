@@ -210,8 +210,6 @@ page response. It is also usually not required to re-count all records with each
 So, if you need to know the total count of records, you can execute a count query on the repository:
 
 ```java
-import java.awt.print.Pageable;// Simple to optimize by caching...
-import javax.naming.ldap.PagedResultsControl;
 
 @Cacheable( "datarecord.count" )
 public long queryCount( PageRequest<DataRecord> request ) {
