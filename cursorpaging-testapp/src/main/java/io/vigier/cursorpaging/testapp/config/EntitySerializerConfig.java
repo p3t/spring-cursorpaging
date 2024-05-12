@@ -27,5 +27,4 @@ public class EntitySerializerConfig {
     public EntitySerializer<DataRecord> dataRecordEntitySerializer( final EntitySerializerFactory serializerFactory ) {
         return serializerFactory.forEntity( DataRecord.class );
     }
-
 }

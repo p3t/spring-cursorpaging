@@ -19,9 +19,4 @@ public class WebConfig implements WebMvcConfigurer {
     public StringToBase64StringConverter stringToBase64StringConverter() {
         return new StringToBase64StringConverter();
     }
-
-//    @Override
-//    public void addFormatters( final FormatterRegistry registry ) {
-//        registry.addConverter( new AttributeOrderConverter() );
-//    }
 }

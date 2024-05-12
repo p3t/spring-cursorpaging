@@ -5,7 +5,7 @@ Library supporting cursor based paging for Spring Data Repositories.
 
 # Introduction
 
-Cursor based paging is an alternative to the page/offset based paging provided by Spring.
+Cursor based paging is an alternative to the page/offset based paging provided by Spring and SQL.
 It eliminates the need to provide an offset or a page-number which can cause a lot of load on a database in case of very
 large amount of records in a table. It also avoids the often not needed total count query per page.
 
@@ -25,11 +25,32 @@ Please check the testapp sourcecode for latest examples and usage.
 
 ## Include the cursorpaging library in you maven pom / build.gradle
 
-TODO (not yet published)
+There are two dependencies:
+
+1. The repository part, containing the Spring fragment interface and the repository implementation
+2. The API part, containing logic about serialization of page requests and some useful classes for API implementation
+
+```xml
+
+<dependencies>
+  <dependency>
+    <groupId>io.vigier.cursorpaging</groupId>
+    <artifactId>cursorpaging-jpa</artifactId>
+    <version>${cursorpaging.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>io.vigier.cursorpaging</groupId>
+    <artifactId>cursorpaging-jpa-api</artifactId>
+    <version>${cursorpaging.version}</version>
+  </dependency>
+</dependencies>
+```
+
+Note: Currently the library is only available on gitHub-packages: https://maven.pkg.github.com/p3t/spring-cursorpaging
 
 ## Generate the JPA meta-model
 
-The cursorpaging library is easier to use, when the JPA meta-model is generate to define the available attributes.
+The cursorpaging library is easier to use, when the JPA metamodel is generated to define the available attributes.
 This is done by the `hibernate-jpamodelgen` annotation processor (in case you are using eclipse-link or another ORM
 there should be a similar one available.
 
@@ -198,31 +219,115 @@ public long queryCount() {
 }
 ```
 
-## Passing the cursor to a client
+## Using the page request in a controller
 
-(under construction/unfinished implementation)
+In order to keep the server stateless, the information within a `PageRequest` have to be passed to the client and send
+back to the server, to get the next page.
+In order to do that, a serializer implementation is provided in the "API" package together with some other useful
+classes.
 
-The information in the page request(s) needs to be serialized and encrypted in order to be passed to a client.
-Encryption is needed to avoid un-wanted insights to the implementation and to protects from injection attacks.
-Within the sub-project `cursorpaging-jpa-serial` there is a serializer available generated respective page-links, e.g.
-for a web-client.
+### Configuration
+
+Each entity needs it's own serializer, there is a factory simplifying the creation within a Spring config-class:
 
 ```java
-// Serializer should be reused and not created for each request
-final private Serialzer serializer = Serializer.create();
 
-public String getNextLink( PageRequest<DataRecord> request ) {
-    final var serializedRequest = serializer.toBase64( request );
+@Configuration
+public class EntitySerializerConfig {
 
-    return "http://localhost:8080/datarecords/next?cursor=" + serializedRequest;
+  @Value( "${cursorpaging.jpa.serializer.encrypter.secret:1234567890ABCDEFGHIJKlmnopqrst--}" )
+  private String encrypterSecret;
+
+  @Bean
+  public EntitySerializerFactory entitySerializerFactory( final ConversionService conversionService ) {
+    return EntitySerializerFactory.builder()
+            .conversionService( conversionService )
+            .encrypter( Encrypter.getInstance( encrypterSecret ) )
+            .build();
+  }
+
+  @Bean
+  public EntitySerializer<DataRecord> dataRecordEntitySerializer( final EntitySerializerFactory serializerFactory ) {
+    return serializerFactory.forEntity( DataRecord.class );
+  }
 }
 ```
 
-- The serializer is learning the types of the attributes when he is serializing Requests. In case that it can happen,
-  that he gets requests created before he had the chance to "learn", the attributes must be configured explicitly.
-- The encrypter uses internally a random secret. In case that the service is behind a load-balancer, the secret must be
-  the same for all
-  instances. The secret and should be configured explicitly.
+1. `encrypterSecret`: The serializer does also encryption in order to avoid unwanted insights to the implementation and
+   code injection attacks. If no secret is provided, a random one is generated. The secret must be the same for all
+   instances of the service, in case it is running behind a load-balancer.
+2. `entitySerializerFactory`: The factory is used to create the entity-specific serializer. Actually it just passes the
+   common parts to the specific serializers.
+3. `dataRecordEntitySerializer`: The serializer for a `DataRecord` entity. This is used to serialize the page request
+   and to deserialize it back.
+
+### Controller
+
+```java
+public class DataRecordController {
+
+  public static final String PATH = "/api/v1/datarecord";
+  public static final String COUNT = "/count";
+
+  private final DataRecordRepository dataRecordRepository;
+  private final DtoDataRecordMapper dtoDataRecordMapper;
+  private final EntitySerializer<DataRecord> serializer;
+
+  @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )
+  @ResponseStatus( HttpStatus.OK )
+  public CollectionModel<DtoDataRecord> getDataRecordPage( //
+          @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
+          @RequestParam( "cursor" ) final Optional<Base64String> cursor ) {
+
+    final PageRequest<DataRecord> request = cursor.map( serializer::toPageRequest )
+            .orElseGet( () -> PageRequest.create( b -> b.asc( DataRecord_.name ).asc( DataRecord_.id ) ) )
+            .withPageSize( pageSize.orElse( 10 ) );
+
+    final var page = dataRecordRepository.loadPage( request );
+
+    return CollectionModel.of( page.content( dtoDataRecordMapper::toDto ) ) //
+            .add( getLink( pageSize, page.self(), IanaLinkRelations.SELF ) ) //
+            .addIf( page.next().isPresent(),
+                    () -> getLink( pageSize, page.next().orElseThrow(), IanaLinkRelations.NEXT ) );
+  }
+
+  private Link getLink( final Optional<Integer> pageSize, final PageRequest<DataRecord> request,
+          final LinkRelation rel ) {
+    return linkTo( methodOn( DataRecordController.class ).getDataRecordPage( pageSize,
+            Optional.of( serializer.toBase64( request ) ) ) ).withRel( rel ).expand();
+  }
+}
+```
+
+The serializer is used:
+
+1. To get the requested page (`PageRequest<DataRecord> request = cursor.map( serializer::toPageRequest )`)
+2. To provide links on the current and the next
+   page (`linkTo( methodOn( DataRecordController.class ).getDataRecordPage( pageSize, Optional.of( serializer.toBase64( request ) ) ) )`)
+
+The serializer is returning a `Base64String` in order to use this directly in the API a converter needs to be
+configured:
+
+```java
+
+@Configuration
+@EnableHypermediaSupport( type = { EnableHypermediaSupport.HypermediaType.HAL } )
+public class WebConfig {
+
+  @Bean
+  public StringToBase64StringConverter stringToBase64StringConverter() {
+    return new StringToBase64StringConverter();
+  }
+}
+```
+
+The annotation: `@MaxSize(20)` is a shortcut for ` @RequestParam final Optional<@Min(1) @Max(20) Integer> pageSize`.
+
+### Serializer Details
+
+The serializer "learns" about the entity attributes by serializing them.
+There might be situations where it could be usefule to pre-configure the attributes used to filter and order the
+records.
 
 # Background: Concept description
 ## Basic idea
