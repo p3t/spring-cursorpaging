@@ -8,6 +8,7 @@ version = "0-SNAPSHOT"
 
 ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
 
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")

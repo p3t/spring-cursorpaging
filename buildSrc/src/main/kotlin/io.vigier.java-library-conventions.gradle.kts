@@ -28,6 +28,9 @@ tasks {
     delombok {
         enabled = false
     }
+    jar {
+        archiveClassifier.set("")
+    }
 }
 spotbugs {
     ignoreFailures = true
