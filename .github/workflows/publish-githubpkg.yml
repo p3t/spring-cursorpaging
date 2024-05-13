@@ -23,9 +23,13 @@ jobs:
   publish:
 
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
+    outputs:
+      BUILD_VERSION: ${{ steps.release_version.outputs.BUILD_VERSION }}
 
     steps:
       - name: "Release Version"

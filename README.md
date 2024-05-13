@@ -46,7 +46,13 @@ There are two dependencies:
 </dependencies>
 ```
 
-Note: Currently the library is only available on gitHub-packages: https://maven.pkg.github.com/p3t/spring-cursorpaging
+Note: Currently the library is only available on gitHub-packages:
+
+- Repository-URL: https://maven.pkg.github.com/p3t/spring-cursorpaging
+- You need an personal-access token (classic) to read from any github-package
+  repo [see docu](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages#authenticating-to-github-packages)
+   - Add the token to your `~/.m2/settings.xml` or `~/.gradle/gradle.properties` file as password
+   - username is you github-user
 
 ## Generate the JPA meta-model
 

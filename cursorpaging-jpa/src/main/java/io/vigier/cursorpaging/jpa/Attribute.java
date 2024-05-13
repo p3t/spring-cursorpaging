@@ -63,6 +63,17 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
         return new Attribute( Arrays.asList( path ) );
     }
 
+    
+    public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2 ) {
+        return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ) ) );
+    }
+
+    public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2,
+            final String name3, final Class<?> type3 ) {
+        return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ),
+                SingleAttribute.of( name3, type3 ) ) );
+    }
+
     Comparable<?> valueOf( final Object entity ) {
         Object result = entity;
         for ( final SingleAttribute a : attributes ) {

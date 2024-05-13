@@ -24,7 +24,22 @@ public class DtoPageRequest {
 
     @Min( 1 )
     @Max( 100 )
-    private final int pageSize = 100;
+    private int pageSize = 100; // Must not be final!
+
+    public DtoPageRequest withPageSize( final int pageSize ) {
+        this.pageSize = pageSize;
+        return this;
+    }
+
+    public DtoPageRequest withOrderBy( final String name, final Order order ) {
+        orderBy.put( name, order );
+        return this;
+    }
+
+    public DtoPageRequest withFilterBy( final String name, final String... values ) {
+        filterBy.put( name, List.of( values ) );
+        return this;
+    }
 
     public <T> PageRequest<T> toPageRequest( final Function<String, Attribute> attributeProvider ) {
         return PageRequest.create( b -> {
@@ -43,7 +58,7 @@ public class DtoPageRequest {
         } );
     }
 
-    public void addOrderByIfNotPresent( final String name, final Order order ) {
+    public void addOrderByIfAbsent( final String name, final Order order ) {
         if ( !orderBy.containsKey( name ) ) {
             orderBy.put( name, order );
         }

@@ -134,9 +134,8 @@ public class DataRecordController {
                                "pageSize": 100
                              }""" ) ) ) //
             @RequestBody final DtoPageRequest request ) {
-        request.addOrderByIfNotPresent( DataRecord_.ID, Order.ASC );
-        final PageRequest<DataRecord> pageRequest = request.toPageRequest(
-                name -> DataRecordAttribute.valueOf( name.toUpperCase() ).getAttribute() );
+        request.addOrderByIfAbsent( DataRecord_.ID, Order.ASC );
+        final PageRequest<DataRecord> pageRequest = request.toPageRequest( DataRecordAttribute::forName );
         return RepresentationModel.of( request )
                 .add( getLink( Optional.of( request.getPageSize() ), pageRequest, IanaLinkRelations.FIRST ) );
     }
