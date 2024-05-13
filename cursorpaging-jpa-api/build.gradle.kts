@@ -25,7 +25,7 @@ dependencies {
 	implementation("jakarta.validation:jakarta.validation-api")
 	implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
 
-	testImplementation("org.mockito:mockito-core:5.11.0")
+	testImplementation("org.mockito:mockito-core:5.12.0")
 	testImplementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
