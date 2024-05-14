@@ -79,9 +79,9 @@ jobs:
         distribution: 'temurin'
 
     # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
-    # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
+      # https://github.com/gradle/actions/blob/main/docs/dependency-submission.md
     - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      uses: gradle/actions/dependency-submission@v3
       env:
         # Exclude all dependencies that originate solely in the 'buildSrc' or testapp project
         DEPENDENCY_GRAPH_EXCLUDE_PROJECTS: ':buildSrc|:cursorpaging-testapp'
@@ -89,5 +89,5 @@ jobs:
         DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: '.*[Tt]est(Compile|Runtime)Classpath'
       with:
         build-scan-publish: true
-        build-scan-terms-of-service-url: "https://gradle.com/help/legal-terms-of-use"
-        build-scan-terms-of-service-agree: "yes"
+        build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
+        build-scan-terms-of-use-agree: "yes"
