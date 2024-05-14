@@ -5,6 +5,7 @@ plugins {
 }
 
 group = "io.vigier.cursorpaging.jpa.api"
+version = "0-SNAPSHOT"
 ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa-api"
 
 configurations {

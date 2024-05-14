@@ -5,6 +5,7 @@ plugins {
 }
 
 group = "io.vigier.cursorpaging"
+version = "0-SNAPSHOT"
 
 dependencies {
     val mapstructVersion: String by extra("1.5.5.Final")
