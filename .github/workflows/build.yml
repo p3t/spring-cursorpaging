@@ -85,3 +85,15 @@ jobs:
         build-scan-publish: true
         build-scan-terms-of-service-url: "https://gradle.com/help/legal-terms-of-use"
         build-scan-terms-of-service-agree: "yes"
+
+  upload-artifacts:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: build/libs/*.jar
