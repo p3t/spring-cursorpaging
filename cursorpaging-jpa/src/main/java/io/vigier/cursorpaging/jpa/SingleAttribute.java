@@ -38,7 +38,6 @@ public record SingleAttribute(
      * @return the value of the attribute if found.
      */
     Comparable<?> valueOf( final Object entity ) {
-        final Object value = new DirectFieldAccessFallbackBeanWrapper( entity ).getPropertyValue( name );
-        return (Comparable<?>) value;
+        return (Comparable<?>) new DirectFieldAccessFallbackBeanWrapper( entity ).getPropertyValue( name );
     }
 }

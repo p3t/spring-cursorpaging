@@ -46,13 +46,13 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     @Override
     public Page<E> loadPage( final PageRequest<E> request ) {
-        final CriteriaQueryBuilder<E, E> c = CriteriaQueryBuilder.forEntity( entityInformation.getJavaType(),
+        final CriteriaQueryBuilder<E, E> cqb = CriteriaQueryBuilder.forEntity( entityInformation.getJavaType(),
                 entityManager );
 
-        request.positions().forEach( position -> position.apply( c ) );
-        request.filters().forEach( filter -> filter.apply( c ) );
+        request.positions().forEach( position -> position.apply( cqb ) );
+        request.filters().forEach( filter -> filter.apply( cqb ) );
 
-        final var results = entityManager.createQuery( c.query() )
+        final var results = entityManager.createQuery( cqb.query() )
                 .setMaxResults( getMaxResultSize( request ) )
                 .getResultList();
 

@@ -1,10 +1,14 @@
+
 plugins {
+    id("java-library")
     id("maven-publish")
+//    id("org.jreleaser")
 }
 ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
 ext["releaseVersion"] = findProperty("VERSION")  //
     ?: System.getenv("VERSION") //
             ?: file(rootDir.path + "/version.txt").readText().trim()
+ext["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
 publishing {
     var artifactId: String? by ext("")

@@ -71,14 +71,6 @@ public class PageRequest<E> {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
         }
 
-        private PageRequestBuilder<E> addPosition( final Position pos ) {
-            if ( this.positions == null ) {
-                this.positions = new ArrayList<>( 3 );
-            }
-            this.positions.add( pos );
-            return this;
-        }
-
         /**
          * Shortcut for adding a position spec of an attribute in ascending  order
          *
@@ -117,6 +109,14 @@ public class PageRequest<E> {
          */
         public PageRequestBuilder<E> desc( final Attribute attribute ) {
             return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
+        }
+
+        private PageRequestBuilder<E> addPosition( final Position pos ) {
+            if ( this.positions == null ) {
+                this.positions = new ArrayList<>( 3 );
+            }
+            this.positions.add( pos );
+            return this;
         }
     }
 

@@ -21,6 +21,8 @@ dependencyResolutionManagement {
     }
 }
 
+
+
 rootProject.name = "spring-cursorpaging"
 
 include("cursorpaging-jpa", "cursorpaging-jpa-api", "cursorpaging-testapp")

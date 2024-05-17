@@ -1,0 +1,21 @@
+name: [ TEST ] Coveralls
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          # *base-path* is prepended to all paths in order to correctly reference source files on coveralls.io
+          base-path: src/main/java
+
+          # *file* is optional, but good to have. By default coveralls will try to find the report automatically.
+          file: build/reports/jacoco/aggregate/jacocoTestReport.xml

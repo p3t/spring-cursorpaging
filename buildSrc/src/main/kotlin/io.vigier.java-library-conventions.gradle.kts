@@ -3,9 +3,12 @@ plugins {
     id("java-library")
     `jvm-test-suite`
     id("io.freefair.lombok")
-    id("com.github.spotbugs")
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
+    id("org.kordamp.gradle.project")
+    id("org.kordamp.gradle.spotbugs")
+    id("com.github.kt3k.coveralls")
+    id("org.kordamp.gradle.coveralls")
 }
 
 group = "io.vigier.cursorpaging"
@@ -29,11 +32,51 @@ tasks {
         enabled = false
     }
     jar {
-        archiveClassifier.set("")
+        archiveClassifier.set("") // needed to remove "-plain" when bootJar = false
     }
 }
-spotbugs {
-    ignoreFailures = true
+config {
+    info {
+        inceptionYear = "2024"
+        vendor = "p3t/viger"
+        tags = listOf("paging", "spring", "jpa", "cursor")
+        description = "Cursor based paging support for Spring Data JPA"
+
+        links {
+            scm = "https://github.com/p3t/spring-cursorpaging.git"
+        }
+
+        people {
+            person {
+                id = "p3t"
+                name = "P. Vigier"
+                roles = listOf("developer", "maintainer")
+            }
+        }
+
+        organization {
+            name = "p3t"
+            url = "https://github.com/p3t/spring-cursorpaging"
+        }
+    }
+    licensing {
+        licenses {
+            license {
+                id = "Apache-2.0"
+            }
+        }
+    }
+    coverage {
+        coveralls {
+            enabled = false
+        }
+    }
+    quality {
+        spotbugs {
+            enabled = true
+            ignoreFailures = true
+        }
+    }
 }
 
 ext["hibernate.version"] = "6.4.4.Final"
@@ -59,17 +102,11 @@ dependencies {
 }
 
 java {
-    version = JavaVersion.VERSION_17
-    withSourcesJar()
-    withJavadocJar()
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
-
-//configurations {
-//    compileOnly {
-//        extendsFrom(configurations.annotationProcessor.get())
-//    }
-//}
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {
