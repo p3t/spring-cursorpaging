@@ -60,9 +60,11 @@ config {
         }
     }
     licensing {
+        enabled = false
         licenses {
             license {
                 id = "Apache-2.0"
+                primary = true
             }
         }
     }
