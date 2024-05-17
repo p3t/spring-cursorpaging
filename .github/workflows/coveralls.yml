@@ -1,4 +1,4 @@
-name: [ TEST ] Coveralls
+name: '[ TEST ] Coveralls'
 
 on:
   workflow_dispatch:
