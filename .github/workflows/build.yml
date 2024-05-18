@@ -49,21 +49,13 @@ jobs:
 #        dependency-graph: generate-and-submit
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: ./gradlew build jacocoTestReport
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: ~/**/build/libs/*.jar
-
-  test-report:
-    needs: [ build ]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run jacoco
-        run: ./gradlew jacocoTestReport
 
   dependency-submission:
     runs-on: ubuntu-latest
