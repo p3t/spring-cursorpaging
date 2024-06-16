@@ -1,4 +1,4 @@
-package io.vigier.sbcpreleasetest.config;
+package io.vigier.cursorpaging.testapp.config;
 
 import org.mapstruct.MapperConfig;
 

@@ -1,4 +1,4 @@
-package io.vigier.sbcpreleasetest.model;
+package io.vigier.cursorpaging.testapp.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

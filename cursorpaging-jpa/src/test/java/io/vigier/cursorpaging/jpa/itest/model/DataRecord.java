@@ -1,4 +1,4 @@
-package io.vigier.cursorpaging.testapp.model;
+package io.vigier.cursorpaging.jpa.itest.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.FieldNameConstants;
 
 /**
  * A simple data record for testing cursor pagination.
@@ -24,6 +25,7 @@ import lombok.ToString;
 @Getter
 @ToString
 @EqualsAndHashCode( onlyExplicitlyIncluded = true )
+@FieldNameConstants
 public class DataRecord {
 
     @EqualsAndHashCode.Include

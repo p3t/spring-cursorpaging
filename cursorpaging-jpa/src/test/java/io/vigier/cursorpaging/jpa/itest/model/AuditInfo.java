@@ -1,4 +1,4 @@
-package io.vigier.cursorpaging.testapp.model;
+package io.vigier.cursorpaging.jpa.itest.model;
 
 import jakarta.persistence.Embeddable;
 import java.io.Serial;
@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -21,6 +22,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldNameConstants
 public class AuditInfo implements Comparable<AuditInfo>, Serializable {
 
     @Serial

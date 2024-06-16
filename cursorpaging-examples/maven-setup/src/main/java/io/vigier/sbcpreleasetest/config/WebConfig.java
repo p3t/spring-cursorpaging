@@ -1,4 +1,4 @@
-package io.vigier.sbcpreleasetest.config;
+package io.vigier.cursorpaging.testapp.config;
 
 import io.vigier.cursorpaging.jpa.api.StringToBase64StringConverter;
 import org.springframework.context.annotation.Bean;

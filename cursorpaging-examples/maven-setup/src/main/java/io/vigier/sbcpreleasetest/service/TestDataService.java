@@ -1,8 +1,8 @@
-package io.vigier.sbcpreleasetest.service;
+package io.vigier.cursorpaging.testapp.service;
 
-import io.vigier.sbcpreleasetest.model.AuditInfo;
-import io.vigier.sbcpreleasetest.model.DataRecord;
-import io.vigier.sbcpreleasetest.repository.DataRecordRepository;
+import io.vigier.cursorpaging.testapp.model.AuditInfo;
+import io.vigier.cursorpaging.testapp.model.DataRecord;
+import io.vigier.cursorpaging.testapp.repository.DataRecordRepository;
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

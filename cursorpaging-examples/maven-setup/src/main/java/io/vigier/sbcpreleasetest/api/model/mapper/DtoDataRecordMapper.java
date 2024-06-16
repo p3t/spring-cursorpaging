@@ -1,8 +1,8 @@
-package io.vigier.sbcpreleasetest.api.model.mapper;
+package io.vigier.cursorpaging.testapp.api.model.mapper;
 
-import io.vigier.sbcpreleasetest.api.model.DtoDataRecord;
-import io.vigier.sbcpreleasetest.config.MapstructConfig;
-import io.vigier.sbcpreleasetest.model.DataRecord;
+import io.vigier.cursorpaging.testapp.api.model.DtoDataRecord;
+import io.vigier.cursorpaging.testapp.config.MapstructConfig;
+import io.vigier.cursorpaging.testapp.model.DataRecord;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -12,9 +12,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper( config = MapstructConfig.class,
-        unmappedTargetPolicy = ReportingPolicy.ERROR,
-        injectionStrategy = InjectionStrategy.CONSTRUCTOR )
+@Mapper( config = MapstructConfig.class, unmappedTargetPolicy = ReportingPolicy.ERROR, injectionStrategy = InjectionStrategy.CONSTRUCTOR )
 public abstract class DtoDataRecordMapper {
 
     @Mapping( target = "id" )

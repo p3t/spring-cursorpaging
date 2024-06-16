@@ -1,10 +1,9 @@
-package io.vigier.cursorpaging.testapp;
+package io.vigier.cursorpaging.jpa.itest;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -19,10 +18,6 @@ import org.testcontainers.utility.DockerImageName;
 @EnableRetry
 @Slf4j
 public class PostgreSqlTestConfiguration {
-
-    public static void main( final String[] args ) {
-        SpringApplication.from( TestApplication::main ).with( PostgreSqlTestConfiguration.class ).run( args );
-    }
 
     @Bean
     @ServiceConnection
