@@ -1,7 +1,7 @@
-package io.vigier.sbcpreleasetest.config;
+package io.vigier.cursorpaging.testapp.config;
 
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
-import io.vigier.sbcpreleasetest.ScpReleaseTestApplication;
+import io.vigier.cursorpaging.testapp.TestApplication;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -10,8 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * would require an entity manager factory (bean).
  */
 @Configuration
-@EnableJpaRepositories( basePackageClasses = ScpReleaseTestApplication.class,
-        repositoryFactoryBeanClass = CursorPageRepositoryFactoryBean.class )
+@EnableJpaRepositories( basePackageClasses = TestApplication.class, repositoryFactoryBeanClass = CursorPageRepositoryFactoryBean.class )
 public class JpaConfig {
 
 }

@@ -1,4 +1,4 @@
-package io.vigier.sbcpreleasetest.api.model;
+package io.vigier.cursorpaging.testapp.api.model;
 
 import java.time.OffsetDateTime;
 import lombok.Data;

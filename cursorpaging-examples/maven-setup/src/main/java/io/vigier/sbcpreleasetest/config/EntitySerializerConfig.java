@@ -1,9 +1,9 @@
-package io.vigier.sbcpreleasetest.config;
+package io.vigier.cursorpaging.testapp.config;
 
 import io.vigier.cursorpaging.jpa.serializer.Encrypter;
 import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
 import io.vigier.cursorpaging.jpa.serializer.EntitySerializerFactory;
-import io.vigier.sbcpreleasetest.model.DataRecord;
+import io.vigier.cursorpaging.testapp.model.DataRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

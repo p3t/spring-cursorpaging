@@ -1,7 +1,8 @@
-package io.vigier.sbcpreleasetest.api.controller;
+package io.vigier.cursorpaging.testapp.api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,12 +12,13 @@ import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
 import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
 import io.vigier.cursorpaging.jpa.validation.MaxSize;
-import io.vigier.sbcpreleasetest.api.model.DataRecordAttribute;
-import io.vigier.sbcpreleasetest.api.model.DtoDataRecord;
-import io.vigier.sbcpreleasetest.api.model.mapper.DtoDataRecordMapper;
-import io.vigier.sbcpreleasetest.model.DataRecord;
-import io.vigier.sbcpreleasetest.model.DataRecord_;
-import io.vigier.sbcpreleasetest.repository.DataRecordRepository;
+import io.vigier.cursorpaging.testapp.api.model.DataRecordAttribute;
+import io.vigier.cursorpaging.testapp.api.model.DtoDataRecord;
+import io.vigier.cursorpaging.testapp.api.model.mapper.DtoDataRecordMapper;
+import io.vigier.cursorpaging.testapp.model.DataRecord;
+import io.vigier.cursorpaging.testapp.model.DataRecord_;
+import io.vigier.cursorpaging.testapp.repository.DataRecordRepository;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import org.springframework.hateoas.LinkRelation;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,6 +79,39 @@ public class DataRecordController {
                         () -> getLink( pageSize, page.next().orElseThrow(), IanaLinkRelations.NEXT ) );
     }
 
+    /**
+     * Just a  example how a GET request might be mapped to transport all necessary information. Note that the
+     * parameters are just there to be visible in swagger - all of them do more or less contain the same content.
+     *
+     * @param orderBy  order bx
+     * @param filterBy filter by
+     * @param pageSize page size
+     * @param request  all request parameters - shouldn't be visible in swagger
+     * @return a page of data records
+     */
+    @Operation( summary = "Get data records, (first page), specifying all order and filter parameters" )
+    @GetMapping( path = "/first", name = "first", produces = "application/json" )
+    @ResponseStatus( HttpStatus.OK )
+    public CollectionModel<DtoDataRecord> getDataRecords( //
+            @Parameter( style = ParameterStyle.DEEPOBJECT, example = """
+                    {
+                      "NAME": "ASC",
+                      "ID": "ASC"
+                    }""" ) @RequestParam final Map<DataRecordAttribute, Order> orderBy,
+            @Parameter( style = ParameterStyle.DEEPOBJECT, example = """
+                    {
+                      "NAME": [
+                        "Alpha", "Bravo"
+                      ]
+                    }""" ) @RequestParam final MultiValueMap<DataRecordAttribute, String> filterBy,
+            @Parameter( style = ParameterStyle.DEEPOBJECT ) @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
+            @RequestParam( required = false ) final MultiValueMap<String, String> request ) {
+        log.debug( "request = {}, ", request );
+        log.debug( "order = {}, ", orderBy );
+        log.debug( "filter = {}", filterBy );
+        log.debug( "pageSize = {}", pageSize );
+        return CollectionModel.of( List.of() );
+    }
 
     @Operation( summary = "Get a cursor on the first page of records" )
     @PostMapping( value = "/page",
@@ -99,8 +135,7 @@ public class DataRecordController {
                              }""" ) ) ) //
             @RequestBody final DtoPageRequest request ) {
         request.addOrderByIfAbsent( DataRecord_.ID, Order.ASC );
-        final PageRequest<DataRecord> pageRequest = request.toPageRequest(
-                name -> DataRecordAttribute.valueOf( name.toUpperCase() ).getAttribute() );
+        final PageRequest<DataRecord> pageRequest = request.toPageRequest( DataRecordAttribute::forName );
         return RepresentationModel.of( request )
                 .add( getLink( Optional.of( request.getPageSize() ), pageRequest, IanaLinkRelations.FIRST ) );
     }

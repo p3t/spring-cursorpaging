@@ -1,16 +1,16 @@
-package io.vigier.cursorpaging.testapp;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package io.vigier.cursorpaging.jpa.itest;
 
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
-import io.vigier.cursorpaging.testapp.model.AuditInfo;
-import io.vigier.cursorpaging.testapp.model.AuditInfo_;
-import io.vigier.cursorpaging.testapp.model.DataRecord;
-import io.vigier.cursorpaging.testapp.model.DataRecord_;
-import io.vigier.cursorpaging.testapp.repository.DataRecordRepository;
+import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
+import io.vigier.cursorpaging.jpa.itest.model.AuditInfo;
+import io.vigier.cursorpaging.jpa.itest.model.AuditInfo_;
+import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
+import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
+import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
+import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -23,15 +23,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 @SpringBootTest
 @Slf4j
-@Import( PostgreSqlTestConfiguration.class )
+@Import( { PostgreSqlTestConfiguration.class, JpaConfig.class } )
 class PostgreSqlCursorPageTest {
 
     private static final String[] NAMES = { "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel",
             "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra",
             "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };
+    public static final Attribute DATARECORD_ID = Attribute.of( Fields.id, UUID.class );
 
     @Autowired
     ApplicationContext applicationContext;
@@ -72,22 +75,25 @@ class PostgreSqlCursorPageTest {
         generateData( 100 );
         final var all = dataRecordRepository.findAll();
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull();
         assertThat( firstPage.getContent() ).hasSize( 10 );
         // Result should be sorted by ID...
         final var resultIdList = firstPage.getContent().stream().map( DataRecord::getId ).toList();
-        final var allIdsSorted = all.stream().map( DataRecord::getId )
-                .sorted( Comparator.comparing( UUID::toString ) ).limit( 10 ).toList();
+        final var allIdsSorted = all.stream()
+                .map( DataRecord::getId )
+                .sorted( Comparator.comparing( UUID::toString ) )
+                .limit( 10 )
+                .toList();
         assertThat( resultIdList ).containsExactlyElementsOf( allIdsSorted );
     }
 
     @Test
     void shouldFetchNextPage() {
         generateData( 30 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull().hasSize( 10 );
@@ -112,9 +118,12 @@ class PostgreSqlCursorPageTest {
         assertThat( firstPage ).isNotNull();
         assertThat( firstPage.getContent() ).hasSize( 5 );
 
-        final var all = dataRecordRepository.findAll().stream()
-                .sorted( Comparator.comparing( DataRecord::getAuditInfo ).reversed()
-                        .thenComparing( r -> r.getId().toString() ) ).toList();
+        final var all = dataRecordRepository.findAll()
+                .stream()
+                .sorted( Comparator.comparing( DataRecord::getAuditInfo )
+                        .reversed()
+                        .thenComparing( r -> r.getId().toString() ) )
+                .toList();
 
         assertThat( firstPage.getContent() ).containsExactlyElementsOf( all );
         assertThat( firstPage.next() ).isEmpty();

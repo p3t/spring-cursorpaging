@@ -1,4 +1,4 @@
-package io.vigier.sbcpreleasetest.api.controller;
+package io.vigier.cursorpaging.testapp.api.controller;
 
 import jakarta.validation.ValidationException;
 import org.springframework.http.ResponseEntity;

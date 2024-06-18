@@ -1,5 +1,5 @@
 spring:
-  application.name: "cursorpage-testapp"
+  application.name: "cursorpage-jpa-itest"
   jpa:
     hibernate.ddl-auto: create
     database-platform: "org.hibernate.dialect.PostgreSQLDialect"

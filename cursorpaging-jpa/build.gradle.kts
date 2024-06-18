@@ -16,9 +16,15 @@ dependencies {
     api("jakarta.validation:jakarta.validation-api")
 //    implementation("org.springframework.data:spring-data-commons")
 //    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter")
-
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.springframework.retry:spring-retry")
+    testAnnotationProcessor("org.hibernate:hibernate-jpamodelgen:6.5.0.Final")
+    testRuntimeOnly("org.postgresql:postgresql")
 }
 
 tasks.test {
