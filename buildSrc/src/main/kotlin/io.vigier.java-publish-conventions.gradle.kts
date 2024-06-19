@@ -69,7 +69,18 @@ publishing {
     }
 }
 signing {
-    sign(publishing.publications)
+    val gpgKeyPassword: String? by project
+    val GPG_SIGNING_KEY: String? by project
+    val GPG_KEY_ID: String? by project
+
+    isRequired = true
+
+    logger.info("Signing> Key ID: $GPG_KEY_ID")
+    logger.info("Signing> Password is present: {}", gpgKeyPassword.orEmpty().length)
+    logger.info("Signing> Key is present: {}", GPG_SIGNING_KEY.orEmpty().length)
+
+    useInMemoryPgpKeys(GPG_KEY_ID, GPG_SIGNING_KEY, gpgKeyPassword)
+    sign(publishing.publications["mavenJava"])
 }
 
 //    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenPublication")
