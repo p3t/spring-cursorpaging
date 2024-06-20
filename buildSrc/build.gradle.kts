@@ -14,7 +14,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-gradle-plugin:3.3.0")
     implementation("io.spring.gradle:dependency-management-plugin:1.1.5")
 //    implementation("org.kordamp.gradle:plugin-gradle-plugin:$kordampVersion")
-    implementation("org.kordamp.gradle:project-gradle-plugin:$kordampVersion")
+//    implementation("org.kordamp.gradle:project-gradle-plugin:$kordampVersion")
     implementation("org.kordamp.gradle:spotbugs-gradle-plugin:$kordampVersion")
     implementation("org.kordamp.gradle:coveralls-gradle-plugin:$kordampVersion")
 //    implementation("org.kordamp.gradle:base-gradle-plugin:$kordampVersion")

@@ -1,4 +1,4 @@
-import gradle.kotlin.dsl.accessors._446ed18d166870f364f70250871cd21b.signing
+import cl.franciscosolis.sonatypecentralupload.SonatypeCentralUploadTask
 
 plugins {
     id("java-library")
@@ -69,37 +69,51 @@ publishing {
     }
 }
 signing {
-    val gpgKeyPassword: String? by project
+    val GPG_SIGNING_KEY_PASSWORD: String? by project
     val GPG_SIGNING_KEY: String? by project
     val GPG_KEY_ID: String? by project
 
     isRequired = true
 
     logger.info("Signing> Key ID: $GPG_KEY_ID")
-    logger.info("Signing> Password is present: {}", gpgKeyPassword.orEmpty().length)
+    logger.info("Signing> Password is present: {}", GPG_SIGNING_KEY_PASSWORD.orEmpty().length)
     logger.info("Signing> Key is present: {}", GPG_SIGNING_KEY.orEmpty().length)
 
-    useInMemoryPgpKeys(GPG_KEY_ID, GPG_SIGNING_KEY, gpgKeyPassword)
+    useInMemoryPgpKeys(GPG_KEY_ID, GPG_SIGNING_KEY, GPG_SIGNING_KEY_PASSWORD)
     sign(publishing.publications["mavenJava"])
 }
 
-//    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenPublication")
-//
-//    username = System.getenv("SONATYPE_CENTRAL_USERNAME")  // This is your Sonatype generated username
-//    password = System.getenv("SONATYPE_CENTRAL_PASSWORD")  // This is your sonatype generated password
-//
-//    // This is a list of files to upload. Ideally you would point to your jar file, source and javadoc jar (required by central)
-//    archives = files(
-//        tasks.named("jar"),
-//        tasks.named("sourcesJar"),
-//        tasks.named("javadocJar"),
-//    )
-//    // This is the pom file to upload. This is required by central
-//    pom = file(
-//        tasks.named("generatePomFileForMavenPublication").get().outputs.files.single()
-//    )
-//
-//    signingKey = System.getenv("PGP_SIGNING_KEY")  // This is your PGP private key. This is required to sign your files
-//    signingKeyPassphrase =
-//        System.getenv("PGP_SIGNING_KEY_PASSPHRASE")  // This is your PGP private key passphrase (optional) to decrypt your private key
-//}
+tasks.named<SonatypeCentralUploadTask>("sonatypeCentralUpload") {
+    dependsOn("jar", "sourcesJar", "javadocJar", "generatePomFileForMavenJavaPublication")
+
+    val mavenCentralUsername: String? by project
+    val mavenCentralPassword: String? by project
+
+    username = mavenCentralUsername ?: System.getenv("SONATYPE_CENTRAL_USERNAME")
+    password = mavenCentralPassword ?: System.getenv("SONATYPE_CENTRAL_PASSWORD")
+
+    // This is a list of files to upload. Ideally you would point to your jar file, source and javadoc jar (required by central)
+    archives = files(
+        tasks.named("jar"),
+        tasks.named("sourcesJar"),
+        tasks.named("javadocJar"),
+//        tasks.named("signing"),
+    )
+    // This is the pom file to upload. This is required by central
+    pom = file(
+        layout.buildDirectory.file("publications/mavenJava/pom-default.xml")
+//        tasks.publish.get().outputs.files.single()
+//        tasks.named("generatePomFileForMavenJavaPublication").get().outputs.files.single()
+    )
+
+    val GPG_SIGNING_KEY_PASSWORD: String? by project
+    val GPG_SIGNING_KEY: String? by project
+
+    signingKey = (GPG_SIGNING_KEY ?: System.getenv("GPG_SIGNING_KEY"))
+    signingKeyPassphrase = (GPG_SIGNING_KEY_PASSWORD ?: System.getenv("GPG_SIGNING_KEY_PASSWORD"))
+
+    logger.info("Signing> Password is present: {}", signingKeyPassphrase.isPresent)
+    logger.info("Signing> Key is present: {}", signingKey.isPresent)
+
+    publishingType = "MANUAL"
+}

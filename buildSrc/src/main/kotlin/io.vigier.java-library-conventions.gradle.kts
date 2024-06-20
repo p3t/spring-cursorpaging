@@ -5,7 +5,7 @@ plugins {
     id("io.freefair.lombok")
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
-    id("org.kordamp.gradle.project")
+//    id("org.kordamp.gradle.project")
     id("org.kordamp.gradle.spotbugs")
     id("com.github.kt3k.coveralls")
     id("org.kordamp.gradle.coveralls")
@@ -23,6 +23,10 @@ dependencyManagement {
         mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.5")
     }
 
+}
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 tasks.named<Jar>("bootJar") {
     enabled = false
