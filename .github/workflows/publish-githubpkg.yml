@@ -60,7 +60,6 @@ jobs:
           name: build-artifacts
 
       - name: publish to sonar central
-        uses: gradle/actions/setup-gradle@v3
         run: ./gradlew sonatypeCentralUpload
         env:
           GPG_SIGNING_KEY_PASSWORD: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
