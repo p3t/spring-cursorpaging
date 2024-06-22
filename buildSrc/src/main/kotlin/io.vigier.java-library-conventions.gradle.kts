@@ -24,6 +24,10 @@ dependencyManagement {
     }
 
 }
+//java {
+//    withSourcesJar()
+//    withJavadocJar()
+//}
 tasks.named<Jar>("bootJar") {
     enabled = false
 }
