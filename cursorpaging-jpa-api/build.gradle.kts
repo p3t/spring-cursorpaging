@@ -4,9 +4,8 @@ plugins {
 	id("com.google.protobuf")
 }
 
-group = "io.vigier.cursorpaging.jpa.api"
-version = "0-SNAPSHOT"
-ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa-api"
+group = "io.vigier.cursorpaging"
+ext["artifactId"] = findProperty("artifactId") ?: "cursorpaging-jpa-api"
 
 configurations {
 	compileOnly {

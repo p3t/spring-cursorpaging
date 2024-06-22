@@ -35,8 +35,6 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "io.vigier.cursorpaging"
-            artifactId = artifactId.orEmpty()
         }
         withType<MavenPublication> {
             pom {
@@ -72,14 +70,18 @@ signing {
     val GPG_SIGNING_KEY_PASSWORD: String? by project
     val GPG_SIGNING_KEY: String? by project
     val GPG_KEY_ID: String? by project
+    
+    val signingKey = (GPG_SIGNING_KEY ?: System.getenv("GPG_SIGNING_KEY"))
+    val signingKeyId = (GPG_KEY_ID ?: System.getenv("GPG_KEY_ID"))
+    val signingKeyPassphrase = (GPG_SIGNING_KEY_PASSWORD ?: System.getenv("GPG_SIGNING_KEY_PASSWORD"))
 
     isRequired = true
 
-    logger.info("Signing> Key ID: $GPG_KEY_ID")
-    logger.info("Signing> Password is present: {}", GPG_SIGNING_KEY_PASSWORD.orEmpty().length)
-    logger.info("Signing> Key is present: {}", GPG_SIGNING_KEY.orEmpty().length)
+    logger.info("Signing> Key ID: $signingKeyId")
+    logger.info("Signing> Password is present: {}", signingKeyPassphrase.orEmpty().length)
+    logger.info("Signing> Key is present: {}", signingKey.orEmpty().length)
 
-    useInMemoryPgpKeys(GPG_KEY_ID, GPG_SIGNING_KEY, GPG_SIGNING_KEY_PASSWORD)
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingKeyPassphrase)
     sign(publishing.publications["mavenJava"])
 }
 

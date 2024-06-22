@@ -5,14 +5,14 @@ plugins {
     id("io.freefair.lombok")
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
-    id("org.kordamp.gradle.project")
+    `jacoco`
     id("org.kordamp.gradle.spotbugs")
     id("com.github.kt3k.coveralls")
     id("org.kordamp.gradle.coveralls")
 }
 
 group = "io.vigier.cursorpaging"
-version = "0-SNAPSHOT"
+version = findProperty("version") ?: System.getenv("BUILD_VERSION") ?: "0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -24,14 +24,18 @@ dependencyManagement {
     }
 
 }
-//java {
-//    withSourcesJar()
-//    withJavadocJar()
-//}
+// This is needed for sontarTypeCentralUpload! Has conflict with kordamp.java-project
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
 tasks.named<Jar>("bootJar") {
     enabled = false
 }
 tasks {
+    jacocoTestReport {
+        dependsOn(tasks.test) // tests are required to run before generating the report
+    }
     delombok {
         enabled = false
     }

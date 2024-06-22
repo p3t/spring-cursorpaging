@@ -4,10 +4,9 @@ plugins {
     id("org.kordamp.gradle.coveralls")
 }
 
-group = "io.vigier.cursorpaging-jpa"
-version = "0-SNAPSHOT"
+group = "io.vigier.cursorpaging"
 
-ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
+ext["artifactId"] = findProperty("artifactId") ?: "cursorpaging-jpa"
 
 
 dependencies {

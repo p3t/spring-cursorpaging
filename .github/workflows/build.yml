@@ -2,6 +2,17 @@ name: '[ BUILD ] Build Project (Java/Gradle)'
 
 on:
   workflow_dispatch:
+    inputs:
+      release_build:
+        description: 'toggles an release-build, by default false'
+        type: boolean
+        default: false
+        required: false
+      build_version:
+        description: 'The version to build and deploy'
+        type: string
+        required: true
+        default: '0-SNAPSHOT'
   workflow_call:
     inputs:
       release_build:
@@ -9,29 +20,36 @@ on:
         type: boolean
         default: false
         required: false
+      build_version:
+        description: 'The version to build and deploy'
+        type: string
+        required: true
+        default: '0-SNAPSHOT'
+    outputs:
+      build_artifact_id:
+        description: 'The id of the uploaded build artifacts.'
+        value: ${{ jobs.Build.outputs.build_artifacts_id}}
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-env:
-  BUILD_VERSION: '0-SNAPSHOT'
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  MAVEN_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
-  MAVEN_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
-  GITHUBPKG_USERNAME: ${{ secrets.GITHUBPKG_USERNAME }}
-  GITHUBPKG_PASSWORD: ${{ secrets.GITHUBPKG_PASSWORD }}
-
 jobs:
-  build:
+  Validation:
+    name: "Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gradle/actions/wrapper-validation@v3
+
+  Build:
+    name: "Build, Sign and Upload Artifacts"
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     outputs:
-      maven_artifactId: ${{ steps.maven_artifactId.outputs.artifactId }}
-      maven_groupId: ${{ steps.maven_groupId.outputs.groupId }}
-      maven_version: ${{ steps.maven_version.outputs.version }}
-      cache_key: ${{ steps.cache.outputs.cache_key }}
+      build_artifacts_id: ${{ steps.BuildArtifactUpload.outputs.artifact-id }}
 
     steps:
     - uses: actions/checkout@v4
@@ -45,19 +63,53 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3 # v3.1.0
+      with:
+        add-job-summary-as-pr-comment: on-failure
+        artifact-retention-days: 5
 #      with:
 #        dependency-graph: generate-and-submit
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build jacocoTestReport
+    - name: Generate gradle.properties
+      run: |
+        echo "version=${{ inputs.build_version }}" >> ./gradle.properties
+        ls -R
 
-    - name: Upload build artifacts
+    - name: Clean
+      if: inputs.release_build
+      run: ./gradlew clean
+      env:
+        GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+    - name: Build with Gradle Wrapper
+      id: Build
+      run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
+      env:
+        BUILD_VERSION: ${{ inputs.build_version }}
+
+    - name: Sign Artifacts
+      if: steps.Build.outcome == 'success'
+      #      if: inputs.release_build
+      run: |
+        ./gradlew -Pversion=${build_version} \
+                  --info signMavenJavaPublication
+        ls -R
+      env:
+        GPG_SIGNING_KEY_PASSWORD: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+        GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+
+    - name: Build Artifacts Upload
+      id: BuildArtifactUpload
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
-        path: ~/**/build/libs/*.jar
+        path: |
+          ~/**/build/libs/*${{inputs.build_version}}*.jar
+          ~/**/build/libs/*${{inputs.build_version}}*.jar.asc
+          ~/**/build/reports/
 
-  dependency-submission:
+  DependencySubmission:
+    name: "Dependency Submission"
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,0 +1,105 @@
+#
+
+name: '[ RELEASE ] Package & Deploy'
+
+on:
+  workflow_dispatch:
+    inputs:
+      BUILD_VERSION:
+        description: 'The version to build and deploy'
+        required: true
+        default: '0-SNAPSHOT'
+  release:
+    types: [created]
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name }}
+
+jobs:
+
+  ReleaseVersion:
+    runs-on: ubuntu-latest
+    outputs:
+      build_version: ${{ steps.release_version.outputs.build_version }}
+    steps:
+      - name: "Release Version"
+        id: release_version
+        run: |
+          VERSION=${RELEASE_TAG#v}
+          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "Release version is $VERSION"
+      - name: Print output variables
+        run: |
+          echo BUILD_VERSION: ${{ steps.release_version.outputs.build_version }}
+
+  Build:
+    needs: [ ReleaseVersion ]
+    uses: ./.github/workflows/build.yml
+    with:
+      build_version: ${{ needs.ReleaseVersion.outputs.build_version }}
+      release_build: true
+    secrets: inherit
+    permissions:
+      pull-requests: write
+      contents: write
+
+  Publish:
+    needs: [ ReleaseVersion, Build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      BUILD_VERSION: ${{ needs.ReleaseVersion.outputs.build_version }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: actions/download-artifact@v4
+        env:
+          ARTIFACT_ID: ${{ needs.Build.outputs.build_artifact_id }}
+
+      - name: Display structure of downloaded files
+        run: |
+          ls -R
+          echo ${{ github.event }}
+      
+
+      #      - name: Upload artifact to release
+      #        uses: actions/upload-release-asset@v1
+      #        env:
+      #          GITHUB_TOKEN: ${{ github.token }}
+      #        with:
+      #          upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #          asset_path: ./bin/azblogfilter.linux-amd64.tar.gz
+      #          asset_name: azblogfilter.linux-amd64.tar.gz
+      #          asset_content_type: application/gzip
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3  # v3.1.0
+
+      # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
+      # the publishing section of your build.gradle
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_SIGNING_KEY_PASSWORD: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: publish to sonar central
+        run: ./gradlew sonatypeCentralUpload
+        env:
+          GPG_SIGNING_KEY_PASSWORD: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          SONATYPE_CENTRAL_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          SONATYPE_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
