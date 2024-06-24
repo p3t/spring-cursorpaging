@@ -67,8 +67,9 @@ jobs:
         with:
           files: |
             ./**/build/libs/*
-            LICENSE
-
+            ./LICENSE
+            ./README.md  
+  
   Publish:
     needs: [ ReleaseVersion, Build ]
     runs-on: ubuntu-latest
