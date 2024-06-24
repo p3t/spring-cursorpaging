@@ -1,0 +1,14 @@
+spring:
+  application.name: "Spring Cursor Paging Example App"
+  jpa:
+    hibernate.ddl-auto: create
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+    show-sql: false
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "jdbc:postgresql://localhost:6543/reltest-db"
+    username: "admin"
+    password: "secret"
+server:
+  tomcat:
+    relaxed-query-chars: "[,]"
