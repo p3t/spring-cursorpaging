@@ -26,15 +26,15 @@ jobs:
         run: |
           VERSION=${RELEASE_TAG#v}
           echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
-          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "build_version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
           echo "Release version is $VERSION"
-          echo "RELEASE_ASSETS_URL=${{ github.event.release.assets_url }}" >> "$GITHUB_OUTPUT"
           echo "RELEASE_ASSETS_URL=${{ github.event.release.assets_url }}" >> "$GITHUB_ENV"
+          echo "release_assets_url=${{ github.event.release.assets_url }}" >> "$GITHUB_OUTPUT"
 
       - name: Print output variables
         run: |
           echo BUILD_VERSION: ${{ steps.release_version.outputs.build_version }}
-          echo RELEASE_ASSETS_URL: ${{ steps.release_version.outputs.assets_url }}
+          echo RELEASE_ASSETS_URL: ${{ steps.release_version.outputs.release_assets_url }}
 
   Build:
     needs: [ ReleaseVersion ]
@@ -47,11 +47,33 @@ jobs:
       pull-requests: write
       contents: write
 
+  UploadAssetsToRelease:
+    needs: [ ReleaseVersion, Build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      BUILD_VERSION: ${{ needs.ReleaseVersion.outputs.build_version }}
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+        env:
+          ARTIFACT_ID: ${{ needs.Build.outputs.build_artifact_id }}
+
+      - name: Upload artifact to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./**/build/libs/*
+            LICENSE
+
   Publish:
     needs: [ ReleaseVersion, Build ]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     env:
       BUILD_VERSION: ${{ needs.ReleaseVersion.outputs.build_version }}
@@ -67,24 +89,17 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
-        env:
-          ARTIFACT_ID: ${{ needs.Build.outputs.build_artifact_id }}
 
       - name: Display structure of downloaded files
         run: tree
 
-      #      - name: Upload artifact to release
-      #        uses: actions/upload-release-asset@v1
-      #        env:
-      #          GITHUB_TOKEN: ${{ github.token }}
-      #        with:
-      #          upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #          asset_path: ./bin/azblogfilter.linux-amd64.tar.gz
-      #          asset_name: azblogfilter.linux-amd64.tar.gz
-      #          asset_content_type: application/gzip
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3  # v3.1.0
+
+      - name: Generate gradle.properties with version
+        run: |
+          echo "version=${BUILD_VERSION}"
+          echo "version=${BUILD_VERSION}" >> ./gradle.properties
 
       # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
       # the publishing section of your build.gradle
@@ -106,3 +121,9 @@ jobs:
           SONATYPE_CENTRAL_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           SONATYPE_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Debug
+        if: ${{ failure() }}
+        run: |
+          echo "Failed"
+          tree

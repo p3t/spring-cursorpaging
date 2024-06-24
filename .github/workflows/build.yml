@@ -58,7 +58,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - run: tree
-        
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -92,7 +92,7 @@ jobs:
         run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
 
       - name: Sign Artifacts
-        if: ${{ steps.Build.outcome == 'success' }}
+        if: ${{ steps.Build.outcome == 'success' && inputs.release_build }}
         #      if: inputs.release_build
         run: |
           ./gradlew -Pversion=${BUILD_VERSION} \
