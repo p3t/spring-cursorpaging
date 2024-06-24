@@ -6,18 +6,10 @@ plugins {
     id("signing")
     id("cl.franciscosolis.sonatype-central-upload")
 }
-ext["artifactId"] = findProperty("artifactId") ?: "spring-cursorpaging-jpa"
-ext["releaseVersion"] = findProperty("VERSION")  //
-    ?: System.getenv("VERSION") //
-            ?: file(rootDir.path + "/version.txt").readText().trim()
-ext["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
+version = findProperty("version") ?: System.getenv("BUILD_VERSION") ?: "0-SNAPSHOT"
 
 publishing {
-    var artifactId: String? by ext("")
-    val propVersion = findProperty("VERSION")
-    val envVersion = System.getenv("BUILD_VERSION")
-    val fileVersion = file(rootDir.path + "/version.txt").readText().trim()
-    val releaseVersion = propVersion ?: envVersion ?: fileVersion
+    val releaseVersion = version
     repositories {
         maven {
             credentials {
@@ -40,8 +32,8 @@ publishing {
             pom {
                 version = releaseVersion.toString()
                 packaging = "jar"
-                name.set("spring-cursorpaging-jpa")
-                description.set("Spring cursor paging for JPA")
+                name.set("spring-cursorpaging")
+                description.set("Cursor paging support for Spring Data")
                 url.set("https://github.com/p3t/spring-cursorpaging/")
                 inceptionYear.set("2024")
                 licenses {

@@ -21,16 +21,20 @@ jobs:
     outputs:
       build_version: ${{ steps.release_version.outputs.build_version }}
     steps:
-      - name: "Release Version"
+      - name: "Release Version and Properties"
         id: release_version
         run: |
           VERSION=${RELEASE_TAG#v}
           echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
           echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
           echo "Release version is $VERSION"
+          echo "RELEASE_ASSETS_URL=${{ github.event.release.assets_url }}" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_ASSETS_URL=${{ github.event.release.assets_url }}" >> "$GITHUB_ENV"
+
       - name: Print output variables
         run: |
           echo BUILD_VERSION: ${{ steps.release_version.outputs.build_version }}
+          echo RELEASE_ASSETS_URL: ${{ steps.release_version.outputs.assets_url }}
 
   Build:
     needs: [ ReleaseVersion ]
@@ -61,14 +65,13 @@ jobs:
           distribution: 'temurin'
 
       - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
         env:
           ARTIFACT_ID: ${{ needs.Build.outputs.build_artifact_id }}
 
       - name: Display structure of downloaded files
-        run: |
-          ls -R
-          echo ${{ github.event }}
-      
+        run: tree
 
       #      - name: Upload artifact to release
       #        uses: actions/upload-release-asset@v1
