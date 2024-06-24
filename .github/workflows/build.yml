@@ -23,7 +23,7 @@ on:
       build_version:
         description: 'The version to build and deploy'
         type: string
-        required: true
+        required: false
         default: '0-SNAPSHOT'
     outputs:
       build_artifact_id:
@@ -33,6 +33,9 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+env:
+  BUILD_VERSION: ${{ inputs.build_version != '' && inputs.build_version || '0-SNAPSHOT' }}
 
 jobs:
   Validation:
@@ -71,11 +74,12 @@ jobs:
 
     - name: Generate gradle.properties
       run: |
-        echo "version=${{ inputs.build_version }}" >> ./gradle.properties
-        ls -R
+        echo "version=${BUILD_VERSION}"
+        echo "version=${BUILD_VERSION}" >> ./gradle.properties
+        cat ./gradle.properties
 
     - name: Clean
-      if: inputs.release_build
+      if: ${{ inputs.release_build }}
       run: ./gradlew clean
       env:
         GITHUB_DEPENDENCY_GRAPH_ENABLED: false
@@ -83,16 +87,13 @@ jobs:
     - name: Build with Gradle Wrapper
       id: Build
       run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
-      env:
-        BUILD_VERSION: ${{ inputs.build_version }}
 
     - name: Sign Artifacts
-      if: steps.Build.outcome == 'success'
+      if: ${{ steps.Build.outcome == 'success' }}
       #      if: inputs.release_build
       run: |
-        ./gradlew -Pversion=${build_version} \
+        ./gradlew -Pversion=${BUILD_VERSION} \
                   --info signMavenJavaPublication
-        ls -R
       env:
         GPG_SIGNING_KEY_PASSWORD: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
         GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
