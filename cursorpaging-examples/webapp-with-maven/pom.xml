@@ -10,7 +10,7 @@
   </parent>
 
   <groupId>io.vigier</groupId>
-  <artifactId>cursorpaging-example-maven</artifactId>
+  <artifactId>cursorpaging-example-webapp-with-maven</artifactId>
   <version>0-SNAPSHOT</version>
 
   <name>cursorpaging :: example :: webapp-maven</name>
@@ -24,12 +24,25 @@
     <testcontainers.version>1.19.8</testcontainers.version>
   </properties>
 
-  <!--  <repositories>-->
-  <!--    <repository>-->
-  <!--      <id>p3t-github-packages</id>-->
-  <!--      <url>https://maven.pkg.github.com/p3t/spring-cursorpaging</url>-->
-  <!--    </repository>-->
-  <!--  </repositories>-->
+  <profiles>
+    <profile>
+      <id>githubPackages</id>
+      <activation>
+        <property>
+          <name>githubPackages</name>
+        </property>
+      </activation>
+      <repositories>
+        <repository>
+          <id>p3t-github-packages</id>
+          <url>https://maven.pkg.github.com/p3t/spring-cursorpaging</url>
+        </repository>
+      </repositories>
+      <properties>
+        <cursorpage.version>0.8.0-RC1</cursorpage.version>
+      </properties>
+    </profile>
+  </profiles>
 
   <dependencies>
     <dependency>

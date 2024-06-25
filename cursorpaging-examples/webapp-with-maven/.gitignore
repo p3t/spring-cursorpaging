@@ -1,8 +1,11 @@
 HELP.md
 target/
+build/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
 .mvn/settings.xml
 .mvn/maven.config
 
