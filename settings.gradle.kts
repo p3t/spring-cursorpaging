@@ -26,6 +26,9 @@ dependencyResolutionManagement {
 rootProject.name = "spring-cursorpaging"
 
 include("cursorpaging-jpa", "cursorpaging-jpa-api")
+include("cursorpaging-examples:webapp-with-maven")
+//project("cursorpaging-example-webapp")
+//    .projectDir = file("cursorpaging-examples/webapp-with-maven")
 
 develocity {
     buildScan {
