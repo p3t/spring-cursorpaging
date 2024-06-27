@@ -51,6 +51,7 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
         request.positions().forEach( position -> position.apply( cqb ) );
         request.filters().forEach( filter -> filter.apply( cqb ) );
+        request.rules().forEach( rule -> rule.apply( cqb ) );
 
         final var results = entityManager.createQuery( cqb.query() )
                 .setMaxResults( getMaxResultSize( request ) )
