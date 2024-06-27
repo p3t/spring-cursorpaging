@@ -1,16 +1,19 @@
 [![Java CI with Gradle](https://github.com/p3t/spring-curserpaging/actions/workflows/build.yml/badge.svg)](https://github.com/p3t/spring-curserpaging/actions/workflows/build.yml)
 
-# Spring Cursor based Paging
-Library supporting cursor based paging for Spring Data Repositories.
+# Spring Data Support for Cursor based Paging
+
+Library supporting an efficient way for paging with large data sets and avoiding to count all records with each page.
 
 # Introduction
-
 Cursor based paging is an alternative to the page/offset based paging provided by Spring and SQL.
 It eliminates the need to provide an offset or a page-number which can cause a lot of load on a database in case of very
 large amount of records in a table. It also avoids the often not needed total count query per page.
 
+This is done by defining a "cursor", which identifies the page by one or more unique attributes of the record and by ordering the records (s. detail concept below).
+
 # Considered Requirements
-- The implementation should follow the repository concept from spring.
+
+- The implementation should follow the repository concept from spring data.
 - Ordering by arbitrary columns should be possible.
 - A filtering mechanism should be provided
 - Total count of records is not part of the page response and not executed while retrieving the page
@@ -18,10 +21,8 @@ large amount of records in a table. It also avoids the often not needed total co
 - State is/can send to the client and returned to the server for the next page (stateless behaviour)
 
 # Quickstart / how to use it
-under construction / todo
-- [ ] Describe how to include dependency in maven.pom / build.gradle
 
-Please check the testapp sourcecode for latest examples and usage.
+Please check also the example/webapp sourcecode and README, as well as the courserpaging-jpa-api/README.md.
 
 ## Include the cursorpaging library in you maven pom / build.gradle
 
@@ -46,7 +47,9 @@ There are two dependencies:
 </dependencies>
 ```
 
-Note: Currently the library is only available on gitHub-packages:
+Current published version is `0.8.0-RC1`
+
+Note: The library is also available on gitHub-packages:
 
 - Repository-URL: https://maven.pkg.github.com/p3t/spring-cursorpaging
 - You need an personal-access token (classic) to read from any github-package
@@ -105,7 +108,9 @@ Currently, this has not really been tested, so there might be places which need 
 ## Register the CursorPageRepositoryFactoryBean
 
 In order to use the repository interface an modified `JpaRepFactoryBean` is needed.
-This is done via `@EnableJpaRepositories` annotation in the Spring Boot Application class.
+This is done via `@EnableJpaRepositories` annotation in the Spring Boot Application class,
+or (maybe better due to less side-effects for `@SpringBootTest`s) on an extra configuration
+class (annotated with `@Configuration`)
 
 ```java
 @SpringBootApplication
@@ -118,12 +123,10 @@ public class TestApplication {
 }
 ```
 
-This implementation checks, whether there is a fragment interface of the repository to be instantiated is
-a `CursorPageRepository` and if so, it will create a `CursorPageRepositoryImpl` instead of the default.
+The implementation checks, whether there is a fragment interface of the repository to be instantiated is
+a `CursorPageRepository` and if so, it will create a `CursorPageRepositoryImpl` and add it to the repository fragments. Then it delegates to the default implementation.
 
-An alternative, which works without an extra factory implementation, would be to derive for each entity an additional
-repository-interface and create a repository-impl aside, passing the required arguments (entity class & entity-manager)
-to the constructor of the `CursorPageRepositoryImpl`.
+An alternative, which works without an extra factory implementation, would be to derive for each entity an additional repository-interface and create a repository-impl aside, passing the required arguments (entity class & entity-manager) to the constructor of the `CursorPageRepositoryImpl`.
 
 ## Define a repository interface
 
@@ -206,13 +209,11 @@ public void queryData() {
 }
 ```
 
-This will only return `DataRecords` with name "Alpha". It is possible to add multiple filters for different attributes
-or to provide multiple values for one attribute (one must match).
+This will only return `DataRecords` with name "Alpha". It is possible to add multiple filters for different attributes or to provide multiple values for one attribute (one must match).
 
 ### There is no total count in the Page...
 
-Executing a count operation can be a quite expensive operation! Therefore, the total count of records is not part of the
-page response. It is also usually not required to re-count all records with each page request!
+Executing a count operation can be a quite expensive operation! Therefore, the total count of records is not part of the page response. It is also usually not required to re-count all records with each page request!
 So, if you need to know the total count of records, you can execute a count query on the repository:
 
 ```java
@@ -348,11 +349,13 @@ Most DBs do have something like an ID/Primary Key (PK) to uniquely identify a re
 
 Assuming we use a numeric PK a query for the first page could look like this:
 ```sql
-SELECT * FROM table WHERE id > 0 ORDER BY id ASC LIMIT 10
+-- @formatter:off
+SELECT * FROM some_table WHERE id > 0 ORDER BY id ASC LIMIT 10
 ```  
 The next cursor is the last id of the result set. Page 2 would look like this:
 ```sql
-SELECT * FROM table WHERE id > 10 ORDER BY id ASC LIMIT 10
+-- @formatter:off
+SELECT * FROM some_table WHERE id > 10 ORDER BY id ASC LIMIT 10                              
 ```
 and so on. 
 
