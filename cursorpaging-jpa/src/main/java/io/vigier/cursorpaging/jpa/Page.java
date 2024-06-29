@@ -90,7 +90,7 @@ public class Page<E> implements Iterable<E> {
     }
 
     /**
-     * Map the content with the given function an get the result
+     * Map the content with the given function and get the result
      *
      * @param mapper the function to be applied on each element of the page
      * @param <T>    the result type of the mapping function
@@ -98,5 +98,14 @@ public class Page<E> implements Iterable<E> {
      */
     public <T> List<T> content( final Function<E, T> mapper ) {
         return content.stream().map( mapper ).toList();
+    }
+
+    /**
+     * Get the number of elements in this page.
+     *
+     * @return the number of elements
+     */
+    public int size() {
+        return content.size();
     }
 }

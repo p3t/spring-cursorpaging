@@ -8,7 +8,6 @@ import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
-import io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo_;
@@ -16,6 +15,7 @@ import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass;
+import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -235,40 +236,83 @@ class PostgreSqlCursorPageTest {
         assertThat( count ).isEqualTo( 0 );
     }
 
-    @Builder
-    private static class AclFilterRule implements FilterRule {
-
-        private String subject;
-        private Action requiredAction;
+    private static class OnlyPublicFilterRule implements FilterRule {
 
         @Override
         public Predicate getPredicate( final QueryBuilder cqb ) {
-            final var query = cqb.query();
-            final var subquery = query.subquery( Integer.class );
-            final var subRoot = subquery.from( AccessEntry.class );
             final var builder = cqb.cb();
             final var root = cqb.root();
             root.fetch( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
-            subquery.select( builder.literal( 1 ) )
-                    .where( builder.equal( subRoot.get( AccessEntry_.SUBJECT ), subject ),  //
-                            builder.equal( subRoot.get( AccessEntry_.ACTION ), requiredAction ) );
+            return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), 0 );
+        }
 
-            return builder.exists( subquery );
+        @Override
+        public Predicate getCountPredicate( final QueryBuilder cqb ) {
+            final var builder = cqb.cb();
+            final var root = cqb.root();
+            root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
+            return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), 0 );
         }
     }
 
     @Test
     void shouldReturnFilteredEntityCountWhenFilterPresent() {
         final List<DataRecord> all = generateData( NAMES.length );
-        final long countStandardAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
+        final long countPublicAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .asc( DataRecord_.id )
-                .rule( AclFilterRule.builder().subject( SUBJECT_READ_STANDARD ).requiredAction( READ )
-                        .build() ) );
+                .asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
 
+        final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
         final var count = dataRecordRepository.count( request );
 
-        assertThat( count ).isEqualTo( countStandardAccess );
+        assertThat( page.size() ).isEqualTo( countPublicAccess );
+        assertThat( count ).isEqualTo( countPublicAccess );
+    }
+
+    @RequiredArgsConstructor
+    @Builder
+    private static class AclCheckFilterRule implements FilterRule {
+
+        private final String subject;
+        private final AccessEntry.Action action;
+
+        @Override
+        public Predicate getPredicate( final QueryBuilder cqb ) {
+            final var builder = cqb.cb();
+            final var root = cqb.root();
+            root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
+
+            final var subquery = cqb.query().subquery( Long.class );
+            final var ae = subquery.from( AccessEntry.class );
+            subquery.select( builder.max( ae.get( AccessEntry_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ) ) )
+                    .where( builder.equal( ae.get( AccessEntry_.SUBJECT ), subject ),
+                            builder.equal( ae.get( AccessEntry_.ACTION ), action ) );
+            return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), subquery );
+        }
+    }
+
+    @Test
+    public void shouldUseMoreComplicateFilterRulesForAclChecks() {
+        generateData( 100 );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
+                .rule( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+
+        assertThat( firstPage ).isNotNull();
+        assertThat( firstPage.getContent() ).allMatch( e -> e.getSecurityClass().getLevel() <= 1 );
+
+        final PageRequest<DataRecord> request2 = PageRequest.create( b -> b.pageSize( 100 )
+                .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                .asc( DataRecord_.id )
+                .rule( new AclCheckFilterRule( "does not exist", READ ) ) );
+
+        final var shouldBeEmpty = dataRecordRepository.loadPage( request2 );
+        assertThat( shouldBeEmpty ).isNotNull();
+        assertThat( shouldBeEmpty.getContent() ).isEmpty();
+        assertThat( dataRecordRepository.count( request2 ) ).isEqualTo( 0 );
     }
 }
 
