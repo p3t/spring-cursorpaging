@@ -228,6 +228,64 @@ public long queryCount( PageRequest<DataRecord> request ) {
 
 The request (if available) should be passed as it might contain filters which reduce returned count.
 
+### Example: Extend filter with custom rules
+
+In some cases you might want to filter the results by defining your own custom rules. One example where this could be useful is, when you need to implement sophisticated access rights (ACLs.
+
+In order to support this, `cursorpaging-jpa` provides an interface: `FilterRule` which can be used to extend the internally executed criteria query with custom `Predicates`.
+
+```java
+
+@RequiredArgsConstructor
+@Builder
+private static class AclCheckFilterRule implements FilterRule {
+
+    private final String subject;
+    private final AccessEntry.Action action;
+
+    @Override
+    public Predicate getPredicate( final QueryBuilder cqb ) {
+        final var builder = cqb.cb();
+        final var root = cqb.root();
+        root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
+
+        final var subquery = cqb.query().subquery( Long.class );
+        final var ae = subquery.from( AccessEntry.class );
+        subquery.select( builder.max( ae.get( AccessEntry_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ) ) )
+                .where( builder.equal( ae.get( AccessEntry_.SUBJECT ), subject ),
+                        builder.equal( ae.get( AccessEntry_.ACTION ), action ) );
+        return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), subquery );
+    }
+}
+
+@Test
+public void shouldUseMoreComplicateFilterRulesForAclChecks() {
+    generateData( 100 );
+    final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
+            .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+            .asc( DataRecord_.id )
+            .rule( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
+
+    final var firstPage = dataRecordRepository.loadPage( request );
+
+    assertThat( firstPage ).isNotNull();
+    assertThat( firstPage.getContent() ).allMatch( e -> e.getSecurityClass().getLevel() <= 1 );
+
+    final PageRequest<DataRecord> request2 = PageRequest.create( b -> b.pageSize( 100 )
+            .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+            .asc( DataRecord_.id )
+            .rule( new AclCheckFilterRule( "does not exist", READ ) ) );
+
+    final var shouldBeEmpty = dataRecordRepository.loadPage( request2 );
+    assertThat( shouldBeEmpty ).isNotNull();
+    assertThat( shouldBeEmpty.getContent() ).isEmpty();
+    assertThat( dataRecordRepository.count( request2 ) ).isEqualTo( 0 );
+}
+```
+
+Important: `FilterRules` will
+*not* be serialized to the client, due to their unknown nature, and must be re-added for each subsequent page request!
+
 ## Using the page request in a controller
 
 In order to keep the server stateless, the information within a `PageRequest` have to be passed to the client and send

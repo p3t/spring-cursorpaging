@@ -33,6 +33,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     private final CriteriaBuilder cb;
     private final Root<E> root;
     private final Class<E> entityType;
+    private final EntityManager entityManager;
 
     public static <T> CriteriaQueryBuilder<T, T> forEntity( final Class<T> entityType,
             final EntityManager entityManager ) {
@@ -40,7 +41,12 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         final var query = cb.createQuery( entityType );
         final var root = query.from( entityType );
         query.select( root );
-        return CriteriaQueryBuilder.<T, T>builder().query( query ).cb( cb ).root( root ).entityType( entityType )
+        return CriteriaQueryBuilder.<T, T>builder()
+                .query( query )
+                .cb( cb )
+                .root( root )
+                .entityType( entityType )
+                .entityManager( entityManager )
                 .build();
     }
 
@@ -50,7 +56,12 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         final var query = cb.createQuery( Long.class );
         final var root = query.from( entityType );
         query.select( cb.count( root ) );
-        return CriteriaQueryBuilder.<E, Long>builder().query( query ).cb( cb ).root( root ).entityType( entityType )
+        return CriteriaQueryBuilder.<E, Long>builder()
+                .query( query )
+                .cb( cb )
+                .root( root )
+                .entityType( entityType )
+                .entityManager( entityManager )
                 .build();
     }
 
@@ -92,7 +103,8 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         addWhere( cb().equal( attribute.path( root ), value ) );
     }
 
-    private void addWhere( final Predicate predicate ) {
+    @Override
+    public void addWhere( final Predicate predicate ) {
         final var restriction = query().getRestriction();
         if ( restriction == null ) {
             query().where( predicate );

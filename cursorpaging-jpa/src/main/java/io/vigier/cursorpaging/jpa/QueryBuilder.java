@@ -1,5 +1,10 @@
 package io.vigier.cursorpaging.jpa;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.Collection;
 
 /**
@@ -47,4 +52,41 @@ public interface QueryBuilder {
      * @param value the value to filter on
      */
     void isEqual( Attribute attribute, Comparable<?> value );
+
+    /**
+     * Low level access to add custom filter rules
+     *
+     * @param predicate
+     */
+    void addWhere( final Predicate predicate );
+
+    /**
+     * Low level access to the query for the root-entity
+     *
+     * @param <R> the return type
+     * @return the query
+     */
+    <R> CriteriaQuery<R> query();
+
+    /**
+     * Low level access to the criteria builder
+     *
+     * @return the criteria builder
+     */
+    CriteriaBuilder cb();
+
+    /**
+     * Low level access to the root
+     *
+     * @param <E> the entity type
+     * @return the root
+     */
+    <E> Root<E> root();
+
+    /**
+     * Low level access to the entity manager
+     *
+     * @return the entity manager
+     */
+    EntityManager entityManager();
 }

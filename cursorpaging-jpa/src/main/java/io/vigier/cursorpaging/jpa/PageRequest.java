@@ -1,5 +1,6 @@
 package io.vigier.cursorpaging.jpa;
 
+import jakarta.persistence.Transient;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,14 @@ public class PageRequest<E> {
      */
     @Singular
     private final List<Filter> filters;
+
+    /**
+     * The filter rules to apply to the query (removing results). Note that filter rules are <i>not</i> passed to the
+     * client in serialized form, and must be added every-time the cursor is deserialized.
+     */
+    @Singular
+    @Transient
+    private final List<FilterRule> rules;
 
     /**
      * The size of the page to fetch
