@@ -80,7 +80,7 @@ public class DataRecordController {
     }
 
     /**
-     * Just a  example how a GET request might be mapped to transport all necessary information. Note that the
+     * Just an example how a GET request might be mapped to transport all necessary information. Note that the
      * parameters are just there to be visible in swagger - all of them do more or less contain the same content.
      *
      * @param orderBy  order bx

@@ -2,7 +2,7 @@
 
 # Spring Data Support for Cursor based Paging
 
-Library supporting an efficient way for paging with large data sets and avoiding to count all records with each page.
+Library supporting an efficient way for paging with large data sets and avoiding counting all records with each page.
 
 # Introduction
 Cursor based paging is an alternative to the page/offset based paging provided by Spring and SQL.
@@ -47,21 +47,21 @@ There are two dependencies:
 </dependencies>
 ```
 
-Current published version is `0.8.0-RC1`
+Current published version is `0.8.0`
 
 Note: The library is also available on gitHub-packages:
 
 - Repository-URL: https://maven.pkg.github.com/p3t/spring-cursorpaging
-- You need an personal-access token (classic) to read from any github-package
-  repo [see docu](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages#authenticating-to-github-packages)
+- You need a personal-access token (classic) to read from any github-package
+  repo [see documentation](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages#authenticating-to-github-packages)
    - Add the token to your `~/.m2/settings.xml` or `~/.gradle/gradle.properties` file as password
    - username is you github-user
 
-## Generate the JPA meta-model
+## Generate the JPA metamodel
 
 The cursorpaging library is easier to use, when the JPA metamodel is generated to define the available attributes.
 This is done by the `hibernate-jpamodelgen` annotation processor (in case you are using eclipse-link or another ORM
-there should be a similar one available.
+there should be a similar one available).
 
 ### Maven configuration
 
@@ -107,9 +107,9 @@ Currently, this has not really been tested, so there might be places which need 
 
 ## Register the CursorPageRepositoryFactoryBean
 
-In order to use the repository interface an modified `JpaRepFactoryBean` is needed.
+In order to use the repository interface a modified `JpaRepFactoryBean` is needed.
 This is done via `@EnableJpaRepositories` annotation in the Spring Boot Application class,
-or (maybe better due to less side-effects for `@SpringBootTest`s) on an extra configuration
+or (maybe better due to fewer side effects for `@SpringBootTest`s) on an extra configuration
 class (annotated with `@Configuration`)
 
 ```java
@@ -175,7 +175,7 @@ public void queryData() {
 }
 ```
 
-### Example: Multiple order defintions, sort by embedded entity attributes
+### Example: Multiple order definitions, sort by embedded entity attributes
 
 ```java
 public void queryData() {
@@ -192,7 +192,7 @@ public void queryData() {
 The first given attribute is the primary sort order, the second the secondary and so on.
 
 *Important*: The combination of all attributes defined in the request must uniquely identify one single entity.
-Otherwise you will get unexpected results! Most easy is to use the primary key of the entity (at least as secondary
+Otherwise, you will get unexpected results! Most easy is to use the primary key of the entity (at least as secondary
 attribute, if you want to get the records ordered e.g. by a name or creation data)
 
 ### Example: Use a filter
@@ -230,7 +230,7 @@ The request (if available) should be passed as it might contain filters which re
 
 ### Example: Extend filter with custom rules
 
-In some cases you might want to filter the results by defining your own custom rules. One example where this could be useful is, when you need to implement sophisticated access rights (ACLs.
+In some cases you might want to filter the results by defining your own custom rules. One example where this could be useful is, when you need to implement sophisticated access rights (ACLs).
 
 In order to support this, `cursorpaging-jpa` provides an interface: `FilterRule` which can be used to extend the internally executed criteria query with custom `Predicates`.
 
@@ -295,7 +295,7 @@ classes.
 
 ### Configuration
 
-Each entity needs it's own serializer, there is a factory simplifying the creation within a Spring config-class:
+Each entity needs its own serializer, there is a factory simplifying the creation within a Spring config-class:
 
 ```java
 
@@ -393,14 +393,14 @@ The annotation: `@MaxSize(20)` is a shortcut for ` @RequestParam final Optional<
 ### Serializer Details
 
 The serializer "learns" about the entity attributes by serializing them.
-There might be situations where it could be usefule to pre-configure the attributes used to filter and order the
+There might be situations where it could be useful to pre-configure the attributes used to filter and order the
 records.
 
 # Background: Concept description
 ## Basic idea
 A Cursor is nothing elsa than a position in a list of records.
 The content of the page is just the next n-records after the cursor.
-It is important, that the records do have a well defined order, to make this return predictable results.
+It is important, that the records do have a well-defined order, to make this return predictable results.
 
 Databases are very fast, when querying indexed columns or fields. 
 Most DBs do have something like an ID/Primary Key (PK) to uniquely identify a record, still a cursor must not be restricted to only use PKs.
@@ -417,20 +417,20 @@ SELECT * FROM some_table WHERE id > 10 ORDER BY id ASC LIMIT 10
 ```
 and so on. 
 
-In real life this is a little more complicated as the desired order of the records depends on the use case (could e.g. creation time or a status-field), and there is no gurantee that this order doesn't change from query to query.
+In real life this is a little more complicated as the desired order of the records depends on the use case (could e.g. creation time or a status-field), and there is no guarantee that this order doesn't change from query to query.
 
 ## Design model(s)
 ![Basic concept of cursor/positions and pages](media/basic-concept.png "Basic concept of cursor/positions and pages")
 
 # Making things more complicate
-Potentially, a curosr can be reversed, meaning  the query direction can be changed. This would add the feature to the cursor page to not only point to the next page but also to the previous result-set. Still - this must not be misunderstood as the privous page! This is not easily possible, because for doing this it would be needed to have all previous pages still in memory or somehow stored with the cursor.
-Such an reversed cursor is, when used, changing the direction of the query.
+Potentially, a cursor can be reversed, meaning  the query direction can be changed. This would add the feature to the cursor page to not only point to the next page but also to the previous result-set. Still - this must not be misunderstood as the previous page! This is not easily possible, because for doing this it would be needed to have all previous pages still in memory or somehow stored with the cursor.
+Such a reversed cursor is, when used, changing the direction of the query.
 
 ![Reversed cursor](media/reversed-cursor.png "Reversed cursor")
 
 There is only value in this feature, if the client is not able to cache the previous requested pages by himself, i.e. forgets them while moving forward. This might be the case in a very memory limited client scenario which is usually _not_ a web application/web browser.
 
 ## Limitations
-- Such a cursor implementation is not transaction-safe. Which is good enough for most UIs and it is not so important, to miss a record or have a duplicate one in two page requests. This is i.e. the case when the PK is not an ascending numerical ID but maybe an UUID, so that it is possible that an inserted record apears before the page which a client is going to request. In case you need transaction-safe cursor queries, this is most likely a server-side use case and you can use DB-cursors.
+- Such a cursor implementation is not transaction-safe. Which is good enough for most UIs, and it is not so important, to miss a record or have a duplicate one in two-page requests. This is i.e. the case when the PK is not an ascending numerical ID but maybe a UUID, so that it is possible that an inserted record appears before the page which a client is going to request. In case you need transaction-safe cursor queries, this is most likely a server-side use case, and you can use DB-cursors.
 
 
