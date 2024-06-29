@@ -21,6 +21,7 @@ import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -71,8 +72,13 @@ class PostgreSqlCursorPageTest {
     }
 
     List<DataRecord> generateData( final int count ) {
+        accessEntryRepository.deleteAll();
+        dataRecordRepository.deleteAll();
         securityClassRepository.deleteAll();
+        accessEntryRepository.flush();
+        dataRecordRepository.flush();
         securityClassRepository.flush();
+
         final SecurityClass cl0 = securityClassRepository.save( SecurityClass.builder().level( 0 ).name( "public" )
                 .build() );
         final SecurityClass cl1 = securityClassRepository.save( SecurityClass.builder().level( 1 ).name( "standard" )
@@ -82,8 +88,6 @@ class PostgreSqlCursorPageTest {
                         .build() );
         final SecurityClass[] securityClasses = { cl0, cl1, cl2 };
 
-        dataRecordRepository.deleteAll();
-        dataRecordRepository.flush();
         Instant created = Instant.parse( "1999-01-02T10:15:30.00Z" );
         final List<DataRecord> allRecords = new ArrayList<>( count );
         for ( int i = 0; i < count; i++ ) {
@@ -94,8 +98,6 @@ class PostgreSqlCursorPageTest {
                             .build() ) );
         }
 
-        accessEntryRepository.deleteAll();
-        accessEntryRepository.flush();
         accessEntryRepository.saveEntry( b -> b.subject( SUBJECT_READ_STANDARD ).action( READ ).securityClass( cl1 ) );
         accessEntryRepository.saveEntry( b -> b.subject( SUBJECT_READ_SENSITIVE ).action( READ ).securityClass( cl2 ) );
         accessEntryRepository.saveEntry(
@@ -110,8 +112,11 @@ class PostgreSqlCursorPageTest {
     }
 
     @AfterEach
+    @Transactional
     void cleanup() {
-        dataRecordRepository.deleteAll();
+        accessEntryRepository.deleteAllInBatch();
+        dataRecordRepository.deleteAllInBatch();
+        securityClassRepository.deleteAllInBatch();
     }
 
     @Test
