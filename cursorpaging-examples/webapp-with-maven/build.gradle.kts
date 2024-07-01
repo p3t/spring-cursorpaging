@@ -25,7 +25,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3")
 //    compileOnly("javax.xml.bind:jaxb-api")
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
     implementation("org.mapstruct:mapstruct:${mapstructVersion}")
 
     annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
