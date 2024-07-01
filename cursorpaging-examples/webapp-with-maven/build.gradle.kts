@@ -29,7 +29,7 @@ dependencies {
     implementation("org.mapstruct:mapstruct:${mapstructVersion}")
 
     annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
-    annotationProcessor("org.hibernate:hibernate-jpamodelgen:6.5.0.Final")
+    annotationProcessor("org.hibernate:hibernate-jpamodelgen:6.5.2.Final")
 
 //    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
 //    implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
