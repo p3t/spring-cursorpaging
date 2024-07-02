@@ -21,6 +21,6 @@ dependencies {
 //    implementation("org.kordamp.gradle:jacoco-gradle-plugin:$kordampVersion")
     implementation("gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.2")
     implementation("cl.franciscosolis:SonatypeCentralUpload:1.0.3")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
 }
 
