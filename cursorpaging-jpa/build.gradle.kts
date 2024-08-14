@@ -22,7 +22,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.springframework.retry:spring-retry")
-    testAnnotationProcessor("org.hibernate:hibernate-jpamodelgen:6.5.2.Final")
+    testAnnotationProcessor("org.hibernate:hibernate-jpamodelgen:6.6.0.Final")
     testRuntimeOnly("org.postgresql:postgresql")
 }
 
