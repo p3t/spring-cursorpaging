@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
 	api(project(":cursorpaging-jpa"))
-	implementation("com.google.protobuf:protobuf-java:4.27.2")
+	implementation("com.google.protobuf:protobuf-java:4.27.3")
 	api("org.springframework:spring-core")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	api("jakarta.validation:jakarta.validation-api")
