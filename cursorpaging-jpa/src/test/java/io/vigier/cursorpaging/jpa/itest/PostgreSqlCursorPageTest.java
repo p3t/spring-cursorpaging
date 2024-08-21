@@ -9,12 +9,10 @@ import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
-import io.vigier.cursorpaging.jpa.itest.model.AuditInfo;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo_;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
-import io.vigier.cursorpaging.jpa.itest.model.SecurityClass;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
@@ -22,9 +20,6 @@ import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +34,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
 import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.READ;
-import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -48,13 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import( { PostgreSqlTestConfiguration.class, JpaConfig.class } )
 class PostgreSqlCursorPageTest {
 
-    private static final String[] NAMES = { "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel",
-            "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra",
-            "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };
     public static final Attribute DATARECORD_ID = Attribute.of( Fields.id, UUID.class );
     public static final String SUBJECT_READ_STANDARD = "read_standard";
-    public static final String SUBJECT_READ_SENSITIVE = "read_sensitive";
-    public static final String SUBJECT_WRITE_SENSITIVE = "write_sensitive";
 
     @Autowired
     ApplicationContext applicationContext;
@@ -64,6 +53,8 @@ class PostgreSqlCursorPageTest {
     private AccessEntryRepository accessEntryRepository;
     @Autowired
     private SecurityClassRepository securityClassRepository;
+    @Autowired
+    private TestDataGenerator testDataGenerator;
 
     @Test
     void contextLoads() {
@@ -71,45 +62,6 @@ class PostgreSqlCursorPageTest {
         assertThat( factoryBeans.size() ).isGreaterThanOrEqualTo( 1 ); // I.e. one per repository
     }
 
-    List<DataRecord> generateData( final int count ) {
-        accessEntryRepository.deleteAll();
-        dataRecordRepository.deleteAll();
-        securityClassRepository.deleteAll();
-        accessEntryRepository.flush();
-        dataRecordRepository.flush();
-        securityClassRepository.flush();
-
-        final SecurityClass cl0 = securityClassRepository.save( SecurityClass.builder().level( 0 ).name( "public" )
-                .build() );
-        final SecurityClass cl1 = securityClassRepository.save( SecurityClass.builder().level( 1 ).name( "standard" )
-                .build() );
-        final SecurityClass cl2 = securityClassRepository.save(
-                SecurityClass.builder().level( 2 ).name( "confidential" )
-                        .build() );
-        final SecurityClass[] securityClasses = { cl0, cl1, cl2 };
-
-        Instant created = Instant.parse( "1999-01-02T10:15:30.00Z" );
-        final List<DataRecord> allRecords = new ArrayList<>( count );
-        for ( int i = 0; i < count; i++ ) {
-            created = created.plus( 1, ChronoUnit.DAYS );
-            allRecords.add( dataRecordRepository.save(
-                    DataRecord.builder().name( nextName( i ) ).securityClass( securityClasses[i % 3] )
-                    .auditInfo( AuditInfo.create( created, created.plus( 10, ChronoUnit.MINUTES ) ) )
-                            .build() ) );
-        }
-
-        accessEntryRepository.saveEntry( b -> b.subject( SUBJECT_READ_STANDARD ).action( READ ).securityClass( cl1 ) );
-        accessEntryRepository.saveEntry( b -> b.subject( SUBJECT_READ_SENSITIVE ).action( READ ).securityClass( cl2 ) );
-        accessEntryRepository.saveEntry(
-                b -> b.subject( SUBJECT_WRITE_SENSITIVE ).action( WRITE ).securityClass( cl2 ) );
-
-        log.info( "Generated {} test data-records", dataRecordRepository.count() );
-        return allRecords;
-    }
-
-    private String nextName( final int i ) {
-        return NAMES[i % NAMES.length];
-    }
 
     @AfterEach
     @Transactional
@@ -121,7 +73,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchFirstPage() {
-        generateData( 100 );
+        testDataGenerator.generateData( 100 );
         final var all = dataRecordRepository.findAll();
 
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
@@ -141,7 +93,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchNextPage() {
-        generateData( 30 );
+        testDataGenerator.generateData( 30 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
@@ -156,16 +108,18 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchPagesOrderedByCreatedDesc() {
-        generateData( 5 );
+        testDataGenerator.generateData( 15 );
+
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
                 .asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
+        final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow().withPageSize( 10 ) );
 
         assertThat( firstPage ).isNotNull();
-        assertThat( firstPage.getContent() ).hasSize( 5 );
+        assertThat( secondPage ).isNotNull();
 
         final var all = dataRecordRepository.findAll()
                 .stream()
@@ -174,8 +128,63 @@ class PostgreSqlCursorPageTest {
                         .thenComparing( r -> r.getId().toString() ) )
                 .toList();
 
-        assertThat( firstPage.getContent() ).containsExactlyElementsOf( all );
-        assertThat( firstPage.next() ).isEmpty();
+        log.debug( "First page: {}", firstPage.content()
+                .stream()
+                .map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
+                .toList() );
+        log.debug( "Second page: {}", secondPage.content()
+                .stream()
+                .map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
+                .toList() );
+        log.debug( "All : {}",
+                all.stream().map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() ).toList() );
+
+        assertThat( firstPage.getContent() ).hasSize( 5 );
+        assertThat( secondPage.getContent() ).hasSize( 10 );
+
+        assertThat( firstPage.getContent() ).containsExactlyElementsOf( all.subList( 0, 5 ) );
+        assertThat( secondPage.getContent() ).containsExactlyElementsOf( all.subList( 5, 15 ) );
+        assertThat( secondPage.next() ).isEmpty();
+    }
+
+    @Test
+    void shouldFetchPagesOrderedByNameAsc() {
+        testDataGenerator.generateData( 5 );
+        // duplicate names
+        testDataGenerator.generateDataRecords( 10 );
+
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+        final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow().withPageSize( 10 ) );
+        final var all = dataRecordRepository.findAll()
+                .stream()
+                .sorted( Comparator.comparing( DataRecord::getName ).thenComparing( r -> r.getId().toString() ) )
+                .toList();
+
+        assertThat( firstPage ).isNotNull();
+        assertThat( secondPage ).isNotNull();
+
+        log.debug( "First page: {}", firstPage.content().stream().map( DataRecord::getName ).toList() );
+        log.debug( "Second page: {}", secondPage.content().stream().map( DataRecord::getName ).toList() );
+        log.debug( "All : {}", all.stream().map( DataRecord::getName ).toList() );
+
+        final var firstPageContent = firstPage.getContent();
+        assertThat( firstPageContent ).hasSize( 5 );
+        final var secondPageContent = secondPage.getContent();
+        assertThat( secondPageContent ).hasSize( 10 );
+
+        final var lastOnFirstPage = firstPageContent.get( firstPageContent.size() - 1 );
+        final var firstOnSecondPage = secondPageContent.get( 0 );
+
+        assertThat( lastOnFirstPage ).extracting( DataRecord::getName ).isEqualTo( "Charlie" );
+        assertThat( firstOnSecondPage ).extracting( DataRecord::getName ).isEqualTo( "Charlie" );
+        assertThat( lastOnFirstPage.getId() ).isNotEqualTo( firstOnSecondPage.getId() );
+
+        assertThat( firstPageContent ).containsExactlyElementsOf( all.subList( 0, 5 ) );
+        assertThat( secondPageContent ).containsExactlyElementsOf( all.subList( 5, 15 ) );
+        assertThat( secondPage.next() ).isEmpty();
     }
 
     @Test
@@ -186,7 +195,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResults() {
-        generateData( 100 );
+        testDataGenerator.generateData( 100 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
@@ -201,7 +210,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResultsWithInPredicate() {
-        generateData( 100 );
+        testDataGenerator.generateData( 100 );
         final Filter nameIsAlphaOrBravo = Filter.create(
                 b -> b.attribute( DataRecord_.name ).value( "Alpha" ).value( "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
@@ -218,7 +227,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReturnTotalCountWhenNoFilterPresent() {
-        generateData( 42 );
+        testDataGenerator.generateData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id ) );
@@ -230,7 +239,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReturnZeroCountWhenNoRecordsMatches() {
-        generateData( 42 );
+        testDataGenerator.generateData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
@@ -262,7 +271,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReturnFilteredEntityCountWhenFilterPresent() {
-        final List<DataRecord> all = generateData( NAMES.length );
+        final List<DataRecord> all = testDataGenerator.generateData( TestDataGenerator.NAMES.length );
         final long countPublicAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
@@ -298,7 +307,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     public void shouldUseMoreComplicateFilterRulesForAclChecks() {
-        generateData( 100 );
+        testDataGenerator.generateData( 100 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )

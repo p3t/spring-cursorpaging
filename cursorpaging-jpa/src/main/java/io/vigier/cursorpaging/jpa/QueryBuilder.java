@@ -6,28 +6,13 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Queries required by the cursor paging.
  *
  */
 public interface QueryBuilder {
-
-    /**
-     * In case of descending order the positions are less than the last one on the previous page.
-     *
-     * @param attribute the attribute to use for the query
-     * @param value     the value to use for the query
-     */
-    void lessThan( Attribute attribute, Comparable<?> value );
-
-    /**
-     * In case of ascending order the positions are greater than on the previous page
-     *
-     * @param attribute the attribute to use for the query
-     * @param value     the value to use for the query
-     */
-    void greaterThan( Attribute attribute, Comparable<?> value );
 
     /**
      * Provide the order for the position query
@@ -41,24 +26,19 @@ public interface QueryBuilder {
      * Used to filter out not matching entities
      *
      * @param attribute the attribute to filter on
-     * @param value the value to filter on
+     * @param value     the value to filter on
+     * @return the predicate to add to the query
      */
-    void isIn( Attribute attribute, Collection<? extends Comparable<?>> value );
-
-    /**
-     * Used to filter out not matching entities
-     *
-     * @param attribute the attribute to filter on
-     * @param value the value to filter on
-     */
-    void isEqual( Attribute attribute, Comparable<?> value );
+    Predicate isIn( Attribute attribute, Collection<? extends Comparable<?>> value );
 
     /**
      * Low level access to add custom filter rules
      *
-     * @param predicate
+     * @param predicate the predicate to add
      */
     void addWhere( final Predicate predicate );
+
+    void addWhere( final List<Predicate> predicate );
 
     /**
      * Low level access to the query for the root-entity
@@ -89,4 +69,31 @@ public interface QueryBuilder {
      * @return the entity manager
      */
     EntityManager entityManager();
+
+    /**
+     * Get an equal predicate for the given attribute and value
+     *
+     * @param attribute the attribute
+     * @param value     the value to be compared
+     * @return the predicate which can be added to the query
+     */
+    Predicate equalTo( Attribute attribute, Comparable<?> value );
+
+    /**
+     * Get a greater than predicate for the given attribute and value
+     *
+     * @param attribute the attribute
+     * @param value     the value to be compared
+     * @return the predicate which can be added to the query
+     */
+    Predicate greaterThan( Attribute attribute, Comparable<?> value );
+
+    /**
+     * Get a less than predicate for the given attribute and value
+     *
+     * @param attribute the attribute
+     * @param value     the value to be compared
+     * @return the predicate which can be added to the query
+     */
+    Predicate lessThan( final Attribute attribute, final Comparable<?> value );
 }

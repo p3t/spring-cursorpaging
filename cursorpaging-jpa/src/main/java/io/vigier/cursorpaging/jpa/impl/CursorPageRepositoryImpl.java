@@ -5,6 +5,8 @@ import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.repository.CursorPageRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Predicate;
+import java.util.LinkedList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
@@ -49,7 +51,11 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         final CriteriaQueryBuilder<E, E> cqb = CriteriaQueryBuilder.forEntity( entityInformation.getJavaType(),
                 entityManager );
 
-        request.positions().forEach( position -> position.apply( cqb ) );
+        final List<Predicate> positionEquals = new LinkedList<>();
+        request.positions().forEach( position -> {
+            position.apply( cqb.orCondition(), positionEquals );
+            positionEquals.add( position.getEquals( cqb ) );
+        } );
         request.filters().forEach( filter -> filter.apply( cqb ) );
         request.rules().forEach( rule -> rule.applyQuery( cqb ) );
 
