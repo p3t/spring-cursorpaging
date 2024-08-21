@@ -25,15 +25,21 @@ import lombok.experimental.Accessors;
  */
 @Getter
 @Accessors( fluent = true )
-@Builder
+@Builder( toBuilder = true )
 @RequiredArgsConstructor
 public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
+
+    public enum AppendMode {
+        AND, OR
+    }
 
     private final CriteriaQuery<R> query;
     private final CriteriaBuilder cb;
     private final Root<E> root;
     private final Class<E> entityType;
     private final EntityManager entityManager;
+    @Builder.Default
+    private final AppendMode appendMode = AppendMode.AND;
 
     public static <T> CriteriaQueryBuilder<T, T> forEntity( final Class<T> entityType,
             final EntityManager entityManager ) {
@@ -65,22 +71,27 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
                 .build();
     }
 
-    @Override
-    public void lessThan( final Attribute attribute, final Comparable<?> value ) {
-        whereLessThan( attribute, attribute.type().cast( value ) );
-    }
-
-    private <V extends Comparable<? super V>> void whereLessThan( final Attribute attribute, final V value ) {
-        addWhere( cb().lessThan( attribute.path( root ), value ) );
+    public CriteriaQueryBuilder<E, R> orCondition() {
+        return toBuilder().appendMode( AppendMode.OR )
+                .build();
     }
 
     @Override
-    public void greaterThan( final Attribute attribute, final Comparable<?> value ) {
-        whereGreaterThan( attribute, attribute.type().cast( value ) );
+    public Predicate lessThan( final Attribute attribute, final Comparable<?> value ) {
+        return createLessThan( attribute, attribute.type().cast( value ) );
     }
 
-    private <V extends Comparable<? super V>> void whereGreaterThan( final Attribute attribute, final V value ) {
-        addWhere( cb().greaterThan( attribute.path( root ), value ) );
+    private <V extends Comparable<? super V>> Predicate createLessThan( final Attribute attribute, final V value ) {
+        return cb.lessThan( attribute.path( root ), value );
+    }
+
+    @Override
+    public Predicate greaterThan( final Attribute attribute, final Comparable<?> value ) {
+        return createGreaterThan( attribute, attribute.type().cast( value ) );
+    }
+
+    private <V extends Comparable<? super V>> Predicate createGreaterThan( final Attribute attribute, final V value ) {
+        return cb().greaterThan( attribute.path( root ), value );
     }
 
     @Override
@@ -94,22 +105,30 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
-    public void isIn( final Attribute attribute, final Collection<? extends Comparable<?>> value ) {
-        addWhere( attribute.path( root ).in( value ) );
+    public Predicate isIn( final Attribute attribute, final Collection<? extends Comparable<?>> value ) {
+        return attribute.path( root ).in( value );
     }
 
     @Override
-    public void isEqual( final Attribute attribute, final Comparable<?> value ) {
-        addWhere( cb().equal( attribute.path( root ), value ) );
+    public Predicate equalTo( final Attribute attribute, final Comparable<?> value ) {
+        return cb.equal( attribute.path( root ), value );
+    }
+
+    @Override
+    public void addWhere( final List<Predicate> conditions ) {
+        final var restriction = query.getRestriction();
+        if ( restriction == null ) {
+            query.where( conditions.toArray( new Predicate[0] ) );
+        } else {
+            switch ( appendMode ) {
+                case AND -> query.where( cb.and( conditions.toArray( new Predicate[0] ) ) );
+                case OR -> query.where( cb.or( restriction, cb.and( conditions.toArray( new Predicate[0] ) ) ) );
+            }
+        }
     }
 
     @Override
     public void addWhere( final Predicate predicate ) {
-        final var restriction = query().getRestriction();
-        if ( restriction == null ) {
-            query().where( predicate );
-        } else {
-            query().where( restriction, predicate );
-        }
+        addWhere( List.of( predicate ) );
     }
 }
