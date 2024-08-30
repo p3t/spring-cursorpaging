@@ -3,6 +3,7 @@ package io.vigier.cursorpaging.jpa.itest;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
+import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
@@ -157,7 +158,7 @@ class PostgreSqlCursorPageTest {
                 b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
-        final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow().withPageSize( 10 ) );
+        final var secondPage = dataRecordRepository.loadPage( firstPage.next( 10 ).orElseThrow() );
         final var all = dataRecordRepository.findAll()
                 .stream()
                 .sorted( Comparator.comparing( DataRecord::getName ).thenComparing( r -> r.getId().toString() ) )
@@ -327,6 +328,37 @@ class PostgreSqlCursorPageTest {
         assertThat( shouldBeEmpty ).isNotNull();
         assertThat( shouldBeEmpty.getContent() ).isEmpty();
         assertThat( dataRecordRepository.count( request2 ) ).isEqualTo( 0 );
+    }
+
+    @Test
+    void shouldReverseDirectionOfCursors() {
+        testDataGenerator.generateData( 10 );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 ).asc( DataRecord_.name )
+                .asc( DataRecord_.id ) );
+
+        final var allRecords = dataRecordRepository.loadPage( request.withPageSize( 10 ) );
+        final var firstPage = dataRecordRepository.loadPage( request );
+        final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow() );
+        final var reversedFirstPage = dataRecordRepository.loadPage( secondPage.self().toReversed() );
+        logNames( "First", firstPage );
+        logNames( "Second", secondPage );
+        logNames( "First/reversed", reversedFirstPage );
+        logNames( "All", allRecords );
+
+        assertThat( firstPage ).isNotNull();
+        assertThat( firstPage.getContent() ).hasSize( 5 );
+        assertThat( secondPage ).isNotNull();
+        assertThat( secondPage.getContent() ).hasSize( 5 );
+
+        assertThat( reversedFirstPage ).isNotNull();
+        assertThat( reversedFirstPage ).containsExactlyElementsOf( firstPage );
+        assertThat( reversedFirstPage.next() ).isNotPresent();
+    }
+
+    private static void logNames( final String message, final Page<DataRecord> allRecords ) {
+        if ( log.isDebugEnabled() ) {
+            log.debug( message + ": {}", allRecords.content().stream().map( DataRecord::getName ).toList() );
+        }
     }
 }
 

@@ -87,7 +87,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> asc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.ASC ) ) );
+            return firstPage( Order.ASC, attribute );
         }
 
         /**
@@ -97,7 +97,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> desc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( Order.DESC ) ) );
+            return firstPage( Order.DESC, attribute );
         }
 
         /**
@@ -153,5 +153,16 @@ public class PageRequest<E> {
         return create( b -> b.positions( positions.stream()
                 .map( p -> p.positionOf( entity ) )
                 .toList() ).pageSize( this.pageSize ) );
+    }
+
+    public PageRequest<E> toReversed() {
+        return PageRequest.<E>builder()
+                .rules( rules ).filters( filters ).positions( positions.stream().map( Position::toReversed ).toList() )
+                .pageSize( pageSize )
+                .build();
+    }
+
+    public boolean isFirstPage() {
+        return positions.get( 0 ).isFirst();
     }
 }

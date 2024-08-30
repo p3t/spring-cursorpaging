@@ -29,7 +29,7 @@ import lombok.experimental.Accessors;
 @RequiredArgsConstructor
 public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
-    public enum AppendMode {
+    private enum AppendMode {
         AND, OR
     }
 
@@ -38,8 +38,6 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     private final Root<E> root;
     private final Class<E> entityType;
     private final EntityManager entityManager;
-    @Builder.Default
-    private final AppendMode appendMode = AppendMode.AND;
 
     public static <T> CriteriaQueryBuilder<T, T> forEntity( final Class<T> entityType,
             final EntityManager entityManager ) {
@@ -71,11 +69,6 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
                 .build();
     }
 
-    public CriteriaQueryBuilder<E, R> orCondition() {
-        return toBuilder().appendMode( AppendMode.OR )
-                .build();
-    }
-
     @Override
     public Predicate lessThan( final Attribute attribute, final Comparable<?> value ) {
         return createLessThan( attribute, attribute.type().cast( value ) );
@@ -83,6 +76,16 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
     private <V extends Comparable<? super V>> Predicate createLessThan( final Attribute attribute, final V value ) {
         return cb.lessThan( attribute.path( root ), value );
+    }
+
+    @Override
+    public Predicate lessThanOrEqualTo( final Attribute attribute, final Comparable<?> value ) {
+        return createLessThanOrEqualTo( attribute, attribute.type().cast( value ) );
+    }
+
+    private <V extends Comparable<? super V>> Predicate createLessThanOrEqualTo( final Attribute attribute,
+            final V value ) {
+        return cb.lessThanOrEqualTo( attribute.path( root ), value );
     }
 
     @Override
@@ -95,18 +98,18 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
-    public void orderBy( final Attribute attribute, final Order order ) {
-        final List<jakarta.persistence.criteria.Order> orderSpecs = new LinkedList<>( query().getOrderList() );
-        orderSpecs.add( switch ( order ) {
-            case ASC -> cb().asc( attribute.path( root ) );
-            case DESC -> cb().desc( attribute.path( root ) );
-        } );
-        query().orderBy( orderSpecs );
+    public Predicate greaterThanOrEqualTo( final Attribute attribute, final Comparable<?> value ) {
+        return createGreaterThanOrEqualTo( attribute, attribute.type().cast( value ) );
+    }
+
+    private <V extends Comparable<? super V>> Predicate createGreaterThanOrEqualTo( final Attribute attribute,
+            final V value ) {
+        return cb().greaterThanOrEqualTo( attribute.path( root ), value );
     }
 
     @Override
-    public Predicate isIn( final Attribute attribute, final Collection<? extends Comparable<?>> value ) {
-        return attribute.path( root ).in( value );
+    public Predicate isIn( final Attribute attribute, final Collection<? extends Comparable<?>> values ) {
+        return attribute.path( root ).in( values );
     }
 
     @Override
@@ -114,8 +117,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         return cb.equal( attribute.path( root ), value );
     }
 
-    @Override
-    public void addWhere( final List<Predicate> conditions ) {
+    private void addWhere( final List<Predicate> conditions, final AppendMode appendMode ) {
         final var restriction = query.getRestriction();
         if ( restriction == null ) {
             query.where( conditions.toArray( new Predicate[0] ) );
@@ -128,7 +130,27 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
-    public void addWhere( final Predicate predicate ) {
-        addWhere( List.of( predicate ) );
+    public void andWhere( final List<Predicate> conditions ) {
+        addWhere( conditions, AppendMode.AND );
+    }
+
+    @Override
+    public void orWhere( final List<Predicate> conditions ) {
+        addWhere( conditions, AppendMode.OR );
+    }
+
+    @Override
+    public void andWhere( final Predicate predicate ) {
+        andWhere( List.of( predicate ) );
+    }
+
+    @Override
+    public void orderBy( final Attribute attribute, final Order order ) {
+        final List<jakarta.persistence.criteria.Order> orderSpecs = new LinkedList<>( query().getOrderList() );
+        orderSpecs.add( switch ( order ) {
+            case ASC -> cb().asc( attribute.path( root ) );
+            case DESC -> cb().desc( attribute.path( root ) );
+        } );
+        query().orderBy( orderSpecs );
     }
 }

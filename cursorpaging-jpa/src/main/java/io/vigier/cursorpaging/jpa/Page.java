@@ -90,6 +90,16 @@ public class Page<E> implements Iterable<E> {
     }
 
     /**
+     * Get the next page request with the given page size.
+     *
+     * @param pageSize desired page size
+     * @return the next page request or an empty {@link Optional} if there is no further page
+     */
+    public Optional<PageRequest<E>> next( final int pageSize ) {
+        return next().map( pageRequest -> pageRequest.withPageSize( pageSize ) );
+    }
+
+    /**
      * Map the content with the given function and get the result
      *
      * @param mapper the function to be applied on each element of the page

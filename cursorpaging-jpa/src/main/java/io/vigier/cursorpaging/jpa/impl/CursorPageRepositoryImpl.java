@@ -53,8 +53,11 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
         final List<Predicate> positionEquals = new LinkedList<>();
         request.positions().forEach( position -> {
-            position.apply( cqb.orCondition(), positionEquals );
-            positionEquals.add( position.getEquals( cqb ) );
+            if ( !request.isFirstPage() ) {
+                cqb.orWhere( position.conditionsAnd( cqb, positionEquals ) );
+                positionEquals.add( position.equalTo( cqb ) );
+            }
+            cqb.orderBy( position.attribute(), position.order() );
         } );
         request.filters().forEach( filter -> filter.apply( cqb ) );
         request.rules().forEach( rule -> rule.applyQuery( cqb ) );

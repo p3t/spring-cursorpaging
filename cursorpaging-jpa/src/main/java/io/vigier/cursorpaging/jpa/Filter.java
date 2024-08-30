@@ -82,9 +82,9 @@ public class Filter {
      */
     public void apply( final QueryBuilder qb ) {
         if ( values.size() > 1 ) {
-            qb.addWhere( qb.isIn( attribute, values ) );
+            qb.andWhere( qb.isIn( attribute, values ) );
         } else {
-            qb.addWhere( qb.equalTo( attribute, values.get( 0 ) ) );
+            qb.andWhere( qb.equalTo( attribute, values.get( 0 ) ) );
         }
     }
 }
