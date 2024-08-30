@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: gradle/actions/wrapper-validation@v3
+      - uses: gradle/actions/wrapper-validation@v4
 
   Build:
     name: "Build, Sign and Upload Artifacts"
@@ -68,7 +68,7 @@ jobs:
       # Configure Gradle for optimal use in GiHub Actions, including caching of downloaded dependencies.
       # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3 # v3.1.0
+        uses: gradle/actions/setup-gradle@v4 # v3.1.0
         with:
           add-job-summary-as-pr-comment: on-failure
           artifact-retention-days: 5
@@ -129,7 +129,7 @@ jobs:
     # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
       # https://github.com/gradle/actions/blob/main/docs/dependency-submission.md
     - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@v3
+      uses: gradle/actions/dependency-submission@v4
       env:
         # Exclude all dependencies that originate solely in the 'buildSrc' or testapp project
         DEPENDENCY_GRAPH_EXCLUDE_PROJECTS: ':buildSrc|:cursorpaging-testapp'
