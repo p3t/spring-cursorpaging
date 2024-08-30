@@ -9,3 +9,14 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      gradle-patch:
+        update-types: [ "patch" ]
+        applies-to: version-updates
+    labels: [ "dependencies" ]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    labels: [ "dependencies" ]
