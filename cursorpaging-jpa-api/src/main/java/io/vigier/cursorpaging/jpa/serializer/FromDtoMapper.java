@@ -69,7 +69,7 @@ class FromDtoMapper<E> {
                     case ASC -> Order.ASC;
                     case DESC -> Order.DESC;
                     case UNRECOGNIZED -> throw new IllegalArgumentException( "Unrecognized order" );
-                } ) );
+                } ).reversed( position.getReversed() ) );
     }
 
     private Attribute attributeOf( final Cursor.Attribute attribute ) {
