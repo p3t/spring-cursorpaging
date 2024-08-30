@@ -95,7 +95,7 @@ jobs:
         run: tree
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3  # v3.1.0
+        uses: gradle/actions/setup-gradle@v4  # v3.1.0
 
       - name: Generate gradle.properties with version
         run: |

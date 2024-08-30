@@ -19,13 +19,13 @@ repositories {
 
 dependencies {
 	api(project(":cursorpaging-jpa"))
-	implementation("com.google.protobuf:protobuf-java:4.27.3")
+	implementation("com.google.protobuf:protobuf-java:4.28.0")
 	api("org.springframework:spring-core")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	api("jakarta.validation:jakarta.validation-api")
 	api("jakarta.persistence:jakarta.persistence-api:3.2.0")
 
-	testImplementation("org.mockito:mockito-core:5.12.0")
+	testImplementation("org.mockito:mockito-core:5.13.0")
 	testImplementation("jakarta.persistence:jakarta.persistence-api:3.2.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
@@ -48,7 +48,7 @@ tasks {
 protobuf {
 	protoc {
 		// Download from repositories
-		artifact = "com.google.protobuf:protoc:4.27.3"
+		artifact = "com.google.protobuf:protoc:4.28.0"
 	}
 	generateProtoTasks {
 		java{
