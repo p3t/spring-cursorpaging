@@ -19,6 +19,7 @@ message Position {
   Attribute attribute = 1;
   Value value = 2;
   Order order = 3;
+  optional bool reversed = 4;
 }
 
 message Filter {

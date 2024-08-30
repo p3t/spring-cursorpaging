@@ -31,7 +31,7 @@ class ToDtoMapper<E> {
                         .setValue( valueOf( p.value() ) ).setOrder( switch ( p.order() ) {
                             case ASC -> Cursor.Order.ASC;
                             case DESC -> Cursor.Order.DESC;
-                        } )
+                        } ).setReversed( p.reversed() )
                         .build() ).toList();
     }
 

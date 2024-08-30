@@ -434,6 +434,25 @@ Such a reversed cursor is, changing the direction of the query, but not the sort
 
 There is only value in this feature, if the client is not able to cache the previous requested pages by himself, i.e. forgets them while moving forward. This might be the case in a very memory limited client scenario which is usually _not_ a web application/web browser.
 
+## API for reverting page-requests (=cursor positions)
+There is an API (`PageReqiest::toReversed`) for getting a page-request from an existing page-request, which will traverse the results in the opposite direction - while maintaining the sort order.
+Example:
+```java
+        // Extracted from test-case
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 ).asc( DataRecord_.name )
+                .asc( DataRecord_.id ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+        final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow() );
+        final var reversedFirstPage = dataRecordRepository.loadPage( secondPage.self().toReversed() );
+
+        // everything before the second page (self-pointer) is the first page:
+        assertThat( reversedFirstPage ).containsExactlyElementsOf( firstPage );
+        
+        // no next before the "first page":
+        assertThat( reversedFirstPage.next() ).isNotPresent(); 
+```
+
 ## Limitations
 - Such a cursor implementation is not transaction-safe. Which is good enough for most UIs, and it is not so important, to miss a record or have a duplicate one in two-page requests. This is i.e. the case when the PK is not an ascending numerical ID but maybe a UUID, so that it is possible that an inserted record appears before the page which a client is going to request. In case you need transaction-safe cursor queries, this is most likely a server-side use case, and you can use DB-cursors.
 

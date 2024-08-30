@@ -165,4 +165,8 @@ public class PageRequest<E> {
     public boolean isFirstPage() {
         return positions.get( 0 ).isFirst();
     }
+
+    public boolean isReversed() {
+        return positions.get( 0 ).reversed();
+    }
 }
