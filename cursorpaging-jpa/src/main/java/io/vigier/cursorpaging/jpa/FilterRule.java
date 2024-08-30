@@ -9,11 +9,11 @@ import jakarta.persistence.criteria.Predicate;
 public interface FilterRule {
 
     default void applyQuery( final QueryBuilder cqb ) {
-        cqb.addWhere( getPredicate( cqb ) );
+        cqb.andWhere( getPredicate( cqb ) );
     }
 
     default void applyCount( final QueryBuilder cqb ) {
-        cqb.addWhere( getCountPredicate( cqb ) );
+        cqb.andWhere( getCountPredicate( cqb ) );
     }
 
     /**

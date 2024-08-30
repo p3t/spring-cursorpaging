@@ -172,6 +172,10 @@ public void queryData() {
     final var next = firstPage.next();
     assertThat( next ).isPresent();
     final var nextPage = dataRecordRepository.loadPage( next.get().withPageSize( 20 ) );
+
+    // or simpler:
+    final var next = firstPage.next( 20 );
+    final var nextPage = dataRecordRepository.loadPage( next.orElseThrow() );
 }
 ```
 
@@ -423,8 +427,8 @@ In real life this is a little more complicated as the desired order of the recor
 ![Basic concept of cursor/positions and pages](media/basic-concept.png "Basic concept of cursor/positions and pages")
 
 # Making things more complicate
-Potentially, a cursor can be reversed, meaning  the query direction can be changed. This would add the feature to the cursor page to not only point to the next page but also to the previous result-set. Still - this must not be misunderstood as the previous page! This is not easily possible, because for doing this it would be needed to have all previous pages still in memory or somehow stored with the cursor.
-Such a reversed cursor is, when used, changing the direction of the query.
+Potentially, a cursor can be reversed, meaning  the query direction can be changed. This would add the feature to the cursor page to not only point to the next page but also to the previous result-set. Still - this must not be misunderstood as the previous page! This is not easily possible, because for doing this it would require to keep all previous pages in memory or somehow stored with the cursor.
+Such a reversed cursor is, changing the direction of the query, but not the sort-order.
 
 ![Reversed cursor](media/reversed-cursor.png "Reversed cursor")
 

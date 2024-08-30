@@ -2,6 +2,7 @@ package io.vigier.cursorpaging.jpa;
 
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
@@ -41,6 +42,8 @@ public class Position {
     @Builder.Default
     private final Order order = Order.ASC;
 
+    private boolean reversed;
+
     /**
      * Creates a new {@link Position} with a builder.
      *
@@ -54,36 +57,19 @@ public class Position {
     }
 
     /**
-     * Checks if this is the position at the begin of the first page.
+     * Checks if this is the position at the start of the first page.
      *
-     * @return true if the position is at the begin of the first page.
+     * @return true if the position is at the start of the first page.
      */
     public boolean isFirst() {
         return value == null;
     }
 
-    /**
-     * Will apply the position information to the given {@link QueryBuilder}.
-     *
-     * @param qb             builder where position information will be applied.
-     * @param preconditions preconditions to apply.
-     */
-    public void apply( final QueryBuilder qb, final List<Predicate> preconditions ) {
-        log.debug( "Position.apply ({} = {}, order = {})", attribute.name(), value, order );
-        if ( !isFirst() ) {
-            switch ( order ) {
-                case ASC -> qb.addWhere( add( qb.greaterThan( attribute, value ), preconditions ) );
-                case DESC -> qb.addWhere( add( qb.lessThan( attribute, value ), preconditions ) );
-            }
-        }
-        qb.orderBy( attribute, order );
-    }
-
-    private List<Predicate> add( final Predicate condition, final List<Predicate> preconditions ) {
-        final List<Predicate> all = new ArrayList<>( preconditions.size() + 1 );
-        all.addAll( preconditions );
-        all.add( condition );
-        return all;
+    private Order direction() {
+        return switch ( order ) {
+            case ASC -> reversed ? Order.DESC : Order.ASC;
+            case DESC -> reversed ? Order.ASC : Order.DESC;
+        };
     }
 
     /**
@@ -97,7 +83,90 @@ public class Position {
                 .build();
     }
 
-    public Predicate getEquals( final QueryBuilder cqb ) {
+    /**
+     * Create a position from this position using a reverse result traversal.
+     *
+     * @return the new reversed position
+     */
+    public Position toReversed() {
+        return toBuilder().reversed( true )
+                .build();
+    }
+
+    /**
+     * Create a predicate for this position using equal to.
+     *
+     * @param cqb the query builder
+     * @return the predicate
+     */
+    public Predicate equalTo( final QueryBuilder cqb ) {
         return cqb.equalTo( attribute, value );
+    }
+
+    /**
+     * Create a predicate for this position using greater than.
+     *
+     * @param cqb the query builder
+     * @return the predicate
+     */
+    public Predicate greaterThan( final QueryBuilder cqb ) {
+        return cqb.greaterThan( attribute, value );
+    }
+
+    /**
+     * Create a predicate for this position using greater than.
+     *
+     * @param cqb the query builder
+     * @return the predicate
+     */
+    public Predicate greaterThanOrEqualTo( final QueryBuilder cqb ) {
+        return cqb.greaterThanOrEqualTo( attribute, value );
+    }
+
+    /**
+     * Create a predicate for this position using less than.
+     *
+     * @param cqb the query builder
+     * @return the predicate
+     */
+    public Predicate lessThan( final QueryBuilder cqb ) {
+        return cqb.lessThan( attribute, value );
+    }
+
+    /**
+     * Create a predicate for this position using less than or equal to.
+     *
+     * @param cqb the query builder
+     * @return the predicate
+     */
+    public Predicate lessThanOrEqualTo( final QueryBuilder cqb ) {
+        return cqb.lessThanOrEqualTo( attribute, value );
+    }
+
+    /**
+     * Create a condition for this position.
+     *
+     * @param cqb the query builder
+     * @return the condition
+     */
+    public Predicate condition( final QueryBuilder cqb ) {
+        return switch ( direction() ) {
+            case ASC -> reversed() ? greaterThanOrEqualTo( cqb ) : greaterThan( cqb );
+            case DESC -> reversed() ? lessThanOrEqualTo( cqb ) : lessThan( cqb );
+        };
+    }
+
+    /**
+     * Create condition for this position and combine it with the given conditions using AND.
+     *
+     * @param cqb           the query builder
+     * @param andConditions the conditions to combine with
+     * @return the combined conditions
+     */
+    public List<Predicate> conditionsAnd( final QueryBuilder cqb, final List<Predicate> andConditions ) {
+        final List<Predicate> conditions = new ArrayList<>( andConditions.size() + 1 );
+        conditions.addAll( andConditions );
+        conditions.add( condition( cqb ) );
+        return Collections.unmodifiableList( conditions );
     }
 }
