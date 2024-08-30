@@ -48,7 +48,7 @@ tasks {
 protobuf {
 	protoc {
 		// Download from repositories
-		artifact = "com.google.protobuf:protoc:4.27.3"
+		artifact = "com.google.protobuf:protoc:4.28.0"
 	}
 	generateProtoTasks {
 		java{
