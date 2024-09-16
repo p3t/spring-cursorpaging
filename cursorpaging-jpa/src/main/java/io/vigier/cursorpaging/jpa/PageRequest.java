@@ -3,6 +3,8 @@ package io.vigier.cursorpaging.jpa;
 import jakarta.persistence.Transient;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
@@ -44,8 +46,8 @@ public class PageRequest<E> {
     /**
      * The filters to apply to the query (removing results)
      */
-    @Singular
-    private final List<Filter> filters;
+    @Builder.Default
+    private final List<Filter> filters = new LinkedList<>();
 
     /**
      * The filter rules to apply to the query (removing results). Note that filter rules are <i>not</i> passed to the
@@ -118,6 +120,38 @@ public class PageRequest<E> {
          */
         public PageRequestBuilder<E> desc( final Attribute attribute ) {
             return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
+        }
+
+        /**
+         * Add a filter to the request. Filter which do not contain a filter value or empty char-sequences as values are
+         * silently ignored for convenience reasons when creating page requests out of query parameters.
+         *
+         * @param filter A new filter definition
+         * @return the builder
+         */
+        public PageRequestBuilder<E> filter( final Filter filter ) {
+            if ( this.filters$value == null ) {
+                this.filters$value = new LinkedList<>();
+            }
+            if ( filter != null && !filter.isEmpty() ) {
+                this.filters$value.add( filter );
+                this.filters$set = true;
+            }
+            return this;
+        }
+
+        /**
+         * Add a list of filters to the page request. Filter which do not contain a filter value or empty char-sequences
+         * as values are silently ignored for convenience reasons when creating page requests out of query parameters.
+         *
+         * @param filters the list of filters to be added
+         * @return the builder
+         */
+        public PageRequestBuilder<E> filters( final Collection<Filter> filters ) {
+            if ( filters != null ) {
+                filters.forEach( this::filter );
+            }
+            return this;
         }
 
         private PageRequestBuilder<E> addPosition( final Position pos ) {
