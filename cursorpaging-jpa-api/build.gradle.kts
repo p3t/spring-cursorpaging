@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
 	api(project(":cursorpaging-jpa"))
-	implementation("com.google.protobuf:protobuf-java:4.28.0")
+	implementation("com.google.protobuf:protobuf-java:4.28.1")
 	api("org.springframework:spring-core")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	api("jakarta.validation:jakarta.validation-api")
@@ -48,7 +48,7 @@ tasks {
 protobuf {
 	protoc {
 		// Download from repositories
-		artifact = "com.google.protobuf:protoc:4.28.0"
+		artifact = "com.google.protobuf:protoc:4.28.1"
 	}
 	generateProtoTasks {
 		java{
