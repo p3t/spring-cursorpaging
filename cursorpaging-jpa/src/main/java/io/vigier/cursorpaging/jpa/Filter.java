@@ -2,6 +2,7 @@ package io.vigier.cursorpaging.jpa;
 
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.Singular;
 import lombok.With;
 import lombok.experimental.Accessors;
+import org.springframework.util.StringUtils;
 
 /**
  * A filter, which can be used to filter a query (remove elements from the result).
@@ -81,10 +83,17 @@ public class Filter {
      * @param qb the query builder
      */
     public void apply( final QueryBuilder qb ) {
-        if ( values.size() > 1 ) {
-            qb.andWhere( qb.isIn( attribute, values ) );
-        } else {
-            qb.andWhere( qb.equalTo( attribute, values.get( 0 ) ) );
+        final List<? extends Comparable<?>> filterValues = values.stream().filter( Objects::nonNull ).toList();
+        if ( filterValues.size() > 1 ) {
+            qb.andWhere( qb.isIn( attribute, filterValues ) );
+        } else if ( filterValues.size() == 1 ) {
+            qb.andWhere( qb.equalTo( attribute, filterValues.get( 0 ) ) );
         }
+    }
+
+    public boolean isEmpty() {
+        return values.isEmpty() || values.stream()
+                .allMatch( v -> Objects.isNull( v ) || (v instanceof final CharSequence cs && !StringUtils.hasText(
+                        cs )) );
     }
 }
