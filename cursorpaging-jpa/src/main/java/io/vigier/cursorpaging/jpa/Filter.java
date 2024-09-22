@@ -1,9 +1,13 @@
 package io.vigier.cursorpaging.jpa;
 
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.SingularAttribute;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -24,6 +28,10 @@ import org.springframework.util.StringUtils;
 @EqualsAndHashCode
 public class Filter {
 
+    private enum Match {
+        EQUAL, LIKE
+    }
+
     /**
      * The attribute to filter on.
      */
@@ -36,6 +44,10 @@ public class Filter {
     @Singular
     private final List<? extends Comparable<?>> values;
 
+    @With
+    @Builder.Default
+    private final Match match = Match.EQUAL;
+
     public static class FilterBuilder {
 
         public FilterBuilder attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
@@ -47,7 +59,14 @@ public class Filter {
             this.attribute = attribute;
             return this;
         }
+
+        public FilterBuilder like( final Comparable<?>... values ) {
+            match( Match.LIKE );
+            this.values = new ArrayList<>( Arrays.asList( values ) );
+            return this;
+        }
     }
+
     /**
      * Create a {@linkplain Filter} with a builder.
      *
@@ -83,11 +102,34 @@ public class Filter {
      * @param qb the query builder
      */
     public void apply( final QueryBuilder qb ) {
-        final List<? extends Comparable<?>> filterValues = values.stream().filter( Objects::nonNull ).toList();
+        switch ( match ) {
+            case EQUAL -> applyEqual( qb );
+            case LIKE -> applyLike( qb );
+        }
+    }
+
+    private void applyLike( final QueryBuilder qb ) {
+        final List<Predicate> predicates = values.stream()
+                .filter( Objects::nonNull )
+                .map( Object::toString )
+                .filter( StringUtils::hasText )
+                .map( v -> qb.isLike( attribute, v ) )
+                .toList();
+        if ( predicates.size() > 1 ) {
+            qb.andWhere( qb.orOne( predicates ) );
+        } else if ( predicates.size() == 1 ) {
+            qb.andWhere( predicates.get( 0 ) );
+        }
+    }
+
+    private void applyEqual( final QueryBuilder qb ) {
+        final List<? extends Comparable<?>> filterValues = values.stream()
+                .filter( Objects::nonNull )
+                .collect( Collectors.toList() );
         if ( filterValues.size() > 1 ) {
             qb.andWhere( qb.isIn( attribute, filterValues ) );
         } else if ( filterValues.size() == 1 ) {
-            qb.andWhere( qb.equalTo( attribute, filterValues.get( 0 ) ) );
+            qb.equalTo( attribute, filterValues.get( 0 ) );
         }
     }
 

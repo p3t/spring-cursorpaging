@@ -227,6 +227,34 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldFilterResultsWithLikeExpression() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        final Filter nameLikeAlp = Filter.create( b -> b.attribute( DataRecord_.name ).like( "Alp%" ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLikeAlp ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+
+        assertThat( firstPage ).isNotNull();
+
+        assertThat( firstPage.getContent() ).allMatch( e -> e.getName().startsWith( "Alp" ) );
+    }
+
+    @Test
+    void shouldFilterResultsWithLikeExpression2() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        final Filter nameLikeAlp = Filter.create( b -> b.attribute( DataRecord_.name ).like( "%r%" ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLikeAlp ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+
+        assertThat( firstPage ).isNotNull();
+
+        assertThat( firstPage.getContent() ).allMatch( e -> e.getName().indexOf( 'r' ) > 0 );
+    }
+
+    @Test
     void shouldReturnTotalCountWhenNoFilterPresent() {
         testDataGenerator.generateData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
