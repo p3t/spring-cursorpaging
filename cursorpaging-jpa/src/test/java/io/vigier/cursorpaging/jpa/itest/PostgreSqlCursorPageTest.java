@@ -243,15 +243,42 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFilterResultsWithLikeExpression2() {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
-        final Filter nameLikeAlp = Filter.create( b -> b.attribute( DataRecord_.name ).like( "%r%" ) );
+        final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "%r%" ) );
         final PageRequest<DataRecord> request = PageRequest.create(
-                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLikeAlp ) );
+                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
         assertThat( firstPage ).isNotNull();
 
         assertThat( firstPage.getContent() ).allMatch( e -> e.getName().indexOf( 'r' ) > 0 );
+    }
+
+    @Test
+    void shouldFilterResultsWithMultipleLikeExpressions() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "A%", "B%" ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+
+        assertThat( firstPage ).isNotNull();
+
+        assertThat( firstPage.getContent() ).allMatch(
+                e -> e.getName().startsWith( "A" ) || e.getName().startsWith( "B" ) );
+    }
+
+    @Test
+    void shouldCountWhereFilterWithLikeExpressions() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "A%", "B%" ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
+
+        final var count = dataRecordRepository.count( request );
+
+        assertThat( count ).isEqualTo( 2 );
     }
 
     @Test
