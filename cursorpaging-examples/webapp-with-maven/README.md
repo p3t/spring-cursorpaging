@@ -8,7 +8,7 @@ application is a simple Spring Boot web application that exposes a REST API to m
 ## Build-notice (gradle vs. maven)!
 
 The project build with gradle is integrated in the cursorpaging overall continuous build - and should work all the time.
-The maven build is using the latest released version of the libraries and is only updated in case of an new release.
+The maven build is using the latest released version of the libraries and is only updated in case of a new release.
 Therefor it is possible, that it will fail in case new features are used which are not yet released!
 
 ## Required infrastructure

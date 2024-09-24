@@ -47,7 +47,7 @@ There are two dependencies:
 </dependencies>
 ```
 
-Current published version is `0.8.0`
+Current published version is available here: https://mvnrepository.com/artifact/io.vigier.cursorpaging
 
 Note: The library is also available on gitHub-packages:
 
@@ -214,6 +214,23 @@ public void queryData() {
 ```
 
 This will only return `DataRecords` with name "Alpha". It is possible to add multiple filters for different attributes or to provide multiple values for one attribute (one must match).
+
+### Example: Use a filter for searching
+
+By default, a `Filter` is using equals, or when multiple values are provided an `IN`-clause.
+In case you want to use a `LIKE`-clause (in case of multiple values, an "or-like" syntax will be used),
+you can construct the filter by providing the match-values with the `like`-method:
+```java
+public void queryData() {
+    final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "%r%" ) );
+    final PageRequest<DataRecord> request = PageRequest.create(
+            b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
+
+    final var firstPage = dataRecordRepository.loadPage( request );
+
+    assertThat( firstPage.getContent() ).allMatch( e -> e.getName().indexOf( 'r' ) > 0 );
+}
+```
 
 ### There is no total count in the Page...
 
