@@ -129,7 +129,7 @@ public class Filter {
         if ( filterValues.size() > 1 ) {
             qb.andWhere( qb.isIn( attribute, filterValues ) );
         } else if ( filterValues.size() == 1 ) {
-            qb.equalTo( attribute, filterValues.get( 0 ) );
+            qb.andWhere( qb.equalTo( attribute, filterValues.get( 0 ) ) );
         }
     }
 
