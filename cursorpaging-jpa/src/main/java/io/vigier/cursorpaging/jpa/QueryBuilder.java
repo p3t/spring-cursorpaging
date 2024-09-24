@@ -62,6 +62,15 @@ public interface QueryBuilder {
     Predicate equalTo( Attribute attribute, Comparable<?> value );
 
     /**
+     * Get a is like predicate
+     *
+     * @param attribute the attribute
+     * @param value     the value to be used as char-sequence
+     * @return the created predicate
+     */
+    Predicate isLike( final Attribute attribute, final String value );
+
+    /**
      * Get a greater than predicate for the given attribute and value
      *
      * @param attribute the attribute
@@ -125,4 +134,6 @@ public interface QueryBuilder {
      * @param order     the order (ASC or DESC)
      */
     void orderBy( Attribute attribute, Order order );
+
+    Predicate orOne( List<Predicate> predicates );
 }

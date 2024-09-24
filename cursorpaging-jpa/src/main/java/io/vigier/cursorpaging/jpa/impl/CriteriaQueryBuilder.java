@@ -117,6 +117,16 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         return cb.equal( attribute.path( root ), value );
     }
 
+    @Override
+    public Predicate isLike( final Attribute attribute, final String value ) {
+        return cb.like( attribute.path( root ), value );
+    }
+
+    @Override
+    public Predicate orOne( final List<Predicate> predicates ) {
+        return cb.or( predicates.toArray( new Predicate[0] ) );
+    }
+
     private void addWhere( final List<Predicate> conditions, final AppendMode appendMode ) {
         final var restriction = query.getRestriction();
         if ( restriction == null ) {
