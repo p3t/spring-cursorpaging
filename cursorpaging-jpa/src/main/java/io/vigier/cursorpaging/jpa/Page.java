@@ -80,6 +80,10 @@ public class Page<E> implements Iterable<E> {
         return Collections.unmodifiableList( content );
     }
 
+    public Optional<Long> getTotalCount() {
+        return self.totalCount();
+    }
+
     /**
      * The request which can be used to fetching the next page.
      *

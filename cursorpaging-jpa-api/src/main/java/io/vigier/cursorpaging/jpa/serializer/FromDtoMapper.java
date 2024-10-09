@@ -32,6 +32,8 @@ class FromDtoMapper<E> {
 
     public PageRequest<E> map() {
         return PageRequest.<E>builder().positions( positions() ).filters( filters() ).pageSize( request.getPageSize() )
+                .enableTotalCount( request.hasTotalCount() )
+                .totalCount( request.hasTotalCount() ? request.getTotalCount() : null )
                 .build();
     }
 

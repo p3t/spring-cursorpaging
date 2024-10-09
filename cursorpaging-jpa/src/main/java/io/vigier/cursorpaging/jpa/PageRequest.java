@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,7 +26,7 @@ import lombok.experimental.Accessors;
  *
  * @param <E> the entity type
  */
-@Builder( toBuilder = true )
+@Builder
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
@@ -63,6 +64,13 @@ public class PageRequest<E> {
     @With
     @Builder.Default
     private final int pageSize = DEFAULT_PAGE_SIZE;
+
+    /**
+     * Control if the total element count should be calculated if missing in the request
+     */
+    private final boolean enableTotalCount;
+
+    private final Long totalCount;
 
     /**
      * Adding some short-cut builder methods to create a request
@@ -154,6 +162,7 @@ public class PageRequest<E> {
             return this;
         }
 
+
         private PageRequestBuilder<E> addPosition( final Position pos ) {
             if ( this.positions == null ) {
                 this.positions = new ArrayList<>( 3 );
@@ -177,6 +186,49 @@ public class PageRequest<E> {
     }
 
     /**
+     * Create a new page-request from the current one, but with the provided customizer applied
+     *
+     * @param c customizer for the copy
+     * @return A new page-request with existing and customized attributes
+     */
+    public PageRequest<E> copy( Consumer<PageRequestBuilder<E>> c ) {
+        PageRequestBuilder<E> builder = PageRequest.<E>builder()
+                .totalCount( totalCount )
+                .enableTotalCount( enableTotalCount )
+                .pageSize( pageSize );
+        c.accept( builder );
+        if ( !builder.filters$set && !filters.isEmpty() ) {
+            builder.filters( filters );
+        }
+        if ( (builder.rules == null || builder.rules.isEmpty()) && !rules.isEmpty() ) {
+            builder.rules( rules );
+        }
+        if ( (builder.positions == null || builder.positions.isEmpty()) && !positions.isEmpty() ) {
+            builder.positions( positions );
+        }
+        return builder.build();
+    }
+
+    /**
+     * Enable the total count calculation for the request.<br> Setting {@code enable = true} forces also the
+     * re-calculation of the total count for a page-request where the total-count is already present.
+     *
+     * @return A copy of the page-request where the total-count is removed and the enable flag is set accordingly
+     */
+    public PageRequest<E> withEnableTotalCount( boolean enable ) {
+        return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
+    }
+
+    /**
+     * Get the total count if present
+     *
+     * @return the total count if present
+     */
+    public Optional<Long> totalCount() {
+        return Optional.ofNullable( totalCount );
+    }
+
+    /**
      * Create a new {@linkplain PageRequest} pointing to the position defined through the attributes of the provided
      * entity.
      *
@@ -184,16 +236,14 @@ public class PageRequest<E> {
      * @return A new PageRequest with the positions set to the values of the provided entity
      */
     public PageRequest<E> positionOf( final E entity ) {
-        return create( b -> b.positions( positions.stream()
-                .map( p -> p.positionOf( entity ) )
-                .toList() ).pageSize( this.pageSize ) );
+        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity ) ).toList() )
+                .pageSize( this.pageSize )
+                .totalCount( this.totalCount )
+                .enableTotalCount( this.enableTotalCount ) );
     }
 
     public PageRequest<E> toReversed() {
-        return PageRequest.<E>builder()
-                .rules( rules ).filters( filters ).positions( positions.stream().map( Position::toReversed ).toList() )
-                .pageSize( pageSize )
-                .build();
+        return copy( b -> b.positions( positions.stream().map( Position::toReversed ).toList() ) );
     }
 
     public boolean isFirstPage() {

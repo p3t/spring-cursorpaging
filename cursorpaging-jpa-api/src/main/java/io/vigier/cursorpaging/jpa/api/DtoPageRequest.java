@@ -26,6 +26,8 @@ public class DtoPageRequest {
     @Max( 100 )
     private int pageSize = 100; // Must not be final!
 
+    private boolean withTotalCount;
+
     public DtoPageRequest withPageSize( final int pageSize ) {
         this.pageSize = pageSize;
         return this;
@@ -54,7 +56,7 @@ public class DtoPageRequest {
                 final Attribute attribute = attributeProvider.apply( name );
                 b.filter( Filter.create( fb -> fb.attribute( attribute ).values( values ) ) );
             } );
-            b.pageSize( pageSize );
+            b.pageSize( pageSize ).enableTotalCount( withTotalCount );
         } );
     }
 

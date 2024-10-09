@@ -232,7 +232,7 @@ public void queryData() {
 }
 ```
 
-### There is no total count in the Page...
+### There is no total count in the Page - by default
 
 Executing a count operation can be a quite expensive operation! Therefore, the total count of records is not part of the page response. It is also usually not required to re-count all records with each page request!
 So, if you need to know the total count of records, you can execute a count query on the repository:
@@ -248,6 +248,27 @@ public long queryCount( PageRequest<DataRecord> request ) {
 ```
 
 The request (if available) should be passed as it might contain filters which reduce returned count.
+
+It is also possible to instruct the repository to do the count for the page request. Still, the total-count will be stored within the returned self & next-page requests, and will not be recalculated for the subsequent requests!
+
+```java
+public void queryData() {
+    final PageRequest<DataRecord> request = PageRequest.create(
+            b -> b.pageSize( 5 ).withTotalCount( true ).asc( DataRecord_.id ) );
+
+    final var page = dataRecordRepository.loadPage( request );
+    log( "Total records: " + page.totalCount() );
+
+    // insert some data...
+
+    final var page2 = dataRecordRepository.loadPage( page.next().orElseThrow() );
+    log( "Total records: " + page2.totalCount() == page.totalCount() ); // will output true
+
+    // force recalculating the total count
+    final var page3 = dataRecordRepository.loadPage( secondPage.next().orElseThrow().withEnableTotalCount( true ) );
+    log( "Total records: " + page3.totalCount() ); // new total count
+}
+```
 
 ### Example: Extend filter with custom rules
 

@@ -12,9 +12,12 @@ class ToDtoMapper<E> {
     private final PageRequest<E> pageRequest;
 
     public Cursor.PageRequest map() {
-        return Cursor.PageRequest.newBuilder().addAllPositions( positions() ).setPageSize( pageRequest.pageSize() )
-                .addAllFilters( filters() )
-                .build();
+        final var builder = Cursor.PageRequest.newBuilder()
+                .addAllPositions( positions() )
+                .setPageSize( pageRequest.pageSize() )
+                .addAllFilters( filters() );
+        pageRequest.totalCount().ifPresent( builder::setTotalCount );
+        return builder.build();
     }
 
 
