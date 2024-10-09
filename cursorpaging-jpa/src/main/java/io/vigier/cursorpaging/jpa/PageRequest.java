@@ -78,7 +78,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> firstPage( final Order order,
-                final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
+                final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
         }
 
@@ -88,7 +88,7 @@ public class PageRequest<E> {
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> asc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
+        public PageRequestBuilder<E> asc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
             return firstPage( Order.ASC, attribute );
         }
 
@@ -98,7 +98,7 @@ public class PageRequest<E> {
          * @param attribute the attribute used to create a position (descending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> desc( final SingularAttribute<E, ? extends Comparable<?>> attribute ) {
+        public PageRequestBuilder<E> desc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
             return firstPage( Order.DESC, attribute );
         }
 
