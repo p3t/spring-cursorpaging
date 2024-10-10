@@ -31,4 +31,5 @@ message PageRequest {
   int32 page_size = 1;
   repeated  Position positions = 2;
   repeated  Filter filters = 3;
+  optional int64 total_count = 4;
 }

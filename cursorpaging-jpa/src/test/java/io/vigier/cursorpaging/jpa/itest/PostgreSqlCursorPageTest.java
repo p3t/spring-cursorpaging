@@ -282,6 +282,30 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldAddCountInPageRequestWhenRequested() {
+        // Given
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).enableTotalCount( true ).asc( DataRecord_.id ) );
+
+        // When
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).isNotNull();
+        assertThat( page.getTotalCount() ).isPresent().get().isEqualTo( (long) TestDataGenerator.NAMES.length );
+
+        testDataGenerator.generateDataRecords( 66 );
+        final var secondPage = dataRecordRepository.loadPage( page.next().orElseThrow() );
+
+        // THEN the totalCount should not be re-calculated
+        assertThat( secondPage.getTotalCount() ).isPresent().get().isEqualTo( (long) TestDataGenerator.NAMES.length );
+
+        final var thirdPage = dataRecordRepository.loadPage(
+                secondPage.next().orElseThrow().withEnableTotalCount( true ) );
+        assertThat( thirdPage.getTotalCount() ).isPresent().get().isEqualTo( TestDataGenerator.NAMES.length + 66L );
+    }
+
+    @Test
     void shouldReturnTotalCountWhenNoFilterPresent() {
         testDataGenerator.generateData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
@@ -290,7 +314,7 @@ class PostgreSqlCursorPageTest {
 
         final var count = dataRecordRepository.count( request );
 
-        assertThat( count ).isEqualTo( 42 );
+        assertThat( count ).isEqualTo( 42L );
     }
 
     @Test

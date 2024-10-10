@@ -55,6 +55,18 @@ public class Filter {
             return this;
         }
 
+        /**
+         * Creates an attribute as path to an embedded entity's property.
+         *
+         * @param attributes the path to the property
+         * @return the builder
+         */
+        @SafeVarargs
+        public final FilterBuilder path( final SingularAttribute<?, ? extends Comparable<?>>... attributes ) {
+            this.attribute = Attribute.path( attributes );
+            return this;
+        }
+
         public FilterBuilder attribute( final Attribute attribute ) {
             this.attribute = attribute;
             return this;

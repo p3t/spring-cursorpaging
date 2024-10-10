@@ -66,9 +66,12 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
                 .setMaxResults( getMaxResultSize( request ) )
                 .getResultList();
 
-        return Page.create( b -> b.content( toContent( results, request ) )
-                .self( request )
-                .next( toNextRequest( results, request ) ) );
+        final PageRequest<E> self = request.enableTotalCount() && request.totalCount().isEmpty() ? request.copy(
+                b -> b.totalCount( count( request ) ) ) : request;
+
+        return Page.create( b -> b.content( toContent( results, self ) ) //
+                .self( self ) //
+                .next( toNextRequest( results, self ) ) );
     }
 
     @Override

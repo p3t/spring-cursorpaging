@@ -73,6 +73,18 @@ public class SerializerTest {
     }
 
     @Test
+    void shouldSerializeTotalCountIfPresent() {
+        final var request = createPageRequest().copy( b -> b.enableTotalCount( true ).totalCount( 42L ) );
+        final EntitySerializer<TestEntity> serializer = EntitySerializer.create();
+        final var serializedRequest = serializer.toBase64( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+        assertThat( deserializedRequest ).isEqualTo( request ).satisfies( r -> {
+            assertThat( r.totalCount() ).isPresent().get().isEqualTo( 42L );
+            assertThat( r.enableTotalCount() ).isTrue();
+        } );
+    }
+
+    @Test
     void shouldLearnAttributesBySerializing() {
         final var request = createPageRequest();
         final EntitySerializer<TestEntity> serializer = EntitySerializer.create();
