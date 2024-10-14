@@ -3,6 +3,8 @@ package io.vigier.cursorpaging.jpa.itest.model;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -49,6 +51,11 @@ public class DataRecord {
 
     @Builder.Default
     private AuditInfo auditInfo = new AuditInfo();
+
+    @Column( name = "status" )
+    @Enumerated( EnumType.STRING )
+    @Builder.Default
+    private Status status = Status.DRAFT;
 
     public static DataRecord create( final Consumer<DataRecordBuilder> c ) {
         final DataRecordBuilder b = DataRecord.builder();

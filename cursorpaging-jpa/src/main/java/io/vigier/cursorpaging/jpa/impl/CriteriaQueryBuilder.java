@@ -104,7 +104,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
     private <V extends Comparable<? super V>> Predicate createGreaterThanOrEqualTo( final Attribute attribute,
             final V value ) {
-        return cb().greaterThanOrEqualTo( attribute.path( root ), value );
+        return cb.greaterThanOrEqualTo( attribute.path( root ), value );
     }
 
     @Override

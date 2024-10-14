@@ -15,6 +15,7 @@ import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
+import io.vigier.cursorpaging.jpa.itest.model.Status;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
@@ -361,6 +362,25 @@ class PostgreSqlCursorPageTest {
 
         assertThat( page.size() ).isEqualTo( countPublicAccess );
         assertThat( count ).isEqualTo( countPublicAccess );
+    }
+
+    @Test
+    void shouldFilterByEnumAttribute() {
+        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final int countDraft = (int) all.stream().filter( r -> r.getStatus() == Status.DRAFT ).count();
+        final int countActive = (int) all.stream().filter( r -> r.getStatus() == Status.ACTIVE ).count();
+
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT ) ) ) );
+
+        assertThat( page ).hasSize( countDraft );
+
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT, Status.ACTIVE ) ) ) );
+
+        assertThat( page2 ).hasSize( countDraft + countActive );
     }
 
     @RequiredArgsConstructor

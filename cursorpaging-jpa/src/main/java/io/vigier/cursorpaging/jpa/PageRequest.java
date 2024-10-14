@@ -111,7 +111,7 @@ public class PageRequest<E> {
         }
 
         /**
-         * Shortcut for adding a position spec of an attribute in ascending  order
+         * Shortcut for adding a position spec of an attribute in ascending order
          *
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
@@ -121,13 +121,35 @@ public class PageRequest<E> {
         }
 
         /**
-         * Shortcut for adding a position spec of an attribute in descending  order
+         * Shortcut for adding a position spec of an attribute in descending order
          *
          * @param attribute the attribute used to create a position (descending ordered)
          * @return the builder
          */
         public PageRequestBuilder<E> desc( final Attribute attribute ) {
             return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
+        }
+
+        /**
+         * Shortcut for adding a position spec of an attribute in ascending order
+         *
+         * @param name the name of the attribute
+         * @param type the type of the attribute
+         * @return the builder
+         */
+        public PageRequestBuilder<E> asc( final String name, final Class<? extends Comparable<?>> type ) {
+            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.ASC ) ) );
+        }
+
+        /**
+         * Shortcut for adding a position spec of an attribute in descending order
+         *
+         * @param name the name of the attribute
+         * @param type the type of the attribute
+         * @return the builder
+         */
+        public PageRequestBuilder<E> desc( final String name, final Class<? extends Comparable<?>> type ) {
+            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.DESC ) ) );
         }
 
         /**

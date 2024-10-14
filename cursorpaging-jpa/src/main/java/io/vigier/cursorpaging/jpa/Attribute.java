@@ -109,10 +109,12 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
      */
     public <E, V extends Comparable<? super V>> Expression<V> path( final Root<E> root ) {
         Path<?> path = root;
+        String name = "";
         for ( final SingleAttribute a : attributes ) {
-            path = path.get( a.name() );
+            name = a.name();
+            path = path.get( name );
         }
-        return path.as( this.<V>type() );
+        return path.getParentPath().get( name );
     }
 
     /**

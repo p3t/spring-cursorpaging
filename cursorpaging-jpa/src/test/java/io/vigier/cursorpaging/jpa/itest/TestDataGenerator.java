@@ -3,6 +3,7 @@ package io.vigier.cursorpaging.jpa.itest;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass;
+import io.vigier.cursorpaging.jpa.itest.model.Status;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
@@ -75,10 +76,15 @@ public class TestDataGenerator {
                     .name( nextName( i ) )
                     .securityClass( securityClasses[i % securityClasses.length] )
                     .auditInfo( AuditInfo.create( created, created.plus( 10, ChronoUnit.MINUTES ) ) )
+                    .status( nextStatus( i ) )
                     .build() ) );
         }
         log.info( "Generated {} test data-records", dataRecordRepository.count() );
         return allRecords;
+    }
+
+    private static Status nextStatus( final int i ) {
+        return Status.values()[i % Status.values().length];
     }
 
     private String nextName( final int i ) {
