@@ -44,6 +44,31 @@ public class Position {
 
     private boolean reversed;
 
+    public static class PositionBuilder {
+
+        /**
+         * Builds a new position, verifies that at least one attribute has been provided
+         *
+         * @return a new position
+         */
+        public Position build() {
+            if ( attribute == null ) {
+                throw new IllegalStateException( "Attribute must not be null" );
+            } else if ( attribute.attributes().isEmpty() ) {
+                throw new IllegalStateException( "Attribute must not be empty" );
+            } else {
+                attribute.attributes().forEach( a -> {
+                    if ( a.name() == null || a.name().isBlank() ) {
+                        throw new IllegalStateException( "Attribute name must not be null or empty" );
+                    } else if ( a.type() == null ) {
+                        throw new IllegalStateException( "Attribute type must not be null" );
+                    }
+                } );
+            }
+            return new Position( attribute, value, order$value, reversed );
+        }
+    }
+
     /**
      * Creates a new {@link Position} with a builder.
      *

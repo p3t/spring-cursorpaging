@@ -61,6 +61,15 @@ public class Page<E> implements Iterable<E> {
     }
 
     /**
+     * Check if the page is empty.
+     *
+     * @return {@code true} if the page is empty, {@code false} otherwise
+     */
+    public boolean isEmpty() {
+        return content.isEmpty();
+    }
+
+    /**
      * Loop over the content of the page
      *
      * @param action the action to perform on each element

@@ -4,6 +4,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -92,20 +93,55 @@ public class Filter {
     }
 
     /**
-     * Create a {@linkplain Filter} with the given attribute and value (s).
+     * Create a {@linkplain Filter} on an attribute matching the given value(s).
      *
      * @param attribute the attribute to filter on
-     * @param values    the value(s) to filter on
+     * @param values    the value(s) to filter for
      * @return a new {@linkplain Filter}
      */
     public static Filter attributeIs( final SingularAttribute<?, ? extends Comparable<?>> attribute,
             final Comparable<?>... values ) {
-        final Attribute attr = Attribute.of( attribute );
-        final FilterBuilder builder = Filter.builder().attribute( attr );
-        for ( final Comparable<?> v : values ) {
-            builder.value( v );
-        }
-        return builder.build();
+        return attributeIs( Attribute.of( attribute ), values );
+    }
+
+    /**
+     * Create a {@linkplain Filter} on an attribute matching the given value(s).
+     *
+     * @param attribute the attribute to filter on
+     * @param values    the value(s) to filter for
+     * @return a new {@linkplain Filter}
+     */
+    public static Filter attributeIs( final SingularAttribute<?, ? extends Comparable<?>> attribute,
+            final Collection<Comparable<?>> values ) {
+        return attributeIs( Attribute.of( attribute ), values );
+    }
+
+    /**
+     * Create a {@linkplain Filter} on an attribute matching the given value(s).
+     *
+     * @param attribute the attribute to filter on
+     * @param values    the value(s) to filter for
+     * @return a new {@linkplain Filter}
+     */
+    public static Filter attributeIs( final Attribute attribute, final Comparable<?>... values ) {
+        return attributeIs( attribute, List.of( values ) );
+    }
+
+    /**
+     * Create a {@linkplain Filter} on an attribute matching the given value(s).
+     *
+     * @param attribute the attribute to filter on
+     * @param values    the value(s) to filter for
+     * @return a new {@linkplain Filter}
+     */
+    public static Filter attributeIs( final Attribute attribute, final Collection<Comparable<?>> values ) {
+        return Filter.create( b -> b.attribute( attribute ).values( values ) );
+    }
+
+    <T extends Comparable<? super T>> List<T> values( Class<T> valueType ) {
+        return values.stream()
+                .map( v -> valueType.isAssignableFrom( v.getClass() ) ? valueType.cast( v ) : null )
+                .toList();
     }
 
     /**
