@@ -109,16 +109,26 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
     @Override
     public Predicate isIn( final Attribute attribute, final Collection<? extends Comparable<?>> values ) {
+        if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
+            return cb.lower( attribute.path( root ) )
+                    .in( values.stream().map( v -> v.toString().toLowerCase() ).toList() );
+        }
         return attribute.path( root ).in( values );
     }
 
     @Override
     public Predicate equalTo( final Attribute attribute, final Comparable<?> value ) {
+        if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
+            return cb.equal( cb.lower( attribute.path( root ) ), value.toString().toLowerCase() );
+        }
         return cb.equal( attribute.path( root ), value );
     }
 
     @Override
     public Predicate isLike( final Attribute attribute, final String value ) {
+        if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
+            return cb.like( cb.lower( attribute.path( root ) ), value.toLowerCase() );
+        }
         return cb.like( attribute.path( root ), value );
     }
 

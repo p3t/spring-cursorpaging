@@ -8,6 +8,8 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.Arrays;
 import java.util.List;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 
 
@@ -18,7 +20,19 @@ import lombok.Singular;
  * to generate queries.
  */
 @Builder( toBuilder = true )
-public record Attribute( @Singular List<SingleAttribute> attributes ) {
+@RequiredArgsConstructor
+@EqualsAndHashCode
+public class Attribute {
+
+    @Singular
+    private final List<SingleAttribute> attributes;
+
+    private final boolean ignoreCase;
+
+    public Attribute( List<SingleAttribute> attributes ) {
+        this.attributes = attributes;
+        this.ignoreCase = false;
+    }
 
     /**
      * Creates a new attribute from a name and a type.
@@ -84,6 +98,10 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
         return (Comparable<?>) result;
     }
 
+    List<SingleAttribute> attributes() {
+        return attributes;
+    }
+
     @Override
     public String toString() {
         return name() + " : " + type().getSimpleName();
@@ -125,5 +143,38 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
     @SuppressWarnings( "unchecked" )
     public <V extends Comparable<? super V>> Class<V> type() {
         return (Class<V>) attributes.get( attributes.size() - 1 ).type();
+    }
+
+    /**
+     * Instructs equal, like and in-operations to ignore the case of the value. Is ignored for not-character attributes
+     * and for greater/lower than operations!
+     *
+     * @param ignoreCase instruction to ignore character case for comparison operations.
+     * @return New attribute with flag set.
+     */
+    Attribute ignoreCase( boolean ignoreCase ) {
+        return toBuilder().ignoreCase( ignoreCase )
+                .build();
+    }
+
+    /**
+     * Enables the ignore case flag for this attribute.
+     *
+     * @return New attribute with flag set to true.
+     * @see #ignoreCase(boolean)
+     */
+    public Attribute withIgnoreCase() {
+        return toBuilder().ignoreCase( true )
+                .build();
+    }
+
+    /**
+     * Get the state of the ignore case flag.
+     *
+     * @return true when comparison should be case-insensitive
+     * @see #ignoreCase(boolean)
+     */
+    public boolean ignoreCase() {
+        return ignoreCase;
     }
 }

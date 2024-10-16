@@ -37,6 +37,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
+import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_ALPHA;
+import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_BRAVO;
 import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.READ;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -410,6 +412,63 @@ class PostgreSqlCursorPageTest {
                 .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT, Status.ACTIVE ) ) ) );
 
         assertThat( page2 ).hasSize( countDraft + countActive );
+    }
+
+    @Test
+    void shouldNotIgnoreCaseInEqualFilter() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
+                Filter.attributeIs( Attribute.of( DataRecord_.name ), NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filter.attributeIs( Attribute.of( DataRecord_.name ), "alPHa" ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filter.attributeIs( Attribute.of( DataRecord_.name ), "alPHa", "BRAVO" ) ) ) ) ) //
+                .isEmpty();
+    }
+
+    @Test
+    void shouldIgnoreCaseInEqualFilter() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+
+        // equal
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
+                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(),
+                        NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
+
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
+                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(), "alPHa" ) ) ) ) ) //
+                .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
+    }
+
+    @Test
+    void shouldIgnoreCaseInWithInFilter() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+
+        // in operation
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
+                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(), "alPHa",
+                        NAME_BRAVO.toUpperCase() ) ) ) ) ) //
+                .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
+    }
+
+    @Test
+    void shouldIgnoreCaseWithLikeFilter() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+
+        // Like operation
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter( Filter.create(
+                f -> f.attribute( Attribute.of( DataRecord_.name ).withIgnoreCase() ).like( "ALPH%" ) ) ) ) ) ) //
+                .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
+
+        // like-in operation
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter( Filter.create(
+                f -> f.attribute( Attribute.of( DataRecord_.name ).withIgnoreCase() )
+                        .like( "ALPH%", "BRA%" ) ) ) ) ) ) //
+                .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
 
     @Test
