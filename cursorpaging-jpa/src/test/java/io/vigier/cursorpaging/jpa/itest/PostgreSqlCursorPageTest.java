@@ -16,9 +16,11 @@ import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.model.Status;
+import io.vigier.cursorpaging.jpa.itest.model.Tag_;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
+import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
@@ -57,6 +59,8 @@ class PostgreSqlCursorPageTest {
     private SecurityClassRepository securityClassRepository;
     @Autowired
     private TestDataGenerator testDataGenerator;
+    @Autowired
+    private TagRepository tagRepository;
 
     @Test
     void contextLoads() {
@@ -381,6 +385,64 @@ class PostgreSqlCursorPageTest {
                 .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT, Status.ACTIVE ) ) ) );
 
         assertThat( page2 ).hasSize( countDraft + countActive );
+    }
+
+    @Test
+    void shouldFilterByEntryInManyToOneRelationship() {
+        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
+        final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
+
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( DataRecord_.securityClass,
+                        securityClassRepository.findByName( "public" ) ) ) ) );
+
+        assertThat( page ).hasSize( countPublic );
+
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( DataRecord_.securityClass, securityClassRepository.findByName( "public" ),
+                        securityClassRepository.findByName( "standard" ) ) ) ) );
+
+        assertThat( page2 ).hasSize( countPublic + countStandard );
+    }
+
+    @Test
+    void shouldFilterByAttributeOfEntryInManyToOneRelationship() {
+        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
+        final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
+
+        final var attributeSecurityClassLevel = Attribute.path( DataRecord_.securityClass, SecurityClass_.level );
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( attributeSecurityClassLevel, 0 ) ) ) );
+
+        assertThat( page ).hasSize( countPublic );
+
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( attributeSecurityClassLevel, 0, 1 ) ) ) );
+
+        assertThat( page2 ).hasSize( countPublic + countStandard );
+    }
+
+    @Test
+    void shouldFilterByAttributeOfEntryInManyToManyRelationship() {
+        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        var redTag = tagRepository.findByName( "red" );
+        var greenTag = tagRepository.findByName( "green" );
+        final int redOrGreenCount = (int) all.stream()
+                .filter( r -> r.getTags().contains( greenTag ) || r.getTags().contains( redTag ) )
+                .count();
+
+        final var attribute = Attribute.path( DataRecord_.tags, Tag_.name );
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .filter( Filter.attributeIs( attribute, "green", "red" ) ) ) );
+
+        assertThat( page ).hasSize( redOrGreenCount );
     }
 
     @RequiredArgsConstructor
