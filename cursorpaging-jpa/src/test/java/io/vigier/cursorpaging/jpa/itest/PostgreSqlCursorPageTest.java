@@ -275,6 +275,31 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldFilterByGreaterAndLowerThan() {
+        final var count = TestDataGenerator.NAMES.length;
+        testDataGenerator.generateData( count );
+        var all = dataRecordRepository.loadPage( PageRequest.create(
+                        r -> r.asc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) ).pageSize( count ) ) )
+                .content();
+
+        final var createdAt = Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt );
+        final var firstCreatedAt = all.get( 0 ).getAuditInfo().getCreatedAt();
+        final var lastCreatedAt = all.get( all.size() - 1 ).getAuditInfo().getCreatedAt();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filter.create( f -> f.attribute( createdAt ).greaterThan( firstCreatedAt ) ) ) ) ) ) //
+                .hasSize( all.size() - 1 );
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filter.create( f -> f.attribute( createdAt ).greaterThan( lastCreatedAt ) ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filter.create( f -> f.attribute( createdAt ).lessThan( firstCreatedAt ) ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filter.create( f -> f.attribute( createdAt ).lessThan( lastCreatedAt ) ) ) ) ) ) //
+                .hasSize( all.size() - 1 );
+    }
+
+    @Test
     void shouldCountWhereFilterWithLikeExpressions() {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
         final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "A%", "B%" ) );

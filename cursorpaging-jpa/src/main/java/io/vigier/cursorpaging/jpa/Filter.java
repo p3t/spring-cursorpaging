@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
 public class Filter {
 
     private enum Match {
-        EQUAL, LIKE
+        EQUAL, LIKE, GREATER_THAN, LESS_THAN
     }
 
     /**
@@ -63,7 +63,8 @@ public class Filter {
          * @return the builder
          */
         @SafeVarargs
-        public final FilterBuilder path( final SingularAttribute<?, ? extends Comparable<?>>... attributes ) {
+        public final FilterBuilder path(
+                final jakarta.persistence.metamodel.Attribute<?, ? extends Comparable<?>>... attributes ) {
             this.attribute = Attribute.path( attributes );
             return this;
         }
@@ -77,6 +78,25 @@ public class Filter {
             match( Match.LIKE );
             this.values = new ArrayList<>( Arrays.asList( values ) );
             return this;
+        }
+
+        public FilterBuilder greaterThan( final Comparable<?>... values ) {
+            match( Match.GREATER_THAN );
+            this.values = new ArrayList<>( Arrays.asList( values ) );
+            return this;
+        }
+
+        public FilterBuilder lessThan( final Comparable<?>... values ) {
+            match( Match.LESS_THAN );
+            this.values = new ArrayList<>( Arrays.asList( values ) );
+            return this;
+        }
+
+        public Filter build() {
+            if ( attribute == null ) {
+                throw new NullPointerException( "Filter attribute must not be null!" );
+            }
+            return new Filter( attribute, values, match$set ? match$value : Match.EQUAL );
         }
     }
 
@@ -153,6 +173,8 @@ public class Filter {
         switch ( match ) {
             case EQUAL -> applyEqual( qb );
             case LIKE -> applyLike( qb );
+            case GREATER_THAN -> applyGreaterThan( qb );
+            case LESS_THAN -> applyLessThan( qb );
         }
     }
 
@@ -162,6 +184,30 @@ public class Filter {
                 .map( Object::toString )
                 .filter( StringUtils::hasText )
                 .map( v -> qb.isLike( attribute, v ) )
+                .toList();
+        if ( predicates.size() > 1 ) {
+            qb.andWhere( qb.orOne( predicates ) );
+        } else if ( predicates.size() == 1 ) {
+            qb.andWhere( predicates.get( 0 ) );
+        }
+    }
+
+    private void applyGreaterThan( final QueryBuilder qb ) {
+        final List<Predicate> predicates = values.stream()
+                .filter( Objects::nonNull )
+                .map( v -> qb.greaterThan( attribute, v ) )
+                .toList();
+        if ( predicates.size() > 1 ) {
+            qb.andWhere( qb.orOne( predicates ) );
+        } else if ( predicates.size() == 1 ) {
+            qb.andWhere( predicates.get( 0 ) );
+        }
+    }
+
+    private void applyLessThan( final QueryBuilder qb ) {
+        final List<Predicate> predicates = values.stream()
+                .filter( Objects::nonNull )
+                .map( v -> qb.lessThan( attribute, v ) )
                 .toList();
         if ( predicates.size() > 1 ) {
             qb.andWhere( qb.orOne( predicates ) );
