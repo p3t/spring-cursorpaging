@@ -25,9 +25,11 @@ import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.WRITE;
 @Slf4j
 public class TestDataGenerator {
 
-    public static final String[] NAMES = { "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel",
-            "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra",
-            "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };
+    public static String NAME_ALPHA = "Alpha";
+    public static String NAME_BRAVO = "Bravo";
+    public static final String[] NAMES = { NAME_ALPHA, NAME_BRAVO, "Charlie", "Delta", "Echo", "Foxtrot", "Golf",
+            "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo",
+            "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };
     public static final String[] TAGS = { "red", "green", "blue", "yellow", "black", "white", "orange", "purple",
             "pink", "brown" };
     public static final String SUBJECT_READ_STANDARD = "read_standard";
