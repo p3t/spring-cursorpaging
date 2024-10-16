@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SecurityClassRepository extends JpaRepository<SecurityClass, Integer> {
 
+    SecurityClass findByName( String name );
 }

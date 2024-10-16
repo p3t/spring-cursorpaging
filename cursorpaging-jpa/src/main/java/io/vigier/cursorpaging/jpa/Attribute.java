@@ -48,7 +48,7 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
      * @param path Path pointing to an attribute (of an embedded entity)
      * @return The attribute describing the path and the type of the single attributes
      */
-    public static Attribute path( final SingularAttribute<?, ?>... path ) {
+    public static Attribute path( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return new Attribute( Arrays.stream( path ).map( SingleAttribute::of ).toList() );
     }
 
@@ -62,7 +62,6 @@ public record Attribute( @Singular List<SingleAttribute> attributes ) {
     public static Attribute path( final SingleAttribute... path ) {
         return new Attribute( Arrays.asList( path ) );
     }
-
     
     public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2 ) {
         return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ) ) );

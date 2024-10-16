@@ -21,7 +21,7 @@ import lombok.experimental.FieldNameConstants;
 @ToString
 @EqualsAndHashCode( onlyExplicitlyIncluded = true )
 @FieldNameConstants
-public class SecurityClass {
+public class SecurityClass implements Comparable<SecurityClass> {
 
     @EqualsAndHashCode.Include
     @Id
@@ -30,4 +30,8 @@ public class SecurityClass {
     @Column( name = "name" )
     private String name;
 
+    @Override
+    public int compareTo( final SecurityClass o ) {
+        return Integer.compare( level, o.level );
+    }
 }

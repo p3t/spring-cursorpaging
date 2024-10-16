@@ -5,11 +5,16 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -48,6 +53,14 @@ public class DataRecord {
             nullable = false,
             foreignKey = @ForeignKey( name = "fk_datarecord_securityclass_id" ) )
     private SecurityClass securityClass;
+
+    @ManyToMany( cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER )
+    @JoinTable( name = "datarecord_tag",
+            joinColumns = @JoinColumn( name = "datarecord_id", referencedColumnName = "id" ),
+            inverseJoinColumns = @JoinColumn( name = "tag_id", referencedColumnName = "id" ) )
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
+
 
     @Builder.Default
     private AuditInfo auditInfo = new AuditInfo();

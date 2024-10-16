@@ -1,6 +1,5 @@
 package io.vigier.cursorpaging.jpa;
 
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
 
 /**
@@ -27,7 +26,7 @@ public record SingleAttribute(
      * @param attribute the attribute from the JPA metamodel.
      * @return the new instance.
      */
-    public static SingleAttribute of( final SingularAttribute<?, ?> attribute ) {
+    public static SingleAttribute of( final jakarta.persistence.metamodel.Attribute<?, ?> attribute ) {
         return new SingleAttribute( attribute.getName(), attribute.getJavaType() );
     }
 
