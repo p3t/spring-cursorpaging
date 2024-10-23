@@ -16,7 +16,7 @@ import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
-import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import io.vigier.cursorpaging.jpa.validation.MaxSize;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class DataRecordController {
     // Skipping the service layer ;-)
     private final DataRecordRepository dataRecordRepository;
     private final DtoDataRecordMapper dtoDataRecordMapper;
-    private final EntitySerializer<DataRecord> serializer;
+    private final RequestSerializer<DataRecord> serializer;
 
     @Operation( summary = "Get data records, page by page" )
     @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )

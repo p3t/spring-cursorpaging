@@ -14,7 +14,7 @@ public class PageRequestTest {
     @ValueSource( strings = { "  ", "\t", "\n" } )
     void shouldIgnoreEmptyFilter( final String value ) {
         final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) )
-                .filter( Filter.create( f -> f.attribute( Attribute.of( "test", String.class ) ).value( value ) ) ) );
+                .filter( Filter.create( f -> f.attribute( Attribute.of( "test", String.class ) ).equalTo( value ) ) ) );
 
         assertThat( pageRequest.filters() ).isEmpty();
     }
@@ -22,7 +22,7 @@ public class PageRequestTest {
     @Test
     void shouldAddPositionAndFilterIfValuePresent() {
         final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) )
-                .filter( Filter.create( f -> f.attribute( Attribute.of( "test", String.class ) ).value( "value" ) ) ) );
+                .filter( Filters.attribute( "test", String.class ).equalTo( "value" ) ) );
 
         assertThat( pageRequest.filters() ).hasSize( 1 );
         assertThat( pageRequest.positions() ).hasSize( 1 ).first().satisfies( p -> {

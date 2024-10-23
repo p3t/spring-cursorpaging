@@ -15,6 +15,13 @@ enum Order {
   DESC = 1;
 }
 
+enum FilterType {
+  EQ = 0;
+  GT = 1;
+  LT = 2;
+  LIKE = 3;
+}
+
 message Position {
   Attribute attribute = 1;
   Value value = 2;
@@ -25,11 +32,32 @@ message Position {
 message Filter {
   Attribute attribute = 1;
   repeated Value values = 2;
+  optional FilterType type = 3;
+}
+
+message FilterList {
+  enum FilterListType {
+    AND = 0;
+    OR = 1;
+  }
+  optional FilterListType type = 1;
+  repeated Filter filters = 2;
+  repeated FilterList filter_lists = 3;
+}
+
+message Rule {
+  message Parameter {
+    string name = 1;
+    repeated Value values = 2;
+  }
+  string name = 1;
+  repeated Parameter parameters = 2;
 }
 
 message PageRequest {
   int32 page_size = 1;
-  repeated  Position positions = 2;
-  repeated  Filter filters = 3;
-  optional int64 total_count = 4;
+  repeated Position positions = 2;
+  optional FilterList filters = 3;
+  repeated Rule filter_rules = 4;
+  optional int64 total_count = 5;
 }

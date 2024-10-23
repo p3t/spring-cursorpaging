@@ -17,6 +17,7 @@ dependencies {
     implementation("org.kordamp.gradle:project-gradle-plugin:$kordampVersion")
     implementation("org.kordamp.gradle:spotbugs-gradle-plugin:$kordampVersion")
     implementation("org.kordamp.gradle:coveralls-gradle-plugin:$kordampVersion")
+    implementation("org.sonarqube:org.sonarqube.gradle.plugin:5.1.0.4882")
 //    implementation("org.kordamp.gradle:base-gradle-plugin:$kordampVersion")
 //    implementation("org.kordamp.gradle:jacoco-gradle-plugin:$kordampVersion")
     implementation("gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.2")

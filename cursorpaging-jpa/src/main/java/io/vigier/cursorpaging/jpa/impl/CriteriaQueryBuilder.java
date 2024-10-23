@@ -8,6 +8,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -132,21 +133,23 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
         return cb.like( attribute.path( root ), value );
     }
 
-    @Override
-    public Predicate orOne( final List<Predicate> predicates ) {
-        return cb.or( predicates.toArray( new Predicate[0] ) );
-    }
-
     private void addWhere( final List<Predicate> conditions, final AppendMode appendMode ) {
         final var restriction = query.getRestriction();
         if ( restriction == null ) {
             query.where( conditions.toArray( new Predicate[0] ) );
         } else {
             switch ( appendMode ) {
-                case AND -> query.where( cb.and( conditions.toArray( new Predicate[0] ) ) );
+                case AND -> query.where( cb.and( listOf( restriction, conditions ).toArray( new Predicate[0] ) ) );
                 case OR -> query.where( cb.or( restriction, cb.and( conditions.toArray( new Predicate[0] ) ) ) );
             }
         }
+    }
+
+    private static List<Predicate> listOf( final Predicate restriction, final List<Predicate> conditions ) {
+        List<Predicate> allConditions = new ArrayList<>( conditions.size() + 1 );
+        allConditions.add( restriction );
+        allConditions.addAll( conditions );
+        return allConditions;
     }
 
     @Override

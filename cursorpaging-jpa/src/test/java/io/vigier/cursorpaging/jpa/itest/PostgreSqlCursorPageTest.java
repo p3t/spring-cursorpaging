@@ -3,6 +3,7 @@ package io.vigier.cursorpaging.jpa.itest;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
+import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
@@ -12,10 +13,10 @@ import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo_;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
-import io.vigier.cursorpaging.jpa.itest.model.DataRecord.Fields;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
 import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.model.Status;
+import io.vigier.cursorpaging.jpa.itest.model.Tag;
 import io.vigier.cursorpaging.jpa.itest.model.Tag_;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
@@ -37,6 +38,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
+import static io.vigier.cursorpaging.jpa.Filters.attribute;
 import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_ALPHA;
 import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_BRAVO;
 import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.READ;
@@ -48,7 +50,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import( { PostgreSqlTestConfiguration.class, JpaConfig.class } )
 class PostgreSqlCursorPageTest {
 
-    public static final Attribute DATARECORD_ID = Attribute.of( Fields.id, UUID.class );
     public static final String SUBJECT_READ_STANDARD = "read_standard";
 
     @Autowired
@@ -84,7 +85,7 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( 100 );
         final var all = dataRecordRepository.findAll();
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull();
@@ -102,7 +103,8 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFetchNextPage() {
         testDataGenerator.generateData( 30 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DATARECORD_ID ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 10 ).asc( Attribute.of( DataRecord.Fields.id, UUID.class ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull().hasSize( 10 );
@@ -207,7 +209,7 @@ class PostgreSqlCursorPageTest {
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.name, "Alpha" ) ) );
+                .filter( attribute( DataRecord_.name ).equalTo( "Alpha" ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
@@ -219,8 +221,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFilterResultsWithInPredicate() {
         testDataGenerator.generateData( 100 );
-        final Filter nameIsAlphaOrBravo = Filter.create(
-                b -> b.attribute( DataRecord_.name ).value( "Alpha" ).value( "Bravo" ) );
+        final Filter nameIsAlphaOrBravo = Filter.create( b -> b.attribute( DataRecord_.name ).in( "Alpha", "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id ).filter( nameIsAlphaOrBravo ) );
@@ -355,7 +356,7 @@ class PostgreSqlCursorPageTest {
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.name, "name-does-not-exist" ) ) );
+                .filter( attribute( DataRecord_.name ).equalTo( "name-does-not-exist" ) ) );
 
         final var count = dataRecordRepository.count( request );
 
@@ -365,7 +366,7 @@ class PostgreSqlCursorPageTest {
     private static class OnlyPublicFilterRule implements FilterRule {
 
         @Override
-        public Predicate getPredicate( final QueryBuilder cqb ) {
+        public Predicate toPredicate( final QueryBuilder cqb ) {
             final var builder = cqb.cb();
             final var root = cqb.root();
             root.fetch( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
@@ -373,11 +374,16 @@ class PostgreSqlCursorPageTest {
         }
 
         @Override
-        public Predicate getCountPredicate( final QueryBuilder cqb ) {
+        public Predicate toCountPredicate( final QueryBuilder cqb ) {
             final var builder = cqb.cb();
             final var root = cqb.root();
             root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
             return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), 0 );
+        }
+
+        @Override
+        public List<Attribute> attributes() {
+            return List.of( Attribute.path( DataRecord_.securityClass, SecurityClass_.level ) );
         }
     }
 
@@ -403,13 +409,13 @@ class PostgreSqlCursorPageTest {
 
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT ) ) ) );
+                .filter( attribute( DataRecord_.status ).equalTo( Status.DRAFT ) ) ) );
 
         assertThat( page ).hasSize( countDraft );
 
         final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.status, Status.DRAFT, Status.ACTIVE ) ) ) );
+                .filter( attribute( DataRecord_.status ).in( Status.DRAFT, Status.ACTIVE ) ) ) );
 
         assertThat( page2 ).hasSize( countDraft + countActive );
     }
@@ -419,13 +425,13 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filter.attributeIs( Attribute.of( DataRecord_.name ), NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
                 .isEmpty();
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( Filter.attributeIs( Attribute.of( DataRecord_.name ), "alPHa" ) ) ) ) ) //
+                r -> r.filter( attribute( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
                 .isEmpty();
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( Filter.attributeIs( Attribute.of( DataRecord_.name ), "alPHa", "BRAVO" ) ) ) ) ) //
+                r -> r.filter( attribute( DataRecord_.name ).in( "alPHa", "BRAVO" ) ) ) ) ) //
                 .isEmpty();
     }
 
@@ -435,12 +441,11 @@ class PostgreSqlCursorPageTest {
 
         // equal
         assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(),
-                        NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                Filters.ignoreCase( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
 
         assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(), "alPHa" ) ) ) ) ) //
+                Filters.ignoreCase( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
     }
 
@@ -450,7 +455,7 @@ class PostgreSqlCursorPageTest {
 
         // in operation
         assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filter.attributeIs( Attribute.of( DataRecord_.name ).withIgnoreCase(), "alPHa",
+                Filters.ignoreCase( DataRecord_.name ).in( "alPHa",
                         NAME_BRAVO.toUpperCase() ) ) ) ) ) //
                 .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
@@ -460,14 +465,13 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         // Like operation
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter( Filter.create(
-                f -> f.attribute( Attribute.of( DataRecord_.name ).withIgnoreCase() ).like( "ALPH%" ) ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage(
+                PageRequest.create( r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%" ) ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
 
         // like-in operation
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter( Filter.create(
-                f -> f.attribute( Attribute.of( DataRecord_.name ).withIgnoreCase() )
-                        .like( "ALPH%", "BRA%" ) ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%", "BRA%" ) ) ) ) )  //
                 .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
 
@@ -479,14 +483,14 @@ class PostgreSqlCursorPageTest {
 
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.securityClass,
+                .filter( attribute( DataRecord_.securityClass ).equalTo(
                         securityClassRepository.findByName( "public" ) ) ) ) );
 
         assertThat( page ).hasSize( countPublic );
 
         final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( DataRecord_.securityClass, securityClassRepository.findByName( "public" ),
+                .filter( attribute( DataRecord_.securityClass ).in( securityClassRepository.findByName( "public" ),
                         securityClassRepository.findByName( "standard" ) ) ) ) );
 
         assertThat( page2 ).hasSize( countPublic + countStandard );
@@ -501,13 +505,12 @@ class PostgreSqlCursorPageTest {
         final var attributeSecurityClassLevel = Attribute.path( DataRecord_.securityClass, SecurityClass_.level );
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( attributeSecurityClassLevel, 0 ) ) ) );
+                .filter( attribute( attributeSecurityClassLevel ).equalTo( 0 ) ) ) );
 
         assertThat( page ).hasSize( countPublic );
 
         final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( attributeSecurityClassLevel, 0, 1 ) ) ) );
+                .asc( DataRecord_.id ).filter( attribute( attributeSecurityClassLevel ).in( 0, 1 ) ) ) );
 
         assertThat( page2 ).hasSize( countPublic + countStandard );
     }
@@ -521,10 +524,9 @@ class PostgreSqlCursorPageTest {
                 .filter( r -> r.getTags().contains( greenTag ) || r.getTags().contains( redTag ) )
                 .count();
 
-        final var attribute = Attribute.path( DataRecord_.tags, Tag_.name );
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .filter( Filter.attributeIs( attribute, "green", "red" ) ) ) );
+                .filter( attribute( DataRecord_.tags, Tag_.name ).in( "green", "red" ) ) ) );
 
         assertThat( page ).hasSize( redOrGreenCount );
     }
@@ -537,7 +539,7 @@ class PostgreSqlCursorPageTest {
         private final AccessEntry.Action action;
 
         @Override
-        public Predicate getPredicate( final QueryBuilder cqb ) {
+        public Predicate toPredicate( final QueryBuilder cqb ) {
             final var builder = cqb.cb();
             final var root = cqb.root();
             root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
@@ -549,6 +551,7 @@ class PostgreSqlCursorPageTest {
                             builder.equal( ae.get( AccessEntry_.ACTION ), action ) );
             return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), subquery );
         }
+
     }
 
     @Test
@@ -573,6 +576,53 @@ class PostgreSqlCursorPageTest {
         assertThat( shouldBeEmpty ).isNotNull();
         assertThat( shouldBeEmpty.getContent() ).isEmpty();
         assertThat( dataRecordRepository.count( request2 ) ).isEqualTo( 0 );
+    }
+
+    @Test
+    void shouldCombineFilterByOrCondition() {
+        final var all = testDataGenerator.generateData( 99 );
+        final int expectedSize = (int) all.stream()
+                .filter( r -> r.getName().equals( NAME_ALPHA ) || r.getName().equals( NAME_BRAVO ) )
+                .count();
+        var nameIsAlpha = Filters.attribute( DataRecord_.name ).equalTo( NAME_ALPHA );
+        var nameIsBravo = Filters.attribute( DataRecord_.name ).equalTo( NAME_BRAVO );
+        var request = PageRequest.<DataRecord>create(
+                r -> r.desc( DataRecord_.id ).filter( Filters.or( nameIsAlpha, nameIsBravo ) ) );
+
+        var result = dataRecordRepository.loadPage( request );
+
+        assertThat( result ).hasSize( expectedSize )
+                .allSatisfy( r -> assertThat( r ).extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO ) );
+    }
+
+
+    @Test
+    void shouldCombineAndWithOrFilter() {
+        final var all = testDataGenerator.generateData( 99 );
+        Tag red = tagRepository.findByName( "red" );
+        Tag green = tagRepository.findByName( "green" );
+        final int expectedSize = (int) all.stream()
+                .filter( r -> (r.getName().equals( NAME_ALPHA ) && r.getTags().contains( red )) //
+                        || (r.getName().equals( NAME_BRAVO ) && r.getTags().contains( green )) )
+                .count();
+        var redAlpha = Filters.and( Filters.attribute( DataRecord_.name ).equalTo( NAME_ALPHA ),
+                Filters.attribute( DataRecord_.tags, Tag_.name ).equalTo( red.getName() ) );
+        var greenBravo = Filters.and( Filters.attribute( DataRecord_.name ).equalTo( NAME_BRAVO ),
+                Filters.attribute( DataRecord_.tags, Tag_.name ).equalTo( green.getName() ) );
+        var request = PageRequest.<DataRecord>create(
+                r -> r.desc( DataRecord_.id ).filter( Filters.or( redAlpha, greenBravo ) ) );
+
+        var result = dataRecordRepository.loadPage( request );
+
+        assertThat( result ).hasSize( expectedSize ).allSatisfy( r -> {
+            if ( r.getName().equals( NAME_ALPHA ) ) {
+                assertThat( r.getTags() ).contains( red );
+            } else if ( r.getName().equals( NAME_BRAVO ) ) {
+                assertThat( r.getTags() ).contains( green );
+            } else {
+                throw new AssertionError( "Unexpected name: " + r.getName() );
+            }
+        } );
     }
 
     @Test

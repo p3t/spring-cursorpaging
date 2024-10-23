@@ -8,7 +8,7 @@ import org.springframework.core.convert.ConversionService;
 
 @Builder
 @RequiredArgsConstructor
-public class EntitySerializerFactory {
+public class RequestSerializerFactory {
 
     private final ConversionService conversionService;
 
@@ -16,11 +16,11 @@ public class EntitySerializerFactory {
     private final Encrypter encrypter = Encrypter.getInstance();
 
     @Builder.Default
-    private final Map<Class<?>, EntitySerializer<?>> entitySerializers = new ConcurrentHashMap<>();
+    private final Map<Class<?>, RequestSerializer<?>> entitySerializers = new ConcurrentHashMap<>();
 
     @SuppressWarnings( "unchecked" )
-    public <T> EntitySerializer<T> forEntity( final Class<T> entityClass ) {
-        return (EntitySerializer<T>) entitySerializers.computeIfAbsent( entityClass,
-                k -> EntitySerializer.create( b -> b.encrypter( encrypter ).conversionService( conversionService ) ) );
+    public <T> RequestSerializer<T> forEntity( final Class<T> entityClass ) {
+        return (RequestSerializer<T>) entitySerializers.computeIfAbsent( entityClass,
+                k -> RequestSerializer.create( b -> b.encrypter( encrypter ).conversionService( conversionService ) ) );
     }
 }

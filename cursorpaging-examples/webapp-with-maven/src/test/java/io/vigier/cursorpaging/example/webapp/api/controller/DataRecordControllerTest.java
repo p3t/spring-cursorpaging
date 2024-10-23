@@ -10,7 +10,7 @@ import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
-import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import java.util.Base64;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ class DataRecordControllerTest {
     private DtoDataRecordMapper dtoDataRecordMapper;
 
     @MockBean
-    private EntitySerializer<DataRecord> serializer;
+    private RequestSerializer<DataRecord> serializer;
 
     @Test
     void shouldValidateMaxPageSize() throws Exception {

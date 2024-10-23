@@ -1,9 +1,10 @@
 package io.vigier.cursorpaging.jpa;
 
+import io.vigier.cursorpaging.jpa.filter.AndFilter;
+import io.vigier.cursorpaging.jpa.filter.FilterList;
 import jakarta.persistence.Transient;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -48,14 +49,14 @@ public class PageRequest<E> {
      * The filters to apply to the query (removing results)
      */
     @Builder.Default
-    private final List<Filter> filters = new LinkedList<>();
+    private final AndFilter filters = AndFilter.of();
 
     /**
      * The filter rules to apply to the query (removing results). Note that filter rules are <i>not</i> passed to the
      * client in serialized form, and must be added every-time the cursor is deserialized.
      */
-    @Singular
     @Transient
+    @Singular
     private final List<FilterRule> rules;
 
     /**
@@ -159,14 +160,16 @@ public class PageRequest<E> {
          * @param filter A new filter definition
          * @return the builder
          */
-        public PageRequestBuilder<E> filter( final Filter filter ) {
-            if ( this.filters$value == null ) {
-                this.filters$value = new LinkedList<>();
+        public PageRequestBuilder<E> filter( final QueryElement filter ) {
+            List<QueryElement> filters = new LinkedList<>();
+            if ( this.filters$value != null ) {
+                filters.addAll( this.filters$value.filters() );
             }
             if ( filter != null && !filter.isEmpty() ) {
-                this.filters$value.add( filter );
-                this.filters$set = true;
+                filters.add( filter );
             }
+            this.filters$value = AndFilter.of( filters );
+            this.filters$set = true;
             return this;
         }
 
@@ -177,13 +180,16 @@ public class PageRequest<E> {
          * @param filters the list of filters to be added
          * @return the builder
          */
-        public PageRequestBuilder<E> filters( final Collection<Filter> filters ) {
+        public PageRequestBuilder<E> filters( final FilterList filters ) {
             if ( filters != null ) {
-                filters.forEach( this::filter );
+                if ( filters instanceof AndFilter || filters.size() == 1 ) {
+                    filters.forEach( this::filter );
+                } else {
+                    filter( filters );
+                }
             }
             return this;
         }
-
 
         private PageRequestBuilder<E> addPosition( final Position pos ) {
             if ( this.positions == null ) {

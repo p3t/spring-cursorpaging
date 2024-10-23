@@ -4,6 +4,7 @@ package io.vigier.cursorpaging.jpa.serializer;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -12,7 +13,7 @@ import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
 
 @Builder
-public class EntitySerializer<E> {
+public class RequestSerializer<E> {
 
     @Builder.Default
     private Map<String, Attribute> attributes = new ConcurrentHashMap<>();
@@ -22,9 +23,12 @@ public class EntitySerializer<E> {
 
     private final ConversionService conversionService;
 
-    public static class EntitySerializerBuilder<E> {
+    @Builder.Default
+    private final Map<String, RuleFactory> filterRuleFactories = new HashMap<>();
 
-        public EntitySerializerBuilder<E> use( final Attribute attribute ) {
+    public static class RequestSerializerBuilder<E> {
+
+        public RequestSerializerBuilder<E> use( final Attribute attribute ) {
             if ( this.attributes$value == null ) {
                 this.attributes$value = new ConcurrentHashMap<>();
             }
@@ -32,28 +36,37 @@ public class EntitySerializer<E> {
             attributes$set = true;
             return this;
         }
+
+        public RequestSerializerBuilder<E> filterRuleFactory( final String name, final RuleFactory factory ) {
+            if ( this.filterRuleFactories$value == null ) {
+                this.filterRuleFactories$value = new HashMap<>();
+            }
+            this.filterRuleFactories$value.put( name, factory );
+            filterRuleFactories$set = true;
+            return this;
+        }
     }
 
-    public static <E> EntitySerializer<E> create( final Consumer<EntitySerializerBuilder<E>> c ) {
-        final EntitySerializerBuilder<E> builder = builder();
+    public static <E> RequestSerializer<E> create( final Consumer<RequestSerializerBuilder<E>> c ) {
+        final RequestSerializerBuilder<E> builder = builder();
         c.accept( builder );
         return builder.build();
     }
 
-    public static <E> EntitySerializer<E> create() {
+    public static <E> RequestSerializer<E> create() {
         return create( b -> {
         } );
     }
 
     public byte[] toBytes( final PageRequest<E> page ) {
         updateAttributes( page );
-        final Cursor.PageRequest dtoRequest = ToDtoMapper.of( page ).map();
+        final Cursor.PageRequest dtoRequest = ToDtoMapper.<E>create( c -> c.pageRequest( page ) ).map();
         return encrypter.encrypt( dtoRequest.toByteArray() );
     }
 
     private void updateAttributes( final PageRequest<E> page ) {
         page.positions().forEach( p -> attributes.putIfAbsent( p.attribute().name(), p.attribute() ) );
-        page.filters().forEach( f -> attributes.putIfAbsent( f.attribute().name(), f.attribute() ) );
+        page.filters().attributes().forEach( a -> attributes.putIfAbsent( a.name(), a ) );
     }
 
     public Base64String toBase64( final PageRequest<E> page ) {
@@ -63,8 +76,10 @@ public class EntitySerializer<E> {
     @SneakyThrows
     public PageRequest<E> toPageRequest( final byte[] data ) {
         final var request = Cursor.PageRequest.parseFrom( encrypter.decrypt( data ) );
-        final FromDtoMapper<E> fromDtoMapper = FromDtoMapper.create(
-                b -> b.request( request ).conversionService( conversionService ).attributesByName( attributes ) );
+        final FromDtoMapper<E> fromDtoMapper = FromDtoMapper.create( b -> b.request( request )
+                .conversionService( conversionService )
+                .ruleFactories( filterRuleFactories )
+                .attributesByName( attributes ) );
         return fromDtoMapper.map();
     }
 
