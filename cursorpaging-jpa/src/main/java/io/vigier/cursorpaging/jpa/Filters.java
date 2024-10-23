@@ -114,6 +114,9 @@ public final class Filters {
         }
     }
 
+    private Filters() {
+    }
+    
     /**
      * Starts a filter-creation with the provided attribute
      *

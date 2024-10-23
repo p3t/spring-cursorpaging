@@ -58,7 +58,7 @@ public class SerializerTest {
     }
 
     @Test
-    public void shouldSerializePageRequests() {
+    void shouldSerializePageRequests() {
         final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.desc( TestEntity_.name ) );
 
         final RequestSerializer<TestEntity> serializer = RequestSerializer.create(
@@ -70,7 +70,7 @@ public class SerializerTest {
     }
 
     @Test
-    public void shouldSerializePageRequestsWithOrFilter() {
+    void shouldSerializePageRequestsWithOrFilter() {
         final PageRequest<TestEntity> pageRequest = PageRequest.create(
                 b -> b.desc( TestEntity_.name ).filter( Filters.or( //
                         Filters.attribute( TestEntity_.name ).equalTo( "Name-1" ), //

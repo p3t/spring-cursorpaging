@@ -58,7 +58,7 @@ public abstract class Filter implements QueryElement {
      * @param attribute Attribute (must not be `null`)
      * @param values the values used by the filter, must not be `null`, but can be empty or contain `null` or empty strings (which will be ignored)
      */
-    public Filter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+    protected Filter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
         this.attribute = attribute;
         this.values = values.stream()
                 .map( v -> v instanceof final CharSequence cs && !StringUtils.hasText( cs ) ? null : v )
