@@ -2,6 +2,7 @@ package io.vigier.cursorpaging.jpa;
 
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
+import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import jakarta.persistence.Transient;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class PageRequest<E> {
      * The filters to apply to the query (removing results)
      */
     @Builder.Default
-    private final AndFilter filters = AndFilter.of();
+    private final FilterList filters = AndFilter.of();
 
     /**
      * The filter rules to apply to the query (removing results). Note that filter rules are <i>not</i> passed to the
@@ -168,7 +169,7 @@ public class PageRequest<E> {
             if ( filter != null && !filter.isEmpty() ) {
                 filters.add( filter );
             }
-            this.filters$value = AndFilter.of( filters );
+            this.filters$value = (filters$value instanceof OrFilter ? OrFilter.of( filters ) : AndFilter.of( filters ));
             this.filters$set = true;
             return this;
         }
@@ -182,11 +183,8 @@ public class PageRequest<E> {
          */
         public PageRequestBuilder<E> filters( final FilterList filters ) {
             if ( filters != null ) {
-                if ( filters instanceof AndFilter || filters.size() == 1 ) {
-                    filters.forEach( this::filter );
-                } else {
-                    filter( filters );
-                }
+                this.filters$value = filters;
+                this.filters$set = true;
             }
             return this;
         }

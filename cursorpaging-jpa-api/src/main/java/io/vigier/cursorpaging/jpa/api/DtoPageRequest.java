@@ -23,6 +23,7 @@ import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryElement;
+import io.vigier.cursorpaging.jpa.filter.FilterList;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.io.IOException;
@@ -265,7 +266,7 @@ public class DtoPageRequest {
                 }
             } );
             b.pageSize( pageSize ).enableTotalCount( withTotalCount );
-            filterBy.forEach( f -> b.filter( filterOf( f, attributeProvider ) ) );
+            b.filters( (FilterList) filterOf( filterBy, attributeProvider ) );
         } );
     }
 

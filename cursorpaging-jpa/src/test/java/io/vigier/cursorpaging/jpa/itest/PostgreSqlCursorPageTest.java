@@ -68,7 +68,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void contextLoads() {
         final var factoryBeans = applicationContext.getBeansOfType( CursorPageRepositoryFactoryBean.class );
-        assertThat( factoryBeans.size() ).isPositive(); // I.e. one per repository
+        assertThat( factoryBeans ).isNotEmpty(); // I.e. one per repository
     }
 
 

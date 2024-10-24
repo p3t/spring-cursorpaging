@@ -63,6 +63,36 @@ class DtoPageRequestTest {
     }
 
     @Test
+    void shouldDeserializeWithOrRootList() throws Exception {
+        String json = """
+                {
+                    "orderBy": {
+                        "id": "ASC"
+                    },
+                    "filterBy": {
+                        "OR": [
+                            { "GT": { "id": [ "666" ] } }
+                        ]
+                    },
+                    "pageSize": 10,
+                    "withTotalCount": false
+                }
+                """;
+        DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
+        assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.ASC ) );
+        assertThat( request.getFilterBy() ).isNotNull().satisfies( fl -> {
+            assertThat( fl ).isInstanceOf( DtoOrFilter.class );
+            assertThat( ((DtoFilterList) fl).getFilters() ).hasSize( 1 );
+        } );
+
+        var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
+        assertThat( pageRequest.filters() ).hasSize( 1 )
+                .isInstanceOf( OrFilter.class )
+                .first()
+                .isInstanceOf( GreaterThanFilter.class );
+    }
+
+    @Test
     void shouldSerializeDtoPageRequestsToJson() throws JsonProcessingException {
         var request = DtoPageRequest.builder()
                 .pageSize( 10 )
@@ -103,13 +133,7 @@ class DtoPageRequestTest {
                         .build() )
                 .build();
 
-        var pageRequest = request.toPageRequest( s -> switch ( s ) {
-            case "id" -> Attribute.of( "id", Long.class );
-            case "super" -> Attribute.of( "super", Boolean.class );
-            case "name" -> Attribute.of( "name", String.class );
-            case "priority" -> Attribute.of( "priority", Integer.class );
-            default -> throw new IllegalArgumentException( "Unknown attribute: " + s );
-        } );
+        var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
 
         assertThat( pageRequest.pageSize() ).isEqualTo( 10 );
         assertThat( pageRequest.filters() ).hasSize( 2 );
@@ -120,5 +144,15 @@ class DtoPageRequestTest {
             assertThat( ((OrFilter) of).filters().get( 1 ) ).isInstanceOf( LikeFilter.class );
             assertThat( ((OrFilter) of).filters().get( 2 ) ).isInstanceOf( LessThanFilter.class );
         } );
+    }
+
+    private static Attribute getAttribute( final String s ) {
+        return switch ( s ) {
+            case "id" -> Attribute.of( "id", Long.class );
+            case "super" -> Attribute.of( "super", Boolean.class );
+            case "name" -> Attribute.of( "name", String.class );
+            case "priority" -> Attribute.of( "priority", Integer.class );
+            default -> throw new IllegalArgumentException( "Unknown attribute: " + s );
+        };
     }
 }
