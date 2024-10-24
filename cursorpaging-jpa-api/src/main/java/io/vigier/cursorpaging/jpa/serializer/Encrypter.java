@@ -22,10 +22,10 @@ import lombok.SneakyThrows;
 @RequiredArgsConstructor
 public class Encrypter {
 
-    public final static String KEY_ALGORITHM = "ChaCha20";
-    public final static int IV_BYTES_LENGTH = 12;
+    public static final String KEY_ALGORITHM = "ChaCha20";
+    public static final int IV_BYTES_LENGTH = 12;
 
-    private final static String ALGORITHM = "ChaCha20-Poly1305";
+    private static final String ALGORITHM = "ChaCha20-Poly1305";
 
     /**
      * The random generator to use for generating the initial vector (IV). Potentially this can be replaced by a

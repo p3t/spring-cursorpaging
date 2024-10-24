@@ -68,7 +68,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void contextLoads() {
         final var factoryBeans = applicationContext.getBeansOfType( CursorPageRepositoryFactoryBean.class );
-        assertThat( factoryBeans.size() ).isGreaterThanOrEqualTo( 1 ); // I.e. one per repository
+        assertThat( factoryBeans.size() ).isPositive(); // I.e. one per repository
     }
 
 
@@ -108,11 +108,12 @@ class PostgreSqlCursorPageTest {
 
         final var firstPage = dataRecordRepository.loadPage( request );
         assertThat( firstPage ).isNotNull().hasSize( 10 );
+
         final var next = firstPage.next();
         assertThat( next ).isPresent();
+
         final var nextPage = dataRecordRepository.loadPage( next.get().withPageSize( 20 ) );
-        assertThat( nextPage ).isNotNull().hasSize( 20 );
-        assertThat( nextPage ).doesNotContainAnyElementsOf( firstPage );
+        assertThat( nextPage ).isNotNull().hasSize( 20 ).doesNotContainAnyElementsOf( firstPage );
         assertThat( nextPage.next() ).isEmpty();
     }
 
@@ -360,7 +361,7 @@ class PostgreSqlCursorPageTest {
 
         final var count = dataRecordRepository.count( request );
 
-        assertThat( count ).isEqualTo( 0 );
+        assertThat( count ).isZero();
     }
 
     private static class OnlyPublicFilterRule implements FilterRule {
@@ -555,7 +556,7 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
-    public void shouldUseMoreComplicateFilterRulesForAclChecks() {
+    void shouldUseMoreComplicateFilterRulesForAclChecks() {
         testDataGenerator.generateData( 100 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
@@ -575,7 +576,7 @@ class PostgreSqlCursorPageTest {
         final var shouldBeEmpty = dataRecordRepository.loadPage( request2 );
         assertThat( shouldBeEmpty ).isNotNull();
         assertThat( shouldBeEmpty.getContent() ).isEmpty();
-        assertThat( dataRecordRepository.count( request2 ) ).isEqualTo( 0 );
+        assertThat( dataRecordRepository.count( request2 ) ).isZero();
     }
 
     @Test
@@ -645,8 +646,7 @@ class PostgreSqlCursorPageTest {
         assertThat( secondPage ).isNotNull();
         assertThat( secondPage.getContent() ).hasSize( 5 );
 
-        assertThat( reversedFirstPage ).isNotNull();
-        assertThat( reversedFirstPage ).containsExactlyElementsOf( firstPage );
+        assertThat( reversedFirstPage ).isNotNull().containsExactlyElementsOf( firstPage );
         assertThat( reversedFirstPage.next() ).isNotPresent();
     }
 

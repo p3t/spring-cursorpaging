@@ -14,7 +14,7 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 @ExtendWith( MockitoExtension.class )
-public class AutoConfigurationTest {
+class AutoConfigurationTest {
 
     @Mock
     private EntityManager entityManager;
@@ -40,8 +40,7 @@ public class AutoConfigurationTest {
 
     @Test
     void shouldLoadWhenEntityManagerIsPresent() {
-        enabledContextRunner.run( context -> {
-            Assertions.assertThat( context ).hasSingleBean( CursorPageAutoConfigure.class );
-        } );
+        enabledContextRunner.run(
+                context -> Assertions.assertThat( context ).hasSingleBean( CursorPageAutoConfigure.class ) );
     }
 }

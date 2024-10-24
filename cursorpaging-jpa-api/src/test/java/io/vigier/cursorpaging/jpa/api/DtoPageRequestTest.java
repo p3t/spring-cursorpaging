@@ -26,10 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DtoPageRequestTest {
 
     @Test
-    void toPageRequest() {
-    }
-
-    @Test
     void shouldDesrerializeFromJson() throws Exception {
         String json = """
                 {

@@ -60,7 +60,7 @@ class ExampleWebApplicationTests {
 	}
 	@Test
 	void contextLoads() {
-
+		// Fails when Spring's ApplicationContext cannot be created
 	}
 
 	@Test

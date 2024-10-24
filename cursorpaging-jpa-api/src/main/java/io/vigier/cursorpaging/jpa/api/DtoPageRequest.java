@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -148,7 +147,7 @@ public class DtoPageRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
-    public static abstract class DtoFilterList implements DtoFilterElement, Iterable<DtoFilterElement> {
+    public abstract static class DtoFilterList implements DtoFilterElement, Iterable<DtoFilterElement> {
 
         @Singular
         private List<DtoFilterElement> filters;
@@ -175,19 +174,13 @@ public class DtoPageRequest {
 
     public abstract static class DtoFilterListDeserializer extends StdDeserializer<DtoFilterList> {
 
-        public DtoFilterListDeserializer() {
-            this( null );
-        }
-
-        public DtoFilterListDeserializer( Class<? extends DtoFilterList> vc ) {
+        protected DtoFilterListDeserializer( Class<? extends DtoFilterList> vc ) {
             super( vc );
         }
 
         @Override
-        public DtoFilterList deserialize( JsonParser jp, DeserializationContext ctxt )
-                throws IOException, JsonProcessingException {
+        public DtoFilterList deserialize( JsonParser jp, DeserializationContext ctxt ) throws IOException {
             JsonNode node = jp.getCodec().readTree( jp );
-            final var first = node.get( 0 );
             List<DtoFilterElement> filterList = new LinkedList<>();
             for ( JsonNode n : node ) {
                 filterList.add( jp.getCodec().treeToValue( n, DtoFilterElement.class ) );

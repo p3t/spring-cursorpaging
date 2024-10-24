@@ -4,7 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class EncrypterTest {
+class EncrypterTest {
 
     @Test
     @SneakyThrows
