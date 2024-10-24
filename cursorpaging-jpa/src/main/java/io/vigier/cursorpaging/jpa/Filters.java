@@ -198,6 +198,16 @@ public final class Filters {
     }
 
     /**
+     * Create in filter combining the given filters by 'or'
+     *
+     * @param filters the filters to combine
+     * @return the combined filter
+     */
+    public static OrFilter or( final List<QueryElement> filters ) {
+        return OrFilter.of( filters );
+    }
+
+    /**
      * Create in filter combining the given filters by 'and'
      *
      * @param filters the filters to combine

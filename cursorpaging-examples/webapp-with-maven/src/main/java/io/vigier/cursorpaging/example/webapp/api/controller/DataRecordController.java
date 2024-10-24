@@ -123,15 +123,21 @@ public class DataRecordController {
                     mediaType = MediaType.APPLICATION_JSON_VALUE, //
                     schema = @Schema( implementation = DtoPageRequest.class, example = """
                             {
-                               "orderBy": {
-                                 "NAME": "ASC"
-                               },
-                               "filterBy": {
-                                 "NAME": [
-                                   "Bravo", "Tango"
-                                 ]
-                               },
-                               "pageSize": 100
+                                "orderBy": {
+                                    "id": "ASC"
+                                },
+                                "filterBy": {
+                                    "AND": [
+                                        {
+                                            "GT": { "beast": ["666"] }
+                                        },
+                                        {
+                                            "EQ": { "color": ["black"] }
+                                        }
+                                    ]
+                                },
+                                "pageSize": 10,
+                                "withTotalCount": false
                              }""" ) ) ) //
             @RequestBody final DtoPageRequest request ) {
         request.addOrderByIfAbsent( DataRecord_.ID, Order.ASC );
