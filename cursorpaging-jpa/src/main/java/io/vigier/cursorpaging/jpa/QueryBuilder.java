@@ -134,6 +134,4 @@ public interface QueryBuilder {
      * @param order     the order (ASC or DESC)
      */
     void orderBy( Attribute attribute, Order order );
-
-    Predicate orOne( List<Predicate> predicates );
 }

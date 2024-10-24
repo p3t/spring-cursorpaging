@@ -25,8 +25,8 @@ import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.WRITE;
 @Slf4j
 public class TestDataGenerator {
 
-    public static String NAME_ALPHA = "Alpha";
-    public static String NAME_BRAVO = "Bravo";
+    public static final String NAME_ALPHA = "Alpha";
+    public static final String NAME_BRAVO = "Bravo";
     public static final String[] NAMES = { NAME_ALPHA, NAME_BRAVO, "Charlie", "Delta", "Echo", "Foxtrot", "Golf",
             "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo",
             "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" };

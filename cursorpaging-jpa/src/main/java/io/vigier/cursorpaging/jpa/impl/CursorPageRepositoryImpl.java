@@ -59,8 +59,8 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
             }
             cqb.orderBy( position.attribute(), position.order() );
         } );
-        request.filters().forEach( filter -> filter.apply( cqb ) );
-        request.rules().forEach( rule -> rule.applyQuery( cqb ) );
+        cqb.andWhere( request.filters().toPredicate( cqb ) );
+        request.rules().forEach( rule -> cqb.andWhere( rule.toPredicate( cqb ) ) );
 
         final var results = entityManager.createQuery( cqb.query().distinct( true ) )
                 .setMaxResults( getMaxResultSize( request ) )
@@ -79,8 +79,8 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         final CriteriaQueryBuilder<E, Long> cqb = CriteriaQueryBuilder.forCount( entityInformation.getJavaType(),
                 entityManager );
 
-        request.filters().forEach( filter -> filter.apply( cqb ) );
-        request.rules().forEach( rule -> rule.applyCount( cqb ) );
+        request.filters().forEach( filter -> cqb.andWhere( filter.toPredicate( cqb ) ) );
+        request.rules().forEach( rule -> cqb.andWhere( rule.toCountPredicate( cqb ) ) );
 
         return entityManager.createQuery( cqb.query() ).getSingleResult();
     }

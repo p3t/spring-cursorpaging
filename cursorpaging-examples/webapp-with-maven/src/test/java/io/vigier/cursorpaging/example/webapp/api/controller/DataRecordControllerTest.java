@@ -9,9 +9,13 @@ import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
+import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoAndFilter;
+import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoEqFilter;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
-import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
@@ -48,7 +52,7 @@ class DataRecordControllerTest {
     private DtoDataRecordMapper dtoDataRecordMapper;
 
     @MockBean
-    private EntitySerializer<DataRecord> serializer;
+    private RequestSerializer<DataRecord> serializer;
 
     @Test
     void shouldValidateMaxPageSize() throws Exception {
@@ -89,9 +93,16 @@ class DataRecordControllerTest {
 
     @Test
     void shouldCreateNewCursorOnPost() throws Exception {
-        final var request = new DtoPageRequest().withFilterBy( DataRecord_.NAME, "Tango", "Bravo" )
-                .withOrderBy( DataRecord_.NAME, Order.ASC )
-                .withPageSize( 10 );
+        final var request = DtoPageRequest.builder()
+                .filterBy( DtoAndFilter.builder()
+                        .filter( DtoEqFilter.builder()
+                                .attribute( DataRecord_.NAME )
+                                .values( List.of( "Tango", "Bravo" ) )
+                                .build() )
+                        .build() )
+                .orderBy( Map.of( DataRecord_.NAME, Order.ASC ) )
+                .pageSize( 10 )
+                .build();
         final String json = new ObjectMapper().writeValueAsString( request );
         log.debug( "Json:, {}", json );
 
@@ -103,9 +114,10 @@ class DataRecordControllerTest {
                 .andExpect( status().isCreated() ) //
                 .andExpect( jsonPath( "$.orderBy.name" ).value( "ASC" ) )
                 .andExpect( jsonPath( "$.orderBy.id" ).value( "ASC" ) )
-                .andExpect( jsonPath( "$.filterBy.name" ).isArray() )
-                .andExpect( jsonPath( "$.filterBy.name[0]" ).value( "Tango" ) )
-                .andExpect( jsonPath( "$.filterBy.name[1]" ).value( "Bravo" ) )
+                .andExpect( jsonPath( "$.filterBy.AND" ).isArray() )
+                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name" ).isArray() )
+                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name[0]" ).value( "Tango" ) )
+                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name[1]" ).value( "Bravo" ) )
                 .andExpect( jsonPath( "$.pageSize" ).value( 10 ) ) //
                 .andExpect( jsonPath( "$._links.first.href" ).exists() )
                 .andExpect( jsonPath( "$._links.first.href" ).value( Matchers.containsString( CURSOR ) ) );

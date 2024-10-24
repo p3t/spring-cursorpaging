@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 // File: buildSrc/src/main/kotlin/java-project-conventions.gradle.kts
 plugins {
     id("java-library")
@@ -9,6 +12,7 @@ plugins {
     id("org.kordamp.gradle.spotbugs")
     id("com.github.kt3k.coveralls")
     id("org.kordamp.gradle.coveralls")
+    id("org.sonarqube")
 }
 
 group = "io.vigier.cursorpaging"
@@ -35,6 +39,10 @@ tasks.named<Jar>("bootJar") {
 tasks {
     jacocoTestReport {
         dependsOn(tasks.test) // tests are required to run before generating the report
+        reports {
+            xml.required = true
+            html.required = true
+        }
     }
     delombok {
         enabled = false
@@ -42,7 +50,18 @@ tasks {
     jar {
         archiveClassifier.set("") // needed to remove "-plain" when bootJar = false
     }
+    test {
+        finalizedBy(tasks.jacocoTestReport)
+        testLogging {
+            events(TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_OUT)
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+            exceptionFormat = TestExceptionFormat.FULL
+        }
+    }
 }
+
 config {
     info {
         inceptionYear = "2024"

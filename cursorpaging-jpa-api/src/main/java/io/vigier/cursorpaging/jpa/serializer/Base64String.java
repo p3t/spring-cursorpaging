@@ -11,14 +11,14 @@ import java.util.stream.IntStream;
  */
 public class Base64String implements CharSequence {
 
-    private final String base64String;
+    private final String encoded;
 
     public Base64String( final String base64String ) {
-        this.base64String = validate( base64String );
+        this.encoded = validate( base64String );
     }
 
     public Base64String( final byte[] bytes ) {
-        this.base64String = new String( bytes, StandardCharsets.UTF_8 );
+        this.encoded = new String( bytes, StandardCharsets.UTF_8 );
     }
 
     public static Base64String encode( final byte[] content ) {
@@ -42,7 +42,7 @@ public class Base64String implements CharSequence {
      * @return the decoded byte array of the base64 string
      */
     public byte[] decoded() {
-        return decode( base64String );
+        return decode( encoded );
     }
 
     private static byte[] decode( final String base64String ) {
@@ -51,37 +51,37 @@ public class Base64String implements CharSequence {
 
     @Override
     public int length() {
-        return base64String.length();
+        return encoded.length();
     }
 
     @Override
     public char charAt( final int index ) {
-        return base64String.charAt( index );
+        return encoded.charAt( index );
     }
 
     @Override
     public boolean isEmpty() {
-        return base64String.isEmpty();
+        return encoded.isEmpty();
     }
 
     @Override
     public @NotNull CharSequence subSequence( final int start, final int end ) {
-        return base64String.subSequence( start, end );
+        return encoded.subSequence( start, end );
     }
 
     @Override
     public @NotNull IntStream chars() {
-        return base64String.chars();
+        return encoded.chars();
     }
 
     @Override
     public @NotNull IntStream codePoints() {
-        return base64String.codePoints();
+        return encoded.codePoints();
     }
 
     @Override
     public @NotNull String toString() {
-        return base64String;
+        return encoded;
     }
 
     /**
@@ -92,6 +92,6 @@ public class Base64String implements CharSequence {
      * @return a new Base64String with the replaced sequence
      */
     public Base64String replace( final String target, final String replacement ) {
-        return new Base64String( base64String.replace( target, replacement ) );
+        return new Base64String( encoded.replace( target, replacement ) );
     }
 }

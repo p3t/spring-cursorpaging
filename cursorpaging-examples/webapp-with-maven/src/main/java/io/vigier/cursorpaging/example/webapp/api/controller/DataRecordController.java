@@ -16,7 +16,7 @@ import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
-import io.vigier.cursorpaging.jpa.serializer.EntitySerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import io.vigier.cursorpaging.jpa.validation.MaxSize;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class DataRecordController {
     // Skipping the service layer ;-)
     private final DataRecordRepository dataRecordRepository;
     private final DtoDataRecordMapper dtoDataRecordMapper;
-    private final EntitySerializer<DataRecord> serializer;
+    private final RequestSerializer<DataRecord> serializer;
 
     @Operation( summary = "Get data records, page by page" )
     @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )
@@ -123,16 +123,17 @@ public class DataRecordController {
                     mediaType = MediaType.APPLICATION_JSON_VALUE, //
                     schema = @Schema( implementation = DtoPageRequest.class, example = """
                             {
-                               "orderBy": {
-                                 "NAME": "ASC"
-                               },
-                               "filterBy": {
-                                 "NAME": [
-                                   "Bravo", "Tango"
-                                 ]
-                               },
-                               "pageSize": 100
-                             }""" ) ) ) //
+                                "orderBy": { "id": "ASC" },
+                                "filterBy": {
+                                    "AND": [
+                                        { "EQ": { "name": [ "Bravo" ] } },
+                                        { "GT": { "created_at": [ "1999-01-30T10:15:30Z" ] } }
+                                    ]
+                                },
+                                "pageSize": 10,
+                                "withTotalCount": false
+                            }
+                            """ ) ) ) //
             @RequestBody final DtoPageRequest request ) {
         request.addOrderByIfAbsent( DataRecord_.ID, Order.ASC );
         final PageRequest<DataRecord> pageRequest = request.toPageRequest( DataRecordAttribute::forName );

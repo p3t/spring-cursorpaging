@@ -1,19 +1,13 @@
 package io.vigier.cursorpaging.jpa;
 
+import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.metamodel.SingularAttribute;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
-import lombok.With;
 import lombok.experimental.Accessors;
 import org.springframework.util.StringUtils;
 
@@ -23,15 +17,10 @@ import org.springframework.util.StringUtils;
  * Currently only simple attributes can be filtered (no collections, or nested properties). If the provided filter value
  * is a collection a one-must-match ("attribute in my-filter-values") logic applies.
  */
-@Builder( toBuilder = true )
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
-public class Filter {
-
-    private enum Match {
-        EQUAL, LIKE, GREATER_THAN, LESS_THAN
-    }
+public abstract class Filter implements QueryElement {
 
     /**
      * The attribute to filter on.
@@ -41,121 +30,40 @@ public class Filter {
     /**
      * The value to filter on.
      */
-    @With
     @Singular
     private final List<? extends Comparable<?>> values;
 
-    @With
-    @Builder.Default
-    private final Match match = Match.EQUAL;
-
-    public static class FilterBuilder {
-
-        public FilterBuilder attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
-            this.attribute = Attribute.of( attribute );
-            return this;
-        }
-
-        /**
-         * Creates an attribute as path to an embedded entity's property.
-         *
-         * @param attributes the path to the property
-         * @return the builder
-         */
-        @SafeVarargs
-        public final FilterBuilder path(
-                final jakarta.persistence.metamodel.Attribute<?, ? extends Comparable<?>>... attributes ) {
-            this.attribute = Attribute.path( attributes );
-            return this;
-        }
-
-        public FilterBuilder attribute( final Attribute attribute ) {
-            this.attribute = attribute;
-            return this;
-        }
-
-        public FilterBuilder like( final Comparable<?>... values ) {
-            match( Match.LIKE );
-            this.values = new ArrayList<>( Arrays.asList( values ) );
-            return this;
-        }
-
-        public FilterBuilder greaterThan( final Comparable<?>... values ) {
-            match( Match.GREATER_THAN );
-            this.values = new ArrayList<>( Arrays.asList( values ) );
-            return this;
-        }
-
-        public FilterBuilder lessThan( final Comparable<?>... values ) {
-            match( Match.LESS_THAN );
-            this.values = new ArrayList<>( Arrays.asList( values ) );
-            return this;
-        }
-
-        public Filter build() {
-            if ( attribute == null ) {
-                throw new NullPointerException( "Filter attribute must not be null!" );
-            }
-            return new Filter( attribute, values, match$set ? match$value : Match.EQUAL );
-        }
+    /**
+     * Get a new {@linkplain FilterBuilder}
+     *
+     * @return the builder
+     */
+    public static FilterBuilder builder() {
+        return new FilterBuilder();
     }
 
     /**
-     * Create a {@linkplain Filter} with a builder.
-     *
-     * @param creator the customizer for the builder
-     * @return a new {@linkplain Filter}
+     * Creator method to build a new Filter.
+     * @param c the consumer for the builder
+     * @return a new Filter instance
      */
-    public static Filter create( final Consumer<FilterBuilder> creator ) {
-        final var builder = Filter.builder();
-        creator.accept( builder );
+    public static Filter create( final Consumer<FilterBuilder> c ) {
+        FilterBuilder builder = builder();
+        c.accept( builder );
         return builder.build();
     }
 
     /**
-     * Create a {@linkplain Filter} on an attribute matching the given value(s).
-     *
-     * @param attribute the attribute to filter on
-     * @param values    the value(s) to filter for
-     * @return a new {@linkplain Filter}
+     * Constructs a Filter for the attribute and values.
+     * @param attribute Attribute (must not be `null`)
+     * @param values the values used by the filter, must not be `null`, but can be empty or contain `null` or empty strings (which will be ignored)
      */
-    public static Filter attributeIs( final SingularAttribute<?, ? extends Comparable<?>> attribute,
-            final Comparable<?>... values ) {
-        return attributeIs( Attribute.of( attribute ), values );
-    }
-
-    /**
-     * Create a {@linkplain Filter} on an attribute matching the given value(s).
-     *
-     * @param attribute the attribute to filter on
-     * @param values    the value(s) to filter for
-     * @return a new {@linkplain Filter}
-     */
-    public static Filter attributeIs( final SingularAttribute<?, ? extends Comparable<?>> attribute,
-            final Collection<Comparable<?>> values ) {
-        return attributeIs( Attribute.of( attribute ), values );
-    }
-
-    /**
-     * Create a {@linkplain Filter} on an attribute matching the given value(s).
-     *
-     * @param attribute the attribute to filter on
-     * @param values    the value(s) to filter for
-     * @return a new {@linkplain Filter}
-     */
-    public static Filter attributeIs( final Attribute attribute, final Comparable<?>... values ) {
-        return attributeIs( attribute, List.of( values ) );
-    }
-
-    /**
-     * Create a {@linkplain Filter} on an attribute matching the given value(s).
-     *
-     * @param attribute the attribute to filter on
-     * @param values    the value(s) to filter for
-     * @return a new {@linkplain Filter}
-     */
-    public static Filter attributeIs( final Attribute attribute, final Collection<Comparable<?>> values ) {
-        return Filter.create( b -> b.attribute( attribute ).values( values ) );
+    protected Filter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+        this.attribute = attribute;
+        this.values = values.stream()
+                .map( v -> v instanceof final CharSequence cs && !StringUtils.hasText( cs ) ? null : v )
+                .filter( Objects::nonNull )
+                .toList();
     }
 
     <T extends Comparable<? super T>> List<T> values( Class<T> valueType ) {
@@ -164,72 +72,27 @@ public class Filter {
                 .toList();
     }
 
+    @Override
+    public List<Attribute> attributes() {
+        return List.of( attribute );
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return values.isEmpty();
+    }
+
     /**
      * Apply the filter to the query builder
      *
      * @param qb the query builder
      */
-    public void apply( final QueryBuilder qb ) {
-        switch ( match ) {
-            case EQUAL -> applyEqual( qb );
-            case LIKE -> applyLike( qb );
-            case GREATER_THAN -> applyGreaterThan( qb );
-            case LESS_THAN -> applyLessThan( qb );
+    public Predicate toPredicate( final QueryBuilder qb ) {
+        if ( !values.isEmpty() ) {
+            return toFilterPredicate( qb, values );
         }
+        return qb.cb().and();
     }
 
-    private void applyLike( final QueryBuilder qb ) {
-        final List<Predicate> predicates = values.stream()
-                .filter( Objects::nonNull )
-                .map( Object::toString )
-                .filter( StringUtils::hasText )
-                .map( v -> qb.isLike( attribute, v ) )
-                .toList();
-        if ( predicates.size() > 1 ) {
-            qb.andWhere( qb.orOne( predicates ) );
-        } else if ( predicates.size() == 1 ) {
-            qb.andWhere( predicates.get( 0 ) );
-        }
-    }
-
-    private void applyGreaterThan( final QueryBuilder qb ) {
-        final List<Predicate> predicates = values.stream()
-                .filter( Objects::nonNull )
-                .map( v -> qb.greaterThan( attribute, v ) )
-                .toList();
-        if ( predicates.size() > 1 ) {
-            qb.andWhere( qb.orOne( predicates ) );
-        } else if ( predicates.size() == 1 ) {
-            qb.andWhere( predicates.get( 0 ) );
-        }
-    }
-
-    private void applyLessThan( final QueryBuilder qb ) {
-        final List<Predicate> predicates = values.stream()
-                .filter( Objects::nonNull )
-                .map( v -> qb.lessThan( attribute, v ) )
-                .toList();
-        if ( predicates.size() > 1 ) {
-            qb.andWhere( qb.orOne( predicates ) );
-        } else if ( predicates.size() == 1 ) {
-            qb.andWhere( predicates.get( 0 ) );
-        }
-    }
-
-    private void applyEqual( final QueryBuilder qb ) {
-        final List<? extends Comparable<?>> filterValues = values.stream()
-                .filter( Objects::nonNull )
-                .collect( Collectors.toList() );
-        if ( filterValues.size() > 1 ) {
-            qb.andWhere( qb.isIn( attribute, filterValues ) );
-        } else if ( filterValues.size() == 1 ) {
-            qb.andWhere( qb.equalTo( attribute, filterValues.get( 0 ) ) );
-        }
-    }
-
-    public boolean isEmpty() {
-        return values.isEmpty() || values.stream()
-                .allMatch( v -> Objects.isNull( v ) || (v instanceof final CharSequence cs && !StringUtils.hasText(
-                        cs )) );
-    }
+    protected abstract Predicate toFilterPredicate( final QueryBuilder qb, List<? extends Comparable<?>> cleanValues );
 }

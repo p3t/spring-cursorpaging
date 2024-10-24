@@ -15,7 +15,7 @@ public enum DataRecordAttribute {
     // Not using the "lowercase" properties here, because there are tests where no EntityManager is instantiated
     // (i.e. the MockMVC test), but this one is needed to populate them :-(
 
-    ID( Attribute.of( DataRecord_.NAME, UUID.class ) ),
+    ID( Attribute.of( DataRecord_.ID, UUID.class ) ),
     NAME( Attribute.of( DataRecord_.NAME, String.class ) ),
     CREATED_AT( Attribute.path( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.CREATED_AT, Instant.class ) ),
     MODIFIED_AT( Attribute.path( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.MODIFIED_AT, Instant.class ) );
