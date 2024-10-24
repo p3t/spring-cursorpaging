@@ -39,6 +39,10 @@ tasks.named<Jar>("bootJar") {
 tasks {
     jacocoTestReport {
         dependsOn(tasks.test) // tests are required to run before generating the report
+        reports {
+            xml.required = true
+            html.required = true
+        }
     }
     delombok {
         enabled = false
@@ -47,6 +51,7 @@ tasks {
         archiveClassifier.set("") // needed to remove "-plain" when bootJar = false
     }
     test {
+        finalizedBy(tasks.jacocoTestReport)
         testLogging {
             events(TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_OUT)
             showExceptions = true
