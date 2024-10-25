@@ -91,6 +91,10 @@ jobs:
         id: Build
         run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
 
+      - name: Upload coverage
+        id: Build
+        run: ./gradlew -Pversion=${BUILD_VERSION} --info sonarqube
+
       - name: Sign Artifacts
         if: ${{ steps.Build.outcome == 'success' && inputs.release_build }}
         #      if: inputs.release_build
