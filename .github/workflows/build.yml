@@ -92,7 +92,7 @@ jobs:
         run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
 
       - name: Upload coverage
-        id: Build
+        id: Sonarqube
         run: ./gradlew -Pversion=${BUILD_VERSION} --info sonarqube
 
       - name: Sign Artifacts
