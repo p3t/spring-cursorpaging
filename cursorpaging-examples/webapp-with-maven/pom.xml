@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.5</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -20,7 +20,7 @@
     <java.version>17</java.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok.version>1.18.32</lombok.version>
-    <cursorpage.version>0.9.3</cursorpage.version>
+    <cursorpage.version>0.9.8</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
   </properties>
 
@@ -39,7 +39,7 @@
         </repository>
       </repositories>
       <properties>
-        <cursorpage.version>0.8.0-RC1</cursorpage.version>
+        <cursorpage.version>0.9.8</cursorpage.version>
       </properties>
     </profile>
   </profiles>
@@ -77,7 +77,15 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.springframework.retry</groupId>
+      <artifactId>spring-retry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+    </dependency>
+    
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
