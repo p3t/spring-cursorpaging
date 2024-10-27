@@ -8,7 +8,7 @@ plugins {
     id("io.freefair.lombok")
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
-    `jacoco`
+    id("jacoco")
     id("org.kordamp.gradle.spotbugs")
     id("com.github.kt3k.coveralls")
     id("org.kordamp.gradle.coveralls")
@@ -41,6 +41,7 @@ sonar {
         property("sonar.projectKey", "p3t_spring-cursorpaging")
         property("sonar.organization", "p3t")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.exclusions", "**/gradle.build.kts,**/buildSrc/**")
     }
 }
 tasks {
