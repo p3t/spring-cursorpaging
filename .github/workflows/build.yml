@@ -96,8 +96,10 @@ jobs:
         id: Build
         run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
 
-      - name: Upload coverage
+      - name: Sonar scan
         id: Sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         run: ./gradlew -Pversion=${BUILD_VERSION} --info sonar
 
       - name: Sign Artifacts
