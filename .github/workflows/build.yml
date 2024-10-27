@@ -64,7 +64,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
       # Configure Gradle for optimal use in GiHub Actions, including caching of downloaded dependencies.
       # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
       - name: Setup Gradle
@@ -92,8 +97,8 @@ jobs:
         run: ./gradlew -Pversion=${BUILD_VERSION} --info build jacocoTestReport
 
       - name: Upload coverage
-        id: Sonarqube
-        run: ./gradlew -Pversion=${BUILD_VERSION} --info sonarqube
+        id: Sonar
+        run: ./gradlew -Pversion=${BUILD_VERSION} --info sonar
 
       - name: Sign Artifacts
         if: ${{ steps.Build.outcome == 'success' && inputs.release_build }}

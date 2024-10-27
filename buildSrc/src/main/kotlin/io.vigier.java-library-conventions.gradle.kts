@@ -36,6 +36,13 @@ java {
 tasks.named<Jar>("bootJar") {
     enabled = false
 }
+sonar {
+    properties {
+        property("sonar.projectKey", "p3t_spring-cursorpaging")
+        property("sonar.organization", "p3t")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
+}
 tasks {
     jacocoTestReport {
         dependsOn(tasks.test) // tests are required to run before generating the report
