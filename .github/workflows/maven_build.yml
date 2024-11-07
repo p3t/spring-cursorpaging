@@ -38,9 +38,27 @@ env:
   BUILD_VERSION: ${{ inputs.build_version != '' && inputs.build_version || '0-SNAPSHOT' }}
 
 jobs:
-  Validation:
-    name: "Validation"
+  Build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: maven/actions/wrapper-validation@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: 'maven'
+          cache-dependency-path: '**/pom.xml'
+
+      - name: Set version
+        if: ${{ inputs.release_build }}
+        run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
+
+      - name: Build project, run unit and integration tests
+        run: ./mvnw -T1C --batch-mode clean install
+        shell: bash
+

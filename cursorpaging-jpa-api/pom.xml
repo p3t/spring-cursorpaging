@@ -11,8 +11,9 @@
 
   <parent>
     <groupId>io.vigier.cursorpaging</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>cursorpaging-parent</artifactId>
     <version>0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
 
   <artifactId>cursorpaging-jpa-api</artifactId>

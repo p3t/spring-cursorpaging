@@ -9,7 +9,7 @@
   <!-- do_not_remove: published-with-gradle-metadata -->
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vigier.cursorpaging</groupId>
-  <artifactId>parent</artifactId>
+  <artifactId>cursorpaging-parent</artifactId>
   <version>0-SNAPSHOT</version>
 
   <packaging>pom</packaging>
@@ -23,6 +23,14 @@
   <description>Cursor based paging support for Spring Data</description>
   <url>https://github.com/p3t/spring-cursorpaging/</url>
   <inceptionYear>2024</inceptionYear>
+
+  <distributionManagement>
+    <repository>
+      <id>sonar-central</id>
+      <name>Central Repository OSSRH</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <licenses>
     <license>
@@ -199,6 +207,7 @@
             </annotationProcessorPaths>
           </configuration>
         </plugin>
+
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
@@ -214,7 +223,56 @@
             </execution>
           </executions>
         </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jarsigner-plugin</artifactId>
+          <version>3.1.0</version>
+          <executions>
+            <execution>
+              <id>sign</id>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <keystore>/path/to/the/keystore</keystore>
+            <alias>Alias name</alias>
+            <storepass>Store password</storepass>
+            <keypass>Key password</keypass>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.6.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <publishingServerId>central</publishingServerId>
+          </configuration>
+        </plugin>
+
       </plugins>
     </pluginManagement>
+
   </build>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Sonartype Central</name>
+      <url>https://central.sonatype.com/api/v1/</url>
+    </repository>
+  </repositories>
+
+  <profiles>
+    <profile>
+      <id>RELEASE_BUILD</id>
+      <distributionManagement>
+
+      </distributionManagement>
+    </profile>
+  </profiles>
 </project>
