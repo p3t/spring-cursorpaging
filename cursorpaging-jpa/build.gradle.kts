@@ -23,6 +23,14 @@ dependencies {
     testRuntimeOnly("org.postgresql:postgresql")
 }
 
+publishing {
+    publications.named<MavenPublication>("mavenJava") {
+        pom {
+            description = "Cursor based paging support for Spring Data JPA repositories"
+        }
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }

@@ -31,7 +31,13 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
 }
-
+publishing {
+	publications.named<MavenPublication>("mavenJava") {
+		pom {
+			description = "Serialization/Deserialization support of page-request for Spring-CursorPaging"
+		}
+	}
+}
 tasks {
 	withType<Test> {
 		useJUnitPlatform()
@@ -60,7 +66,7 @@ protobuf {
 sourceSets {
 	main {
 		proto {
-			srcDir("src/main/proto")
+			srcDir("src/main/protobuf")
 		}
 	}
 }
