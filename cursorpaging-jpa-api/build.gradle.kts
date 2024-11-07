@@ -19,17 +19,31 @@ repositories {
 
 dependencies {
 	api(project(":cursorpaging-jpa"))
-	implementation("com.google.protobuf:protobuf-java:4.28.2")
-	api("org.springframework:spring-core")
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("org.springframework:spring-core")
 	api("jakarta.validation:jakarta.validation-api")
-	api("jakarta.persistence:jakarta.persistence-api:3.2.0")
 
-	testImplementation("org.mockito:mockito-core:5.14.2")
-	testImplementation("jakarta.persistence:jakarta.persistence-api:3.2.0")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("com.fasterxml.jackson.core:jackson-annotations")
+	implementation("com.fasterxml.jackson.core:jackson-core")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+//	implementation("com.fasterxml.jackson.core:jackson-datatype-jsr310")
+	implementation("com.google.protobuf:protobuf-java:4.28.2")
 
+	testImplementation("jakarta.persistence:jakarta.persistence-api")
+	testImplementation("org.hibernate.orm:hibernate-jpamodelgen")
+	testImplementation("org.assertj:assertj-core")
+	testImplementation("org.hibernate.orm:hibernate-core")
+	testImplementation("jakarta.transaction:jakarta.transaction-api")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	testImplementation("org.springframework.boot:spring-boot-test")
+	testImplementation("org.springframework.retry:spring-retry")
+	testImplementation("org.mockito:mockito-core")
+	testImplementation("org.mockito:mockito-junit-jupiter")
+	testImplementation("org.testcontainers:testcontainers")
+	testImplementation("org.testcontainers:junit-jupiter")
+	testImplementation("org.testcontainers:postgresql")
+
+	testAnnotationProcessor("org.hibernate:hibernate-jpamodelgen:6.6.1.Final")
+	testRuntimeOnly("org.postgresql:postgresql")
 }
 publishing {
 	publications.named<MavenPublication>("mavenJava") {
