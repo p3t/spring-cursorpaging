@@ -65,3 +65,8 @@ jobs:
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+
+      - name: Publish to GitHub Packages Apache Maven
+        run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
