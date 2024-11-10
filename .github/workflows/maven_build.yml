@@ -54,7 +54,9 @@ jobs:
           server-id: 'github'
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-      
+
+      - run: echo  $GITHUB_WORKSPACE/settings.xml
+
       - name: Set version
         if: ${{ inputs.release_build }}
         run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
@@ -75,6 +77,7 @@ jobs:
           retention-days: 10
 
       - name: Publish to GitHub Packages Apache Maven
+        if: ${{ inputs.release_build }}
         run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
         env:
           GITHUB_TOKEN: ${{ github.token }}
