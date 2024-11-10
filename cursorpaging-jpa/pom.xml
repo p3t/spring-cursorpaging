@@ -2,11 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <!-- This module was also published with a richer model, Gradle metadata,  -->
-  <!-- which should be used instead. Do not delete the following line which  -->
-  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
-  <!-- that they should prefer consuming it instead. -->
-  <!-- do_not_remove: published-with-gradle-metadata -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.vigier.cursorpaging</groupId>
@@ -17,7 +12,7 @@
   <artifactId>cursorpaging-jpa</artifactId>
   <version>0-SNAPSHOT</version>
 
-  <name>spring-cursorpaging</name>
+  <name>Spring-CursorPaging::JPA</name>
   <description>Cursor paging support for Spring Data</description>
   <url>https://github.com/p3t/spring-cursorpaging/</url>
   <inceptionYear>2024</inceptionYear>
@@ -145,6 +140,14 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
   <profiles>
     <profile>
       <id>RELEASE_BUILD</id>
@@ -158,7 +161,7 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jarsigner-plugin</artifactId>
+            <artifactId>maven-gpg-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

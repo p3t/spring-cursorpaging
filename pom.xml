@@ -2,11 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <!-- This module was also published with a richer model, Gradle metadata,  -->
-  <!-- which should be used instead. Do not delete the following line which  -->
-  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
-  <!-- that they should prefer consuming it instead. -->
-  <!-- do_not_remove: published-with-gradle-metadata -->
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vigier.cursorpaging</groupId>
   <artifactId>cursorpaging-parent</artifactId>
@@ -19,7 +14,7 @@
     <module>cursorpaging-jpa-api</module>
   </modules>
 
-  <name>Spring-CursorPaging</name>
+  <name>Spring-CursorPagingm</name>
   <description>Cursor based paging support for Spring Data</description>
   <url>https://github.com/p3t/spring-cursorpaging/</url>
   <inceptionYear>2024</inceptionYear>
@@ -55,12 +50,15 @@
 
   <properties>
     <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.28.2</protobuf.version>
     <hibernate.version>6.5.3.Final</hibernate.version>
     <hibernate-annotations.version>6.0.6.Final</hibernate-annotations.version>
     <springboot.version>3.3.4</springboot.version>
     <lombok.version>1.18.34</lombok.version>
     <mockito.version>5.11.0</mockito.version>
+    <delombok.output>${project.build.directory}/generated-sources/delombok</delombok.output>
   </properties>
 
   <dependencyManagement>
@@ -225,23 +223,57 @@
         </plugin>
 
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jarsigner-plugin</artifactId>
-          <version>3.1.0</version>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok-maven-plugin</artifactId>
+          <version>1.18.20.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+            <outputDirectory>${delombok.output}</outputDirectory>
+            <addOutputDirectory>false</addOutputDirectory>
+          </configuration>
           <executions>
             <execution>
-              <id>sign</id>
+              <phase>generate-sources</phase>
               <goals>
-                <goal>sign</goal>
+                <goal>delombok</goal>
               </goals>
             </execution>
           </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.1</version>
           <configuration>
-            <keystore>/path/to/the/keystore</keystore>
-            <alias>Alias name</alias>
-            <storepass>Store password</storepass>
-            <keypass>Key password</keypass>
+            <sourcepath>${delombok.output}</sourcepath>
+            <failOnError>false</failOnError>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.7</version>
+          <executions>
+            <execution>
+              <id>sign-artifacts</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+              <configuration>
+                <signer>bc</signer>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
 
         <plugin>

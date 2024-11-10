@@ -59,6 +59,9 @@ jobs:
         run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
 
       - name: Build project, run unit and integration tests
-        run: ./mvnw -T1C --batch-mode clean install
+        id: Build
+        run: ./mvnw -T1C --batch-mode clean install javadoc:jar gpg:sign -Dgpg.signer=bc
         shell: bash
-
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
