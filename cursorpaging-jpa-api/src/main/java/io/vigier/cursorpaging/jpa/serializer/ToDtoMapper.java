@@ -26,15 +26,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor( staticName = "of" )
 class ToDtoMapper<E> {
 
-    private static final Map<Class<? extends Filter>, FilterType> TYPE_MAP = Map.of( //
-            EqualFilter.class, FilterType.EQ, //
-            GreaterThanFilter.class, FilterType.GT, //
-            LessThanFilter.class, FilterType.LT, //
-            LikeFilter.class, FilterType.LIKE //
-    );
-    private static final Map<Class<? extends FilterList>, FilterListType> LISTTYPE_MAP = Map.of( //
-            AndFilter.class, FilterListType.AND, //
-            OrFilter.class, FilterListType.OR );
+    private static final Map<Class<? extends Filter>, FilterType> TYPE_MAP;
+    private static final Map<Class<? extends FilterList>, FilterListType> LISTTYPE_MAP;
+
+    static {
+        TYPE_MAP = Map.of( //
+                EqualFilter.class, FilterType.EQ, //
+                GreaterThanFilter.class, FilterType.GT, //
+                LessThanFilter.class, FilterType.LT, //
+                LikeFilter.class, FilterType.LIKE //
+        );
+        LISTTYPE_MAP = Map.of( //
+                AndFilter.class, FilterListType.AND, //
+                OrFilter.class, FilterListType.OR );
+    }
 
     private final PageRequest<E> pageRequest;
 

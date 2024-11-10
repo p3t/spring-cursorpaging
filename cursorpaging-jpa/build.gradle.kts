@@ -21,6 +21,7 @@ dependencies {
     testImplementation("jakarta.transaction:jakarta.transaction-api")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.springframework.boot:spring-boot-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.retry:spring-retry")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito:mockito-junit-jupiter")
