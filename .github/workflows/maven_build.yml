@@ -60,7 +60,7 @@ jobs:
 
       - name: Build project, run unit and integration tests
         id: Build
-        run: ./mvn -T1C --batch-mode clean install javadoc:jar gpg:sign -Dgpg.signer=bc
+        run: mvn -T1C --batch-mode clean install javadoc:jar gpg:sign -Dgpg.signer=bc
         shell: bash
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
