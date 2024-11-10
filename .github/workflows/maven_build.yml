@@ -43,24 +43,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      #        with:
-      #          fetch-depth: 0
 
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
-
+          server-id: 'github'
+          gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+      
       - name: Set version
         if: ${{ inputs.release_build }}
         run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
 
       - name: Build project, run unit and integration tests
         id: Build
-        run: mvn -T1C --batch-mode clean install javadoc:jar gpg:sign -Dgpg.signer=bc
+        run: ./mvnw -T1C --batch-mode clean install javadoc:jar gpg:sign -Dgpg.signer=bc
         shell: bash
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
