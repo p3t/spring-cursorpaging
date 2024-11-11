@@ -55,7 +55,8 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
 
-      - run: cat $GITHUB_WORKSPACE/settings.xml
+      - run: cat ~/.m2/settings.xml
+        continue-on-error: true
 
       - name: Set version
         if: ${{ inputs.release_build }}
@@ -78,6 +79,6 @@ jobs:
 
       - name: Publish to GitHub Packages Apache Maven
         if: ${{ inputs.release_build }}
-        run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+        run: mvn deploy
         env:
           GITHUB_TOKEN: ${{ github.token }}
