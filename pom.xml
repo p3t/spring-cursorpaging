@@ -95,7 +95,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
         <version>${springboot.version}</version>
-        <type>pom</type>
+        <!--        <type>pom</type>-->
         <scope>import</scope>
       </dependency>
       <dependency>
@@ -103,7 +103,7 @@
         <artifactId>mockito-bom</artifactId>
         <version>${mockito.version}</version>
         <scope>import</scope>
-        <type>pom</type>
+        <!--        <type>pom</type>-->
       </dependency>
 
 
