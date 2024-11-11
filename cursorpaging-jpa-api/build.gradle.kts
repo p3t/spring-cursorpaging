@@ -26,6 +26,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.core:jackson-core")
 	implementation("com.fasterxml.jackson.core:jackson-databind")
 //	implementation("com.fasterxml.jackson.core:jackson-datatype-jsr310")
+
 	implementation("com.google.protobuf:protobuf-java:4.28.3")
 
 	testImplementation("jakarta.persistence:jakarta.persistence-api")
@@ -42,7 +43,7 @@ dependencies {
 	testImplementation("org.testcontainers:testcontainers")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")
-
+  
 	testAnnotationProcessor("org.hibernate:hibernate-jpamodelgen:6.6.1.Final")
 	testRuntimeOnly("org.postgresql:postgresql")
 }
@@ -81,7 +82,7 @@ protobuf {
 sourceSets {
 	main {
 		proto {
-			srcDir("src/main/proto")
+			srcDir("src/main/protobuf")
 		}
 	}
 }

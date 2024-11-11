@@ -1,7 +1,6 @@
 plugins {
     id("io.vigier.java-library-conventions")
     id("io.vigier.java-publish-conventions")
-    id("org.kordamp.gradle.coveralls")
 }
 
 group = "io.vigier.cursorpaging"

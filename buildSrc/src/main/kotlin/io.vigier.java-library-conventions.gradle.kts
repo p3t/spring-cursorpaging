@@ -24,9 +24,8 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.5")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${Versions.springVersion}")
     }
-
 }
 // This is needed for sontarTypeCentralUpload! Has conflict with kordamp.java-project
 java {
@@ -116,10 +115,9 @@ dependencies {
     val junitVersion: String by extra("5.10.2")
     val assertjVersion: String by extra("3.25.3")
 
-
     // Load BOM for Spring Boot.
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.5"))
-    implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+//    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.5"))
+//    implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
     compileOnly("org.projectlombok:lombok:${lombokVersion}")
     testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
 
