@@ -63,25 +63,25 @@ jobs:
         id: Build
         run: ./mvnw -T1C --batch-mode clean install
 
-      - name: Publish to GitHub Packages Apache Maven
+      - name: Javadoc and sign artifacts
         if: ${{ inputs.release_build }}
         run: ./mvnw -T1C --batch-mode package javadoc:jar gpg:sign -Dgpg.signer=bc
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
-          
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            ./**/target/libs/*${{inputs.build_version}}*.jar
-            ./**/target/libs/*${{inputs.build_version}}*.jar.asc
+            ./**/target/*${{inputs.build_version}}*.jar
+            ./**/target/*${{inputs.build_version}}*.jar.asc
             ./**/target/reports/
           retention-days: 10
 
-      - name: Publish to GitHub Packages Apache Maven
+      - name: Publish to GitHub Packages
         if: ${{ inputs.release_build }}
         run: mvn deploy
         env:

@@ -1,0 +1,42 @@
+name: '[ PUBLISH ] Release build with maven'
+
+on:
+  workflow_call:
+    inputs:
+      build_version:
+        description: 'The version to be published'
+        type: string
+        required: true
+    Publish:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Setup JDK
+          uses: actions/setup-java@v4
+          with:
+            distribution: temurin
+            java-version: 17
+            cache: 'maven'
+            cache-dependency-path: '**/pom.xml'
+            server-id: 'central'
+            server-username: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+            server-password: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+
+        - name: Download build artifacts
+          uses: actions/download-artifact@v4
+          with:
+            name: build-artifacts
+
+        - name: Display structure of downloaded files
+          run: tree
+
+        - name: Publish to Maven Central
+          run: ./mvnw deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+        - name: Debug
+          if: ${{ failure() }}
+          run: |
+            echo "Failed"
+            tree
