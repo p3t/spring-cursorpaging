@@ -59,6 +59,7 @@
     <lombok.version>1.18.34</lombok.version>
     <mockito.version>5.11.0</mockito.version>
     <delombok.output>${project.build.directory}/generated-sources/delombok</delombok.output>
+    <testcontainer.version>1.20.3</testcontainer.version>
   </properties>
 
   <dependencyManagement>
@@ -74,16 +75,7 @@
         <artifactId>jakarta.persistence-api</artifactId>
         <version>3.2.0</version>
       </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jpa</artifactId>
-        <version>${springboot.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jdbc</artifactId>
-        <version>${springboot.version}</version>
-      </dependency>
+
       <dependency>
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
@@ -95,15 +87,29 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
         <version>${springboot.version}</version>
-        <!--        <type>pom</type>-->
+        <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+        <version>${springboot.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        <version>${springboot.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-bom</artifactId>
         <version>${mockito.version}</version>
         <scope>import</scope>
-        <!--        <type>pom</type>-->
+        <type>pom</type>
       </dependency>
 
 
@@ -135,6 +141,14 @@
 
       <!-- Test dependencies -->
       <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>1.20.3</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+
+      <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
         <version>${hibernate.version}</version>
@@ -144,13 +158,6 @@
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
         <version>42.7.4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers-bom</artifactId>
-        <version>1.20.3</version>
-        <scope>import</scope>
-        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -276,24 +283,9 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${springboot.version}</version>
       </plugin>
     </plugins>
   </build>
 
-  <repositories>
-    <repository>
-      <id>central</id>
-      <name>Sonartype Central</name>
-      <url>https://central.sonatype.com/api/v1/</url>
-    </repository>
-  </repositories>
-
-  <profiles>
-    <profile>
-      <id>RELEASE_BUILD</id>
-      <distributionManagement>
-
-      </distributionManagement>
-    </profile>
-  </profiles>
 </project>
