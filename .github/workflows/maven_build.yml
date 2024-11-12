@@ -1,4 +1,4 @@
-name: '[ BUILD ] Build Project (Java/Maven)'
+name: '[ Start ] Build Project (Java/Maven)'
 
 on:
   workflow_dispatch:
@@ -40,6 +40,8 @@ env:
 jobs:
   Build:
     runs-on: ubuntu-latest
+    outputs:
+      build_artifacts_id: ${{ steps.BuildArtifactUpload.outputs.artifact-id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,26 +65,36 @@ jobs:
         id: Build
         run: ./mvnw -T1C --batch-mode clean install
 
+      - name: Evaluate branch name where the scan results are added to in Sonarcloud
+        if: ${{inputs.actor != 'dependabot[bot]' }}
+        id: branch_to_scan
+        shell: bash
+        run: |
+          echo github.head_ref - pull request:   ${{ github.head_ref }} 
+          echo github.ref_name - push:   ${{ github.ref_name }} 
+          echo event: ${{ github.event_name }}
+          echo branch name to scan: ${{ github.head_ref || github.ref_name }}
+          echo name=${{ github.head_ref || github.ref_name }} >> $GITHUB_OUTPUT
+
       - name: Javadoc and sign artifacts
         if: ${{ inputs.release_build }}
-        run: ./mvnw -T1C --batch-mode package javadoc:jar gpg:sign -Dgpg.signer=bc
+        run: ./mvnw -T1C --batch-mode package gpg:sign -Dgpg.signer=bc
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
 
+      - name: (Info) Display structure of files
+        run: tree
+
       - name: Upload build artifacts
+        id: BuildArtifactUpload
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ inputs.build_version }}
           path: |
-            ./**/target/*${{inputs.build_version}}*.jar
-            ./**/target/*${{inputs.build_version}}*.jar.asc
+            ./**/target/*${{ inputs.build_version }}*.jar
+            ./**/target/*${{ inputs.build_version }}*.zip
+            ./**/target/*${{ inputs.build_version }}*.asc
             ./**/target/reports/
           retention-days: 10
-
-      - name: Publish to GitHub Packages
-        if: ${{ inputs.release_build }}
-        run: mvn deploy
-        env:
-          GITHUB_TOKEN: ${{ github.token }}

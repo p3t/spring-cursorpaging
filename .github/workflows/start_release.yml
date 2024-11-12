@@ -1,6 +1,6 @@
 #
 
-name: '[ RELEASE ] Package & Deploy'
+name: '[ Start ] Release artifacts, Build & Deploy'
 
 on:
   workflow_dispatch:
@@ -49,6 +49,7 @@ jobs:
       packages: write
 
   UploadAssetsToRelease:
+    name: 'Upload assets to release'
     needs: [ ReleaseVersion, Build ]
     runs-on: ubuntu-latest
     permissions:
@@ -57,6 +58,9 @@ jobs:
       BUILD_VERSION: ${{ needs.ReleaseVersion.outputs.build_version }}
 
     steps:
+      - name: (Info) build_artifact_id
+        run: echo "build_artifact_id=${{ needs.Build.outputs.build_artifact_id }}"
+
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
@@ -67,7 +71,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./**/build/libs/*
+            ./**/target/*.jar
+            ./**/target/*.jar.asc
+            ./**/target/*.pom
+            ./**/target/*.pom.asc
             ./LICENSE
             ./README.md  
   
@@ -76,6 +83,7 @@ jobs:
     uses: ./.github/workflows/maven_publish.yml
     with:
       build_version: ${{ needs.ReleaseVersion.outputs.build_version }}
+      build_artifact_id: ${{ needs.Build.outputs.build_artifact_id }}
     secrets: inherit
     permissions:
       packages: write

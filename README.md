@@ -1,4 +1,4 @@
-[![Java CI with Gradle](https://github.com/p3t/spring-curserpaging/actions/workflows/build.yml/badge.svg)](https://github.com/p3t/spring-curserpaging/actions/workflows/build.yml)
+[![[ BUILD ] Build Project (Java/Maven)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml/badge.svg)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml)
 
 # Spring Data repository support for cursor based paging
 

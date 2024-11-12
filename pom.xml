@@ -14,18 +14,10 @@
     <module>cursorpaging-jpa-api</module>
   </modules>
 
-  <name>Spring-CursorPagingm</name>
+  <name>Spring-CursorPaging</name>
   <description>Cursor based paging support for Spring Data</description>
   <url>https://github.com/p3t/spring-cursorpaging/</url>
   <inceptionYear>2024</inceptionYear>
-
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/p3t/spring-cursorpaging/</url>
-    </repository>
-  </distributionManagement>
 
   <licenses>
     <license>
@@ -64,17 +56,17 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>jakarta.validation</groupId>
-        <artifactId>jakarta.validation-api</artifactId>
-        <version>3.1.0</version>
-        <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>jakarta.persistence</groupId>
-        <artifactId>jakarta.persistence-api</artifactId>
-        <version>3.2.0</version>
-      </dependency>
+      <!--      <dependency>-->
+      <!--        <groupId>jakarta.validation</groupId>-->
+      <!--        <artifactId>jakarta.validation-api</artifactId>-->
+      <!--        <version>3.1.0</version>-->
+      <!--        <scope>compile</scope>-->
+      <!--      </dependency>-->
+      <!--      <dependency>-->
+      <!--        <groupId>jakarta.persistence</groupId>-->
+      <!--        <artifactId>jakarta.persistence-api</artifactId>-->
+      <!--        <version>3.2.0</version>-->
+      <!--      </dependency>-->
 
       <dependency>
         <groupId>org.hibernate.common</groupId>
@@ -144,6 +136,13 @@
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
         <version>1.20.3</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <version>${springboot.version}</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -246,6 +245,28 @@
             <sourcepath>${delombok.output}</sourcepath>
             <failOnError>false</failOnError>
           </configuration>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.1</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+              <phase>package</phase>
+            </execution>
+          </executions>
         </plugin>
 
         <plugin>
@@ -259,9 +280,9 @@
               <goals>
                 <goal>sign</goal>
               </goals>
-              <configuration>
-                <signer>bc</signer>
-              </configuration>
+              <!--              <configuration>-->
+              <!--                <signer>bc</signer>-->
+              <!--              </configuration>-->
             </execution>
           </executions>
         </plugin>
@@ -273,10 +294,16 @@
           <extensions>true</extensions>
           <configuration>
             <publishingServerId>central</publishingServerId>
-            <waitUntil>uploaded</waitUntil>
+            <waitUntil>validated</waitUntil>
+            <deploymentName>Spring-CursorPaging</deploymentName>
           </configuration>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.1</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -289,4 +316,41 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>github</id>
+      <activation>
+        <property>
+          <name>!central</name>
+        </property>
+      </activation>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/p3t/spring-cursorpaging/</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <id>central</id>
+      <activation>
+        <property>
+          <name>central</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

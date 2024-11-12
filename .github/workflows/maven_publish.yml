@@ -1,4 +1,4 @@
-name: '[ PUBLISH ] Release build with maven'
+name: '[ Step ] Publish artifacts with maven'
 
 on:
   workflow_call:
@@ -7,36 +7,86 @@ on:
         description: 'The version to be published'
         type: string
         required: true
-    Publish:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+      build_artifact_id:
+        description: 'The id of the uploaded build artifacts.'
+        type: string
+        required: false
+        default: 'build-artifacts'
+env:
+  BUILD_VERSION: ${{ inputs.build_version }}
 
-        - name: Setup JDK
-          uses: actions/setup-java@v4
-          with:
-            distribution: temurin
-            java-version: 17
-            cache: 'maven'
-            cache-dependency-path: '**/pom.xml'
-            server-id: 'central'
-            server-username: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
-            server-password: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+jobs:
+  PublishOnCentral:
+    name: 'Publish to Maven Central'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        - name: Download build artifacts
-          uses: actions/download-artifact@v4
-          with:
-            name: build-artifacts
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: 'maven'
+          cache-dependency-path: '**/pom.xml'
+          server-id: 'central'
+          server-username: 'SERVER_USERNAME'
+          server-password: 'SERVER_PASSWORD'
 
-        - name: Display structure of downloaded files
-          run: tree
+      - name: (Info) Display build-version
+        run: echo ${{ inputs.build_version }}
 
-        - name: Publish to Maven Central
-          run: ./mvnw deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      #      - name: Download build artifacts
+      #        uses: actions/download-artifact@v4
+      #        with:
+      #          merge-multiple: true
+      #          name: build-artifacts-${{ inputs.build_version }}
 
-        - name: Debug
-          if: ${{ failure() }}
-          run: |
-            echo "Failed"
-            tree
+      - name: Set version
+        run: ./mvnw versions:set -DnewVersion=${{ inputs.build_version }} -DgenerateBackupPoms=false
+
+      - name: Publish to Maven Central
+        run: ./mvnw -T1C --batch-mode deploy -Dgpg.signer=bc -Dcentral -DskipTests
+        env:
+          SERVER_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          SERVER_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: (Info) Display structure of the files
+        if: always()
+        run: tree -D
+
+  PublishGitHub:
+    name: 'Publish to GitHub packages'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: 'maven'
+          cache-dependency-path: '**/pom.xml'
+          server-id: 'github'
+          gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          name: build-artifacts-${{ inputs.build_version }}
+
+      - name: Set version
+        run: ./mvnw versions:set -DnewVersion=${{ inputs.build_version }} -DgenerateBackupPoms=false
+
+      - name: Publish to GitHub
+        run: ./mvnw deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
