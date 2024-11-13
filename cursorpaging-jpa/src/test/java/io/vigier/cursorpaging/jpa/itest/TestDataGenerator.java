@@ -97,7 +97,7 @@ public class TestDataGenerator {
                     .tags( someTags( tags, i ) )
                     .build() ) );
         }
-        log.info( "Generated {} test data-records", dataRecordRepository.count() );
+        log.debug( "Generated {} test data-records", dataRecordRepository.count() );
         return allRecords;
     }
 

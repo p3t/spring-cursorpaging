@@ -12,6 +12,7 @@
   <modules>
     <module>cursorpaging-jpa</module>
     <module>cursorpaging-jpa-api</module>
+    <module>cursorpaging-examples/webapp-with-maven</module>
   </modules>
 
   <name>Spring-CursorPaging</name>
@@ -56,18 +57,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <!--      <dependency>-->
-      <!--        <groupId>jakarta.validation</groupId>-->
-      <!--        <artifactId>jakarta.validation-api</artifactId>-->
-      <!--        <version>3.1.0</version>-->
-      <!--        <scope>compile</scope>-->
-      <!--      </dependency>-->
-      <!--      <dependency>-->
-      <!--        <groupId>jakarta.persistence</groupId>-->
-      <!--        <artifactId>jakarta.persistence-api</artifactId>-->
-      <!--        <version>3.2.0</version>-->
-      <!--      </dependency>-->
-
       <dependency>
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
@@ -104,13 +93,6 @@
         <type>pom</type>
       </dependency>
 
-
-      <!-- Use: compile -->
-      <!--      <dependency>-->
-      <!--        <groupId>com.google.protobuf</groupId>-->
-      <!--        <artifactId>protobuf-javalite</artifactId>-->
-      <!--        <version>${protobuf.version}</version>-->
-      <!--      </dependency>-->
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
@@ -168,6 +150,7 @@
         <artifactId>junit-jupiter</artifactId>
         <version>5.10.5</version>
       </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -280,9 +263,9 @@
               <goals>
                 <goal>sign</goal>
               </goals>
-              <!--              <configuration>-->
-              <!--                <signer>bc</signer>-->
-              <!--              </configuration>-->
+              <configuration>
+                <signer>bc</signer>
+              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -295,7 +278,10 @@
           <configuration>
             <publishingServerId>central</publishingServerId>
             <waitUntil>validated</waitUntil>
-            <deploymentName>Spring-CursorPaging</deploymentName>
+            <deploymentName>Spring-CursorPaging-${project.version}</deploymentName>
+            <excludeArtifacts>
+              <artifact>cursorpaging-examples/webapp-with-maven</artifact>
+            </excludeArtifacts>
           </configuration>
         </plugin>
 
@@ -339,6 +325,10 @@
           <name>central</name>
         </property>
       </activation>
+      <modules>
+        <module>cursorpaging-jpa</module>
+        <module>cursorpaging-jpa-api</module>
+      </modules>
       <build>
         <plugins>
           <plugin>

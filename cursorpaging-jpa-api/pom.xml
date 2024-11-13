@@ -13,7 +13,7 @@
   <artifactId>cursorpaging-jpa-api</artifactId>
   <version>0-SNAPSHOT</version>
 
-  <name>Spring-CursorPaging::JPA::API</name>
+  <name>Spring-CursorPaging :: JPA :: API</name>
   <description>Cursor paging support for Spring Data, Serialize/Deserializer for API layer</description>
   <url>https://github.com/p3t/spring-cursorpaging/</url>
   <inceptionYear>2024</inceptionYear>
