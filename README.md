@@ -1,4 +1,5 @@
-[![[ BUILD ] Build Project (Java/Maven)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml/badge.svg)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml)
+[![[ BUILD ] Build Project (Java/Maven)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml/badge.svg)](https://github.com/p3t/spring-cursorpaging/actions/workflows/maven_build.yml) ![GitHub License](https://img.shields.io/github/license/p3t/spring-cursorpaging) ![GitHub Release](https://img.shields.io/github/v/release/p3t/spring-cursorpaging?include_prereleases)
+
 
 # Spring Data repository support for cursor based paging
 
