@@ -47,7 +47,7 @@ jobs:
         run: ./mvnw versions:set -DnewVersion=${{ inputs.build_version }} -DgenerateBackupPoms=false
 
       - name: Publish to Maven Central
-        run: ./mvnw -T1C --batch-mode deploy -Dgpg.signer=bc -Dcentral -DskipTests
+        run: ./mvnw -T1C -B -V deploy -Dgpg.signer=bc -DskipTests -Dpublish -Dcentral
         env:
           SERVER_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           SERVER_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
@@ -87,6 +87,9 @@ jobs:
         run: ./mvnw versions:set -DnewVersion=${{ inputs.build_version }} -DgenerateBackupPoms=false
 
       - name: Publish to GitHub
-        run: ./mvnw deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+        run: ./mvnw -B -V deploy -Dgpg.signer=bc -DskipTests=true -Dpublish -Dgithub
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false

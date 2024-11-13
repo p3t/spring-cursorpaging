@@ -9,11 +9,6 @@
 
   <packaging>pom</packaging>
 
-  <modules>
-    <module>cursorpaging-jpa</module>
-    <module>cursorpaging-jpa-api</module>
-    <module>cursorpaging-examples/webapp-with-maven</module>
-  </modules>
 
   <name>Spring-CursorPaging</name>
   <description>Cursor based paging support for Spring Data</description>
@@ -304,12 +299,30 @@
 
   <profiles>
     <profile>
+      <id>build</id>
+      <activation>
+        <property>
+          <name>!publish</name>
+        </property>
+      </activation>
+      <modules>
+        <module>cursorpaging-jpa</module>
+        <module>cursorpaging-jpa-api</module>
+        <module>cursorpaging-examples/webapp-with-maven</module>
+      </modules>
+    </profile>
+
+    <profile>
       <id>github</id>
       <activation>
         <property>
-          <name>!central</name>
+          <name>github</name>
         </property>
       </activation>
+      <modules>
+        <module>cursorpaging-jpa</module>
+        <module>cursorpaging-jpa-api</module>
+      </modules>
       <distributionManagement>
         <repository>
           <id>github</id>
@@ -318,6 +331,7 @@
         </repository>
       </distributionManagement>
     </profile>
+
     <profile>
       <id>central</id>
       <activation>
