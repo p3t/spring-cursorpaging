@@ -188,6 +188,8 @@ public class Attribute {
             return value;
         } else if ( value instanceof Character && (type() == Character.class || type() == char.class) ) {
             return value;
+        } else if ( value instanceof Boolean && typeIsBoolean() ) {
+            return value;
         } else if ( value instanceof Byte && (type() == Byte.class || type() == byte.class) ) {
             return value;
         } else if ( value instanceof Integer && typeIsLong() ) {
@@ -200,10 +202,16 @@ public class Attribute {
             return Long.valueOf( value.toString() );
         } else if ( value instanceof String && typeIsShort() ) {
             return Short.valueOf( value.toString() );
+        } else if ( value instanceof String && typeIsBoolean() ) {
+            return Boolean.valueOf( value.toString() );
         } else {
             throw new IllegalArgumentException(
                     "Value %s (%s) is not of type %s".formatted( value, value.getClass().getName(), type() ) );
         }
+    }
+
+    private boolean typeIsBoolean() {
+        return type() == Boolean.class || type() == boolean.class;
     }
 
     private boolean typeIsShort() {
