@@ -1,5 +1,6 @@
 package io.vigier.cursorpaging.jpa;
 
+import lombok.EqualsAndHashCode;
 import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
 
 /**

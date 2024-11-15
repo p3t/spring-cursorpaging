@@ -76,7 +76,7 @@ public class Attribute {
     public static Attribute path( final SingleAttribute... path ) {
         return new Attribute( Arrays.asList( path ) );
     }
-    
+
     public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2 ) {
         return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ) ) );
     }
@@ -164,8 +164,7 @@ public class Attribute {
      * @see #ignoreCase(boolean)
      */
     public Attribute withIgnoreCase() {
-        return toBuilder().ignoreCase( true )
-                .build();
+        return ignoreCase( true );
     }
 
     /**
@@ -176,5 +175,26 @@ public class Attribute {
      */
     public boolean ignoreCase() {
         return ignoreCase;
+    }
+
+    public Comparable<?> verify( Comparable<?> v ) {
+        if ( type().isAssignableFrom( v.getClass() ) ) {
+            return type().cast( v );
+        } else if ( v instanceof Integer && type().isAssignableFrom( Long.class ) ) {
+            return Long.valueOf( (Integer) v );
+        } else if ( v instanceof Long && type().isAssignableFrom( Integer.class ) && (Long) v <= Integer.MAX_VALUE ) {
+            return Integer.valueOf( v.toString() );
+        } else {
+            throw new IllegalArgumentException(
+                    "Value %s (%s) is not of type %s".formatted( v, v.getClass().getName(), type() ) );
+        }
+    }
+
+    public List<? extends Comparable<?>> verify( List<? extends Comparable<?>> values ) {
+        return values.stream().map( this::verify ).toList();
+    }
+
+    public Comparable<?>[] verify( Comparable<?>... values ) {
+        return Arrays.stream( values ).map( this::verify ).toArray( Comparable<?>[]::new );
     }
 }

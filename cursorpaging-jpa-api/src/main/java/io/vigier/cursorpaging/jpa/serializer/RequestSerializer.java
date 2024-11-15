@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
 
 @Builder
 public class RequestSerializer<E> {
@@ -21,7 +22,53 @@ public class RequestSerializer<E> {
     @Builder.Default
     private final Encrypter encrypter = Encrypter.getInstance();
 
-    private final ConversionService conversionService;
+    @Builder.Default
+    private final ConversionService conversionService = new ConversionService() {
+        @Override
+        public boolean canConvert( final Class<?> sourceType, final Class<?> targetType ) {
+            if ( sourceType == null || targetType == null ) {
+                return false;
+            }
+            return sourceType.isAssignableFrom( String.class ) && (
+                    targetType.isAssignableFrom( Long.class )
+                            || targetType.isAssignableFrom( Integer.class )
+                            || targetType.isAssignableFrom( Boolean.class )
+                            || targetType.isAssignableFrom( String.class )
+                            || targetType.isAssignableFrom( Object.class ) );
+        }
+
+        @Override
+        public boolean canConvert( final TypeDescriptor sourceType, final TypeDescriptor targetType ) {
+            if ( sourceType == null || targetType == null ) {
+                return false;
+            }
+            return canConvert( sourceType.getType(), targetType.getType() );
+        }
+
+        @Override
+        public <T> T convert( final Object source, final Class<T> targetType ) {
+            if (targetType == String.class)
+                return (T) source.toString();
+            if (targetType == Integer.class) {
+                return (T) Integer.valueOf( source.toString() );
+            }
+            if (targetType == Long.class) {
+                return (T) Long.valueOf( source.toString() );
+            }
+            if(targetType == Boolean.class) {
+                return (T) Boolean.valueOf( source.toString().equals( "true" ) );
+            }
+            if(targetType==Object.class) {
+                return (T) source;
+            }
+            return null;
+        }
+
+        @Override
+        public Object convert( final Object source, final TypeDescriptor sourceType, final TypeDescriptor targetType ) {
+            return convert( source, targetType.getObjectType() );
+        }
+    } ;
 
     @Builder.Default
     private final Map<String, RuleFactory> filterRuleFactories = new HashMap<>();

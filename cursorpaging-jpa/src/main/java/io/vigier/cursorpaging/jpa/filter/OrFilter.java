@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode( callSuper = true )
+@ToString(callSuper = true)
 public class OrFilter extends FilterList {
 
     private OrFilter( final List<QueryElement> filters ) {

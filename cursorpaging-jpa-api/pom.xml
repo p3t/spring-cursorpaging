@@ -67,11 +67,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.hibernate.orm</groupId>
-      <artifactId>hibernate-jpamodelgen</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>

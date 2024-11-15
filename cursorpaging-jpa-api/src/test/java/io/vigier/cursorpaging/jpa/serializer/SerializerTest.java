@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.convert.ConversionService;
 
+import static io.vigier.cursorpaging.jpa.Filters.attribute;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -73,8 +74,8 @@ class SerializerTest {
     void shouldSerializePageRequestsWithOrFilter() {
         final PageRequest<TestEntity> pageRequest = PageRequest.create(
                 b -> b.desc( TestEntity_.name ).filter( Filters.or( //
-                        Filters.attribute( TestEntity_.name ).equalTo( "Name-1" ), //
-                        Filters.attribute( TestEntity_.id ).greaterThan( 1L ) //
+                        attribute( TestEntity_.name ).equalTo( "Name-1" ), //
+                        attribute( TestEntity_.id ).greaterThan( 1L ) //
                 ) ) );
         when( conversionService.convert( anyString(), eq( Long.class ) ) ).thenAnswer(
                 i -> Long.valueOf( (String) i.getArguments()[0] ) );
@@ -127,6 +128,18 @@ class SerializerTest {
             assertThat( r.totalCount() ).isPresent().get().isEqualTo( 42L );
             assertThat( r.enableTotalCount() ).isTrue();
         } );
+    }
+
+    @Test
+    void shouldDeserializeAndFilter() {
+        PageRequest<TestEntity> request = PageRequest.create( r -> r.filter(
+                Filters.and( attribute( TestEntity_.id ).equalTo( 123L ),
+                        attribute( TestEntity_.name ).like( "%bumlux%" ) ) ).asc( TestEntity_.id ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create();
+        final var serializedRequest = serializer.toBytes( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+
+        assertThat( deserializedRequest ).isEqualTo( request );
     }
 
     @Test

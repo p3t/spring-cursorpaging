@@ -20,7 +20,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter equalTo( Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).equalTo( value ) );
+            return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( value ) ) );
         }
 
         /**
@@ -30,7 +30,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter equalTo( List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).equalTo( values ) );
+            return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( values ) ) );
         }
 
         /**
@@ -40,7 +40,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter in( List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).in( values ) );
+            return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
         }
 
         /**
@@ -50,7 +50,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter in( Comparable<?>... values ) {
-            return Filter.create( f -> f.attribute( attribute ).in( values ) );
+            return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
         }
 
         /**
@@ -60,7 +60,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter like( String... values ) {
-            return Filter.create( f -> f.attribute( attribute ).like( values ) );
+            return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
         }
 
         /**
@@ -70,7 +70,7 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter like( List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).like( values ) );
+            return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
         }
 
         /**
@@ -80,7 +80,7 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter greaterThan( Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThan( value ) );
+            return Filter.create( f -> f.attribute( attribute ).greaterThan( attribute.verify( value ) ) );
         }
 
         /**
@@ -90,7 +90,7 @@ public final class Filters {
          * @return the filter
          */
         public Filter greaterThan( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThan( values ) );
+            return Filter.create( f -> f.attribute( attribute ).greaterThan( attribute.verify( values ) ) );
         }
 
         /**
@@ -100,7 +100,7 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter lessThan( Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThan( value ) );
+            return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( value ) ) );
         }
 
         /**
@@ -110,13 +110,13 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter lessThan( List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThan( values ) );
+            return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( values ) ) );
         }
     }
 
     private Filters() {
     }
-    
+
     /**
      * Starts a filter-creation with the provided attribute
      *

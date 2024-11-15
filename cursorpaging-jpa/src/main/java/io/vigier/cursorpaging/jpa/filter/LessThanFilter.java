@@ -5,7 +5,9 @@ import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.List;
+import lombok.ToString;
 
+@ToString(callSuper = true)
 public class LessThanFilter extends Filter {
 
     public LessThanFilter( final Attribute attribute, final List<? extends Comparable<?>> values ) {

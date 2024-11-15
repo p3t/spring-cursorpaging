@@ -7,11 +7,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
+@ToString
 public abstract class FilterList implements QueryElement, Iterable<QueryElement> {
 
     private final List<QueryElement> filters;

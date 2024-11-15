@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.springframework.util.StringUtils;
 
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode
+@ToString
 public abstract class Filter implements QueryElement {
 
     /**

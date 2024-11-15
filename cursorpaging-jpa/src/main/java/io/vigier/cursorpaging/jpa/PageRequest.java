@@ -265,6 +265,8 @@ public class PageRequest<E> {
         return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity ) ).toList() )
                 .pageSize( this.pageSize )
                 .totalCount( this.totalCount )
+                .filters( this.filters )
+                .rules( this.rules )
                 .enableTotalCount( this.enableTotalCount ) );
     }
 

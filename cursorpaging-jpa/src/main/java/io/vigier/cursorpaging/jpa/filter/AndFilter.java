@@ -6,11 +6,13 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Getter
 @Accessors( fluent = true )
 @EqualsAndHashCode( callSuper = true )
+@ToString(callSuper = true)
 public class AndFilter extends FilterList {
 
     protected AndFilter( final List<QueryElement> filters ) {

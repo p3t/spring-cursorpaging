@@ -225,7 +225,8 @@ class PostgreSqlCursorPageTest {
         final Filter nameIsAlphaOrBravo = Filter.create( b -> b.attribute( DataRecord_.name ).in( "Alpha", "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id ).filter( nameIsAlphaOrBravo ) );
+                .asc( DataRecord_.id )
+                .filter( nameIsAlphaOrBravo ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
@@ -301,6 +302,27 @@ class PostgreSqlCursorPageTest {
         assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
                 .filter( Filter.create( f -> f.attribute( createdAt ).lessThan( lastCreatedAt ) ) ) ) ) ) //
                 .hasSize( all.size() - 1 );
+    }
+
+    @Test
+    void shouldFilterAndFetchNextWithAndFilter() {
+        testDataGenerator.generateData( 100 );
+        var names = List.of( NAME_ALPHA, NAME_BRAVO, "Charlie", "Delta", "Echo" );
+        var status = List.of( Status.DRAFT, Status.ACTIVE );
+
+        final var page1 = dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.asc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .pageSize( 5 )
+                        .filter( Filters.and( attribute( DataRecord_.name ).in( names ),
+                                attribute( DataRecord_.status ).in( status ) ) ) ) );
+        assertThat( page1 ).allMatch( r -> names.contains( r.getName() ) && status.contains( r.getStatus() ) );
+
+        final var nextRequest = page1.next().orElseThrow();
+        assertThat( nextRequest.filters() ).hasSize( 1 );
+
+        final var page2 = dataRecordRepository.loadPage( nextRequest );
+        assertThat( page2 ).hasSize( 5 )
+                .allMatch( r -> names.contains( r.getName() ) && status.contains( r.getStatus() ) );
     }
 
     @Test
@@ -392,8 +414,8 @@ class PostgreSqlCursorPageTest {
     void shouldReturnFilteredEntityCountWhenFilterPresent() {
         final List<DataRecord> all = testDataGenerator.generateData( TestDataGenerator.NAMES.length );
         final long countPublicAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
 
         final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
         final var count = dataRecordRepository.count( request );
@@ -425,14 +447,14 @@ class PostgreSqlCursorPageTest {
     void shouldNotIgnoreCaseInEqualFilter() {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
-                .isEmpty();
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( attribute( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
+                r -> r.filter( attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
                 .isEmpty();
-        assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( attribute( DataRecord_.name ).in( "alPHa", "BRAVO" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage(
+                PageRequest.create( r -> r.filter( attribute( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage(
+                PageRequest.create( r -> r.filter( attribute( DataRecord_.name ).in( "alPHa", "BRAVO" ) ) ) ) ) //
                 .isEmpty();
     }
 
@@ -441,12 +463,12 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         // equal
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filters.ignoreCase( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
 
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filters.ignoreCase( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage(
+                PageRequest.create( r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
     }
 
@@ -455,9 +477,8 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         // in operation
-        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.filter(
-                Filters.ignoreCase( DataRecord_.name ).in( "alPHa",
-                        NAME_BRAVO.toUpperCase() ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).in( "alPHa", NAME_BRAVO.toUpperCase() ) ) ) ) ) //
                 .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
 
@@ -511,7 +532,8 @@ class PostgreSqlCursorPageTest {
         assertThat( page ).hasSize( countPublic );
 
         final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id ).filter( attribute( attributeSecurityClassLevel ).in( 0, 1 ) ) ) );
+                .asc( DataRecord_.id )
+                .filter( attribute( attributeSecurityClassLevel ).in( 0, 1 ) ) ) );
 
         assertThat( page2 ).hasSize( countPublic + countStandard );
     }
@@ -585,8 +607,8 @@ class PostgreSqlCursorPageTest {
         final int expectedSize = (int) all.stream()
                 .filter( r -> r.getName().equals( NAME_ALPHA ) || r.getName().equals( NAME_BRAVO ) )
                 .count();
-        var nameIsAlpha = Filters.attribute( DataRecord_.name ).equalTo( NAME_ALPHA );
-        var nameIsBravo = Filters.attribute( DataRecord_.name ).equalTo( NAME_BRAVO );
+        var nameIsAlpha = attribute( DataRecord_.name ).equalTo( NAME_ALPHA );
+        var nameIsBravo = attribute( DataRecord_.name ).equalTo( NAME_BRAVO );
         var request = PageRequest.<DataRecord>create(
                 r -> r.desc( DataRecord_.id ).filter( Filters.or( nameIsAlpha, nameIsBravo ) ) );
 
@@ -606,10 +628,10 @@ class PostgreSqlCursorPageTest {
                 .filter( r -> (r.getName().equals( NAME_ALPHA ) && r.getTags().contains( red )) //
                         || (r.getName().equals( NAME_BRAVO ) && r.getTags().contains( green )) )
                 .count();
-        var redAlpha = Filters.and( Filters.attribute( DataRecord_.name ).equalTo( NAME_ALPHA ),
-                Filters.attribute( DataRecord_.tags, Tag_.name ).equalTo( red.getName() ) );
-        var greenBravo = Filters.and( Filters.attribute( DataRecord_.name ).equalTo( NAME_BRAVO ),
-                Filters.attribute( DataRecord_.tags, Tag_.name ).equalTo( green.getName() ) );
+        var redAlpha = Filters.and( attribute( DataRecord_.name ).equalTo( NAME_ALPHA ),
+                attribute( DataRecord_.tags, Tag_.name ).equalTo( red.getName() ) );
+        var greenBravo = Filters.and( attribute( DataRecord_.name ).equalTo( NAME_BRAVO ),
+                attribute( DataRecord_.tags, Tag_.name ).equalTo( green.getName() ) );
         var request = PageRequest.<DataRecord>create(
                 r -> r.desc( DataRecord_.id ).filter( Filters.or( redAlpha, greenBravo ) ) );
 
@@ -629,8 +651,8 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldReverseDirectionOfCursors() {
         testDataGenerator.generateData( 10 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 ).asc( DataRecord_.name )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ) );
 
         final var allRecords = dataRecordRepository.loadPage( request.withPageSize( 10 ) );
         final var firstPage = dataRecordRepository.loadPage( request );
