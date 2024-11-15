@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
           server-id: 'central'
@@ -70,7 +70,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
           server-id: 'github'

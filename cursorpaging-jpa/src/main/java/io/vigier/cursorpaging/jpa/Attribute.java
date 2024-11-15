@@ -177,17 +177,53 @@ public class Attribute {
         return ignoreCase;
     }
 
-    public Comparable<?> verify( Comparable<?> v ) {
-        if ( type().isAssignableFrom( v.getClass() ) ) {
-            return type().cast( v );
-        } else if ( v instanceof Integer && type().isAssignableFrom( Long.class ) ) {
-            return Long.valueOf( (Integer) v );
-        } else if ( v instanceof Long && type().isAssignableFrom( Integer.class ) && (Long) v <= Integer.MAX_VALUE ) {
-            return Integer.valueOf( v.toString() );
+    public Comparable<?> verify( final Comparable<?> value ) {
+        if ( type().isAssignableFrom( value.getClass() ) ) {
+            return type().cast( value );
+        } else if ( value instanceof Integer && typeIsInteger() ) {
+            return value;
+        } else if ( value instanceof Long && typeIsLong() ) {
+            return value;
+        } else if ( value instanceof Short && typeIsShort() ) {
+            return value;
+        } else if ( value instanceof Character && (type() == Character.class || type() == char.class) ) {
+            return value;
+        } else if ( value instanceof Boolean && typeIsBoolean() ) {
+            return value;
+        } else if ( value instanceof Byte && (type() == Byte.class || type() == byte.class) ) {
+            return value;
+        } else if ( value instanceof Integer && typeIsLong() ) {
+            return Long.valueOf( (Integer) value );
+        } else if ( value instanceof Long && typeIsInteger() && ((Long) value) <= Integer.MAX_VALUE ) {
+            return Integer.valueOf( value.toString() );
+        } else if ( value instanceof String && typeIsInteger() ) {
+            return Integer.valueOf( value.toString() );
+        } else if ( value instanceof String && typeIsLong() ) {
+            return Long.valueOf( value.toString() );
+        } else if ( value instanceof String && typeIsShort() ) {
+            return Short.valueOf( value.toString() );
+        } else if ( value instanceof String && typeIsBoolean() ) {
+            return Boolean.valueOf( value.toString() );
         } else {
             throw new IllegalArgumentException(
-                    "Value %s (%s) is not of type %s".formatted( v, v.getClass().getName(), type() ) );
+                    "Value %s (%s) is not of type %s".formatted( value, value.getClass().getName(), type() ) );
         }
+    }
+
+    private boolean typeIsBoolean() {
+        return type() == Boolean.class || type() == boolean.class;
+    }
+
+    private boolean typeIsShort() {
+        return type() == Short.class || type() == short.class;
+    }
+
+    private boolean typeIsInteger() {
+        return type() == Integer.class || type() == int.class;
+    }
+
+    private boolean typeIsLong() {
+        return type() == Long.class || type() == long.class;
     }
 
     public List<? extends Comparable<?>> verify( List<? extends Comparable<?>> values ) {

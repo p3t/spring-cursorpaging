@@ -71,7 +71,7 @@ class DtoPageRequestTest {
                     },
                     "filterBy": {
                         "OR": [
-                            { "GT": { "id": [ "666" ] } }
+                            { "GT": { "id": [ 666 ] } }
                         ]
                     },
                     "pageSize": 10,
