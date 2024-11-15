@@ -180,14 +180,32 @@ public class Attribute {
     public Comparable<?> verify( Comparable<?> v ) {
         if ( type().isAssignableFrom( v.getClass() ) ) {
             return type().cast( v );
-        } else if ( v instanceof Integer && type().isAssignableFrom( Long.class ) ) {
+        } else if ( v instanceof Integer && typeIsInteger() ) {
+            return v;
+        } else if ( v instanceof Long && typeIsLong() ) {
+            return v;
+        } else if ( v instanceof Short && (type() == Short.class || type() == short.class) ) {
+            return v;
+        } else if ( v instanceof Character && (type() == Character.class || type() == char.class) ) {
+            return v;
+        } else if ( v instanceof Byte && (type() == Byte.class || type() == byte.class) ) {
+            return v;
+        } else if ( v instanceof Integer && typeIsLong() ) {
             return Long.valueOf( (Integer) v );
-        } else if ( v instanceof Long && type().isAssignableFrom( Integer.class ) && (Long) v <= Integer.MAX_VALUE ) {
+        } else if ( v instanceof Long && typeIsInteger() && ((Long) v) <= Integer.MAX_VALUE ) {
             return Integer.valueOf( v.toString() );
         } else {
             throw new IllegalArgumentException(
                     "Value %s (%s) is not of type %s".formatted( v, v.getClass().getName(), type() ) );
         }
+    }
+
+    private boolean typeIsInteger() {
+        return type() == Integer.class || type() == int.class;
+    }
+
+    private boolean typeIsLong() {
+        return type() == Long.class || type() == long.class;
     }
 
     public List<? extends Comparable<?>> verify( List<? extends Comparable<?>> values ) {
