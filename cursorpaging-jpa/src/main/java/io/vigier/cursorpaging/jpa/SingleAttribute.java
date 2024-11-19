@@ -1,6 +1,6 @@
 package io.vigier.cursorpaging.jpa;
 
-import lombok.EqualsAndHashCode;
+import java.util.Objects;
 import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
 
 /**
@@ -28,6 +28,8 @@ public record SingleAttribute(
      * @return the new instance.
      */
     public static SingleAttribute of( final jakarta.persistence.metamodel.Attribute<?, ?> attribute ) {
+        Objects.requireNonNull( attribute, "Attribute must not be null: JPA metamodel might not be initialized, "
+                + "make sure the entity manager is created." );
         return new SingleAttribute( attribute.getName(), attribute.getJavaType() );
     }
 

@@ -50,10 +50,9 @@ class FilterTest {
 
     @Test
     void shouldCreateFilterFromPath() {
-        Long value = 4711L;
+        final Long value = 4711L;
         final var sut = Filter.create(
-                f -> f.attribute( Attribute.path( DataRecord_.TAGS, Set.class, Tag_.ID, Long.class ) )
-                        .equalTo( value ) );
+                f -> f.attribute( Attribute.of( DataRecord_.TAGS, Set.class, Tag_.ID, Long.class ) ).equalTo( value ) );
         verifyNameAndValue( sut, DataRecord_.TAGS + "." + Tag_.ID, Long.class, value );
     }
 
@@ -77,9 +76,9 @@ class FilterTest {
         shouldBeEqual( f1 -> f1.lessThan( "1L" ), f2 -> f2.lessThan( "1L" ) );
     }
 
-    private void shouldBeEqual( Function<FilterCreator, Filter> f1, Function<FilterCreator, Filter> f2 ) {
-        var name1 = Attribute.of( "name", String.class );
-        var name2 = Attribute.of( "name", String.class );
+    private void shouldBeEqual( final Function<FilterCreator, Filter> f1, final Function<FilterCreator, Filter> f2 ) {
+        final var name1 = Attribute.of( "name", String.class );
+        final var name2 = Attribute.of( "name", String.class );
 
         Assertions.assertThat( f1.apply( Filters.attribute( name1 ) ) )
                 .isEqualTo( f2.apply( Filters.attribute( name2 ) ) );
@@ -87,9 +86,11 @@ class FilterTest {
 
     @Test
     void filterListsShouldBeEqual() {
-        var nameAndAge1 = Filters.and( Filters.attribute( Attribute.of( "name", String.class ) ).equalTo( "John" ),
+        final var nameAndAge1 = Filters.and(
+                Filters.attribute( Attribute.of( "name", String.class ) ).equalTo( "John" ),
                 Filters.attribute( Attribute.of( "age", Long.class ) ).equalTo( 18 ) );
-        var nameAndAge2 = Filters.and( Filters.attribute( Attribute.of( "name", String.class ) ).equalTo( "John" ),
+        final var nameAndAge2 = Filters.and(
+                Filters.attribute( Attribute.of( "name", String.class ) ).equalTo( "John" ),
                 Filters.attribute( Attribute.of( "age", Long.class ) ).equalTo( 18 ) );
 
         Assertions.assertThat( nameAndAge1 ).isEqualTo( nameAndAge2 );

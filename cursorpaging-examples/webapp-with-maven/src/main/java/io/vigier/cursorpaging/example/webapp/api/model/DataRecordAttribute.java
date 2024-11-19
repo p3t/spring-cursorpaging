@@ -17,8 +17,8 @@ public enum DataRecordAttribute {
 
     ID( Attribute.of( DataRecord_.ID, UUID.class ) ),
     NAME( Attribute.of( DataRecord_.NAME, String.class ) ),
-    CREATED_AT( Attribute.path( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.CREATED_AT, Instant.class ) ),
-    MODIFIED_AT( Attribute.path( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.MODIFIED_AT, Instant.class ) );
+    CREATED_AT( Attribute.of( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.CREATED_AT, Instant.class ) ),
+    MODIFIED_AT( Attribute.of( DataRecord_.AUDIT_INFO, AuditInfo.class, AuditInfo_.MODIFIED_AT, Instant.class ) );
 
     private final Attribute attribute;
 
