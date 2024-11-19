@@ -46,7 +46,7 @@ class FiltersTest {
     void shouldGenerateEqualsFilter() {
         final var filter = Filters.attribute( DataRecord_.name ).equalTo( "Test" );
         assertThat( filter.attributes() ).contains( Attribute.of( name ) );
-        assertThat( filter.values().get( 0 ) ).isEqualTo( "Test" );
+        assertThat( filter.values().getFirst() ).isEqualTo( "Test" );
     }
 
     @Test
@@ -55,9 +55,9 @@ class FiltersTest {
         when( tagName.getName() ).thenReturn( "name" );
         when( tagName.getJavaType() ).thenReturn( String.class );
 
-        List<String> values = List.of( "Test1", "Test2" );
+        final List<String> values = List.of( "Test1", "Test2" );
         final var filter = Filters.ignoreCase( DataRecord_.tags, Tag_.name ).in( values );
-        assertThat( filter.attributes() ).contains( Attribute.path( DataRecord_.tags, Tag_.name ).withIgnoreCase() );
+        assertThat( filter.attributes() ).contains( Attribute.of( DataRecord_.tags, Tag_.name ).withIgnoreCase() );
 
         assertThat( filter.values() ).hasSize( values.size() );
         assertThat( filter.values( String.class ) ).containsAll( values );

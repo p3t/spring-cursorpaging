@@ -93,7 +93,7 @@ class SerializerTest {
 
     @Test
     void shouldSerializePageRequestsWithMultipleAttributes() {
-        final var attribute1 = Attribute.path( //
+        final var attribute1 = Attribute.of( //
                 SingleAttribute.of( "one", TestEntity.class ), //
                 SingleAttribute.of( "two", Instant.class ) );
         final var attribute2 = Attribute.of( "three", Integer.class );
@@ -132,7 +132,7 @@ class SerializerTest {
 
     @Test
     void shouldDeserializeAndFilter() {
-        PageRequest<TestEntity> request = PageRequest.create( r -> r.filter(
+        final PageRequest<TestEntity> request = PageRequest.create( r -> r.filter(
                 Filters.and( attribute( TestEntity_.id ).equalTo( 123L ),
                         attribute( TestEntity_.name ).like( "%bumlux%" ) ) ).asc( TestEntity_.id ) );
         final RequestSerializer<TestEntity> serializer = RequestSerializer.create();
@@ -144,7 +144,7 @@ class SerializerTest {
 
     @Test
     void shouldSerializeParametersOfFilterRules() {
-        Map<String, List<String>> parameters = Map.of( "Test1", List.of( "Value1" ) );
+        final Map<String, List<String>> parameters = Map.of( "Test1", List.of( "Value1" ) );
         final var request = createPageRequest().copy( b -> b.rule( newTestRule( "TestRule", parameters ) ) );
         final RequestSerializer<TestEntity> serializer = RequestSerializer.create(
                 c -> c.filterRuleFactory( "TestRule", p -> newTestRule( "TestRule", p ) ) );
@@ -186,7 +186,7 @@ class SerializerTest {
     }
 
     private PageRequest<TestEntity> createPageRequest() {
-        final var attribute1 = Attribute.path( //
+        final var attribute1 = Attribute.of( //
                 SingleAttribute.of( "one", TestEntity.class ), //
                 SingleAttribute.of( "two", Instant.class ) );
         final var attribute2 = Attribute.of( "three", Integer.class );

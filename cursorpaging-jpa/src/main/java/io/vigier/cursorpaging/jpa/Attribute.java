@@ -29,7 +29,7 @@ public class Attribute {
 
     private final boolean ignoreCase;
 
-    public Attribute( List<SingleAttribute> attributes ) {
+    public Attribute( final List<SingleAttribute> attributes ) {
         this.attributes = attributes;
         this.ignoreCase = false;
     }
@@ -56,32 +56,51 @@ public class Attribute {
     }
 
     /**
-     * Creates a new attribute with a path of single attributes. This is needed to address properties of embedded
-     * entities
+     * Creates a new attribute as path of single attributes. This is needed to address properties of embedded entities
      *
      * @param path Path pointing to an attribute (of an embedded entity)
      * @return The attribute describing the path and the type of the single attributes
      */
-    public static Attribute path( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
+    public static Attribute of( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return new Attribute( Arrays.stream( path ).map( SingleAttribute::of ).toList() );
     }
 
     /**
-     * Creates a new attribute with a path of single attributes. This is needed to address properties of embedded
+     * Creates a new attribute with as path of single attributes. This is needed to address properties of embedded
      * entities
      *
      * @param path Path pointing to an attribute (of an embedded entity)
      * @return The attribute describing the path and the type of the single attributes
      */
-    public static Attribute path( final SingleAttribute... path ) {
+    public static Attribute of( final SingleAttribute... path ) {
         return new Attribute( Arrays.asList( path ) );
     }
 
-    public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2 ) {
+    /**
+     * Creates an attribute as path of 2 attributes
+     *
+     * @param name1 Attribute name 1
+     * @param type1 Type of attribute 1
+     * @param name2 Attribute name 2
+     * @param type2 Type of attribute 2
+     * @return The attribute describing the path and type to the specified attribute
+     */
+    public static Attribute of( final String name1, final Class<?> type1, final String name2, final Class<?> type2 ) {
         return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ) ) );
     }
 
-    public static Attribute path( final String name1, final Class<?> type1, final String name2, final Class<?> type2,
+    /**
+     * Creates an attribute as path of 3 attributes
+     *
+     * @param name1 Attribute name 1
+     * @param type1 Type of attribute 1
+     * @param name2 Attribute name 2
+     * @param type2 Type of attribute 2
+     * @param name3 Attribute name 3
+     * @param type3 Type of attribute 3
+     * @return The attribute describing the path and type to the specified attribute
+     */
+    public static Attribute of( final String name1, final Class<?> type1, final String name2, final Class<?> type2,
             final String name3, final Class<?> type3 ) {
         return new Attribute( List.of( SingleAttribute.of( name1, type1 ), SingleAttribute.of( name2, type2 ),
                 SingleAttribute.of( name3, type3 ) ) );
@@ -122,7 +141,7 @@ public class Attribute {
      * @param root The root of the entity
      * @param <E>  Entity type
      * @param <V>  Value type
-     * @return The path to the attribute
+     * @return The path-expression to the attribute
      */
     public <E, V extends Comparable<? super V>> Expression<V> path( final Root<E> root ) {
         Path<?> path = root;
@@ -135,14 +154,14 @@ public class Attribute {
     }
 
     /**
-     * Get the type of the last attribute in the path
+     * Get the type of the last attribute in the of
      *
      * @param <V> Expected Value type
      * @return the value type
      */
     @SuppressWarnings( "unchecked" )
     public <V extends Comparable<? super V>> Class<V> type() {
-        return (Class<V>) attributes.get( attributes.size() - 1 ).type();
+        return (Class<V>) attributes.getLast().type();
     }
 
     /**
@@ -152,7 +171,7 @@ public class Attribute {
      * @param ignoreCase instruction to ignore character case for comparison operations.
      * @return New attribute with flag set.
      */
-    Attribute ignoreCase( boolean ignoreCase ) {
+    Attribute ignoreCase( final boolean ignoreCase ) {
         return toBuilder().ignoreCase( ignoreCase )
                 .build();
     }
@@ -226,11 +245,11 @@ public class Attribute {
         return type() == Long.class || type() == long.class;
     }
 
-    public List<? extends Comparable<?>> verify( List<? extends Comparable<?>> values ) {
+    public List<? extends Comparable<?>> verify( final List<? extends Comparable<?>> values ) {
         return values.stream().map( this::verify ).toList();
     }
 
-    public Comparable<?>[] verify( Comparable<?>... values ) {
+    public Comparable<?>[] verify( final Comparable<?>... values ) {
         return Arrays.stream( values ).map( this::verify ).toArray( Comparable<?>[]::new );
     }
 }

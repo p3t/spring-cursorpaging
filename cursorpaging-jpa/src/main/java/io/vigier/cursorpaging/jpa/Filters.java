@@ -19,7 +19,7 @@ public final class Filters {
          * @param value the value to compare to
          * @return the filter for the operation
          */
-        public Filter equalTo( Comparable<?> value ) {
+        public Filter equalTo( final Comparable<?> value ) {
             return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( value ) ) );
         }
 
@@ -29,7 +29,7 @@ public final class Filters {
          * @param values the value to compare to
          * @return the filter for the operation
          */
-        public Filter equalTo( List<? extends Comparable<?>> values ) {
+        public Filter equalTo( final List<? extends Comparable<?>> values ) {
             return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( values ) ) );
         }
 
@@ -39,7 +39,7 @@ public final class Filters {
          * @param values the value to compare to
          * @return the filter for the operation
          */
-        public Filter in( List<? extends Comparable<?>> values ) {
+        public Filter in( final List<? extends Comparable<?>> values ) {
             return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
         }
 
@@ -49,7 +49,7 @@ public final class Filters {
          * @param values the value to compare to
          * @return the filter for the operation
          */
-        public Filter in( Comparable<?>... values ) {
+        public Filter in( final Comparable<?>... values ) {
             return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
         }
 
@@ -59,7 +59,7 @@ public final class Filters {
          * @param values the value to compare to
          * @return the filter for the operation
          */
-        public Filter like( String... values ) {
+        public Filter like( final String... values ) {
             return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
         }
 
@@ -69,7 +69,7 @@ public final class Filters {
          * @param values the value to compare to
          * @return the filter for the operation
          */
-        public Filter like( List<? extends Comparable<?>> values ) {
+        public Filter like( final List<? extends Comparable<?>> values ) {
             return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
         }
 
@@ -79,7 +79,7 @@ public final class Filters {
          * @param value The value to compare to
          * @return A filter for the operation
          */
-        public Filter greaterThan( Comparable<?> value ) {
+        public Filter greaterThan( final Comparable<?> value ) {
             return Filter.create( f -> f.attribute( attribute ).greaterThan( attribute.verify( value ) ) );
         }
 
@@ -99,7 +99,7 @@ public final class Filters {
          * @param value The value to compare to
          * @return A filter for the operation
          */
-        public Filter lessThan( Comparable<?> value ) {
+        public Filter lessThan( final Comparable<?> value ) {
             return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( value ) ) );
         }
 
@@ -109,7 +109,7 @@ public final class Filters {
          * @param values values to compare
          * @return A filter for the operation
          */
-        public Filter lessThan( List<? extends Comparable<?>> values ) {
+        public Filter lessThan( final List<? extends Comparable<?>> values ) {
             return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( values ) ) );
         }
     }
@@ -134,54 +134,54 @@ public final class Filters {
      * @param type of the attribute to be filtered on
      * @return the filter creator for the operation
      */
-    public static FilterCreator attribute( final String name, Class<? extends Comparable<?>> type ) {
+    public static FilterCreator attribute( final String name, final Class<? extends Comparable<?>> type ) {
         return FilterCreator.create( Attribute.of( name, type ) );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes
+     * Starts filter-creation with a of of the provided attributes
      *
-     * @param name1 of the first attribute in the path
-     * @param type1 of the first attribute in the path
-     * @param name2 of the second attribute in the path
-     * @param type2 of the second attribute in the path
+     * @param name1 of the first attribute in the of
+     * @param type1 of the first attribute in the of
+     * @param name2 of the second attribute in the of
+     * @param type2 of the second attribute in the of
      * @return the filter creator for the operation
      */
-    public static FilterCreator attribute( final String name1, Class<? extends Comparable<?>> type1, String name2,
-            Class<? extends Comparable<?>> type2 ) {
-        return FilterCreator.create( Attribute.path( name1, type1, name2, type2 ) );
+    public static FilterCreator attribute( final String name1, final Class<? extends Comparable<?>> type1,
+            final String name2, final Class<? extends Comparable<?>> type2 ) {
+        return FilterCreator.create( Attribute.of( name1, type1, name2, type2 ) );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes
+     * Starts filter-creation with a of of the provided attributes
      */
     public static FilterCreator attribute( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
-        return attribute( Attribute.path( path ) );
+        return attribute( Attribute.of( path ) );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes
+     * Starts filter-creation with a of of the provided attributes
      */
     public static FilterCreator attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return attribute( Attribute.of( attribute ) );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation with a of of the provided attributes, ignoring the case in the subsequent operations.
      */
     public static FilterCreator ignoreCase( final Attribute attribute ) {
         return FilterCreator.create( attribute.withIgnoreCase() );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation with a of of the provided attributes, ignoring the case in the subsequent operations.
      */
     public static FilterCreator ignoreCase( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
-        return ignoreCase( Attribute.path( path ) );
+        return ignoreCase( Attribute.of( path ) );
     }
 
     /**
-     * Starts filter-creation with a path of the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation with a of of the provided attributes, ignoring the case in the subsequent operations.
      */
     public static FilterCreator ignoreCase( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return ignoreCase( Attribute.of( attribute ) );

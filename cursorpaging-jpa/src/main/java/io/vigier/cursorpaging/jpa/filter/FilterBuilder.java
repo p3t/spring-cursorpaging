@@ -28,15 +28,15 @@ public class FilterBuilder {
     }
 
     /**
-     * Creates an attribute as path to an embedded entity's property.
+     * Creates an attribute as path to an embedded/related entity's property.
      *
-     * @param attributes the path to the property
+     * @param attributes the of to the property
      * @return the builder
      */
     @SafeVarargs
     public final FilterBuilder path(
             final jakarta.persistence.metamodel.Attribute<?, ? extends Comparable<?>>... attributes ) {
-        this.attribute = Attribute.path( attributes );
+        this.attribute = Attribute.of( attributes );
         return this;
     }
 
