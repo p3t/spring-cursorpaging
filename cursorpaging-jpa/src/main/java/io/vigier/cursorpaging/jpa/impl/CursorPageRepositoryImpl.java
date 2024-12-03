@@ -48,6 +48,9 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     @Override
     public Page<E> loadPage( final PageRequest<E> request ) {
+        if ( request == null || request.pageSize() < 0 ) {
+            throw new IllegalArgumentException( "Invalid page request: " + request );
+        }
         final CriteriaQueryBuilder<E, E> cqb = CriteriaQueryBuilder.forEntity( entityInformation.getJavaType(),
                 entityManager );
 

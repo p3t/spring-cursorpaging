@@ -117,7 +117,7 @@ public class Attribute {
         return (Comparable<?>) result;
     }
 
-    List<SingleAttribute> attributes() {
+    public List<SingleAttribute> attributes() {
         return attributes;
     }
 
@@ -195,9 +195,11 @@ public class Attribute {
     public boolean ignoreCase() {
         return ignoreCase;
     }
-
+    
     public Comparable<?> verify( final Comparable<?> value ) {
-        if ( type().isAssignableFrom( value.getClass() ) ) {
+        if ( value == null ) {
+            return null;
+        } else if ( type().isAssignableFrom( value.getClass() ) ) {
             return type().cast( value );
         } else if ( value instanceof Integer && typeIsInteger() ) {
             return value;
@@ -246,10 +248,10 @@ public class Attribute {
     }
 
     public List<? extends Comparable<?>> verify( final List<? extends Comparable<?>> values ) {
-        return values.stream().map( this::verify ).toList();
+        return values != null ? values.stream().map( this::verify ).toList() : List.of();
     }
 
     public Comparable<?>[] verify( final Comparable<?>... values ) {
-        return Arrays.stream( values ).map( this::verify ).toArray( Comparable<?>[]::new );
+        return values != null ? Arrays.stream( values ).map( this::verify ).toArray( Comparable<?>[]::new ) : null;
     }
 }

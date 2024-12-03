@@ -62,4 +62,33 @@ class FiltersTest {
         assertThat( filter.values() ).hasSize( values.size() );
         assertThat( filter.values( String.class ) ).containsAll( values );
     }
+
+    @Test
+    void shouldAcceptNullAsFilterValueList() {
+        final List<Comparable<?>> nullList = null;
+        final var filter = Filters.attribute( DataRecord_.name ).equalTo( nullList );
+        assertThat( filter.isEmpty() ).isTrue();
+    }
+
+    @Test
+    void shouldAcceptNullAsFilterValue() {
+        final var filter = Filters.attribute( DataRecord_.name ).equalTo( nullComparable() );
+        assertThat( filter.isEmpty() ).isTrue();
+    }
+
+    @Test
+    void shouldAcceptNullAsFilterInValues() {
+        final var filter = Filters.attribute( DataRecord_.name ).in( nullComparable() );
+        assertThat( filter.isEmpty() ).isTrue();
+    }
+
+    @Test
+    void shouldAcceptNullAsFilterMultipleValues() {
+        final var filter = Filters.attribute( DataRecord_.name ).in( nullComparable(), nullComparable() );
+        assertThat( filter.isEmpty() ).isTrue();
+    }
+
+    private Comparable<?> nullComparable() {
+        return null;
+    }
 }
