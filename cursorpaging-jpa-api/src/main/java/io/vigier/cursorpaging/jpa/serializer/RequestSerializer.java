@@ -6,12 +6,14 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.lang.Nullable;
 
 @Builder
 public class RequestSerializer<E> {
@@ -29,12 +31,9 @@ public class RequestSerializer<E> {
             if ( sourceType == null || targetType == null ) {
                 return false;
             }
-            return sourceType.isAssignableFrom( String.class ) && (
-                    targetType.isAssignableFrom( Long.class )
-                            || targetType.isAssignableFrom( Integer.class )
-                            || targetType.isAssignableFrom( Boolean.class )
-                            || targetType.isAssignableFrom( String.class )
-                            || targetType.isAssignableFrom( Object.class ) );
+            return sourceType.isAssignableFrom( String.class ) && (targetType.isAssignableFrom( Long.class )
+                    || targetType.isAssignableFrom( Integer.class ) || targetType.isAssignableFrom( Boolean.class )
+                    || targetType.isAssignableFrom( String.class ) || targetType.isAssignableFrom( Object.class ));
         }
 
         @Override
@@ -47,18 +46,19 @@ public class RequestSerializer<E> {
 
         @Override
         public <T> T convert( final Object source, final Class<T> targetType ) {
-            if (targetType == String.class)
+            if ( targetType == String.class ) {
                 return (T) source.toString();
-            if (targetType == Integer.class) {
+            }
+            if ( targetType == Integer.class ) {
                 return (T) Integer.valueOf( source.toString() );
             }
-            if (targetType == Long.class) {
+            if ( targetType == Long.class ) {
                 return (T) Long.valueOf( source.toString() );
             }
-            if(targetType == Boolean.class) {
+            if ( targetType == Boolean.class ) {
                 return (T) Boolean.valueOf( source.toString().equals( "true" ) );
             }
-            if(targetType==Object.class) {
+            if ( targetType == Object.class ) {
                 return (T) source;
             }
             return null;
@@ -68,7 +68,7 @@ public class RequestSerializer<E> {
         public Object convert( final Object source, final TypeDescriptor sourceType, final TypeDescriptor targetType ) {
             return convert( source, targetType.getObjectType() );
         }
-    } ;
+    };
 
     @Builder.Default
     private final Map<String, RuleFactory> filterRuleFactories = new HashMap<>();
@@ -132,5 +132,17 @@ public class RequestSerializer<E> {
 
     public PageRequest<E> toPageRequest( final Base64String base64 ) {
         return toPageRequest( base64.decoded() );
+    }
+
+    /**
+     * Converts a base64 encoded String into a page-request
+     *
+     * @param cursorStr The encoded string (can be {@code null})
+     * @return a present optional if the input value was present.
+     */
+    public Optional<PageRequest<E>> stringToPageRequest( @Nullable final String cursorStr ) {
+        return Optional.ofNullable( cursorStr != null ? (!cursorStr.isBlank() ? cursorStr : null) : null )
+                .map( Base64String::new )
+                .map( this::toPageRequest );
     }
 }

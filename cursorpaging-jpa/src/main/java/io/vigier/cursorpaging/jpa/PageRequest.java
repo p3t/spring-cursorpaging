@@ -21,10 +21,10 @@ import lombok.experimental.Accessors;
 /**
  * A request, which can be used to query a database for a page of entities.
  * <p>
- * The request uses a list of positions (one for each attribute which should be used to address the start of the page).
- * The combination of all positions must uniquely address a certain record in the table. This can i.e. achieved by
- * adding the primary id of the entity as secondary position, if the first position is not unique, but should be the
- * primary order (e.g. like a created-date).
+ * The request uses a list of `positions` (one for each attribute which should be used to address the start of the
+ * page). The combination of all positions must uniquely address a certain record in the table. This can be achieved by
+ * adding the primary id of the entity as secondary position, if the first position is not unique (like a `name`, or
+ * date), but should be the primary order.
  *
  * @param <E> the entity type
  */
@@ -162,7 +162,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> filter( final QueryElement filter ) {
-            List<QueryElement> filters = new LinkedList<>();
+            final List<QueryElement> filters = new LinkedList<>();
             if ( this.filters$value != null ) {
                 filters.addAll( this.filters$value.filters() );
             }
@@ -217,8 +217,8 @@ public class PageRequest<E> {
      * @param c customizer for the copy
      * @return A new page-request with existing and customized attributes
      */
-    public PageRequest<E> copy( Consumer<PageRequestBuilder<E>> c ) {
-        PageRequestBuilder<E> builder = PageRequest.<E>builder()
+    public PageRequest<E> copy( final Consumer<PageRequestBuilder<E>> c ) {
+        final PageRequestBuilder<E> builder = PageRequest.<E>builder()
                 .totalCount( totalCount )
                 .enableTotalCount( enableTotalCount )
                 .pageSize( pageSize );
@@ -241,7 +241,7 @@ public class PageRequest<E> {
      *
      * @return A copy of the page-request where the total-count is removed and the enable flag is set accordingly
      */
-    public PageRequest<E> withEnableTotalCount( boolean enable ) {
+    public PageRequest<E> withEnableTotalCount( final boolean enable ) {
         return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
     }
 
@@ -275,10 +275,10 @@ public class PageRequest<E> {
     }
 
     public boolean isFirstPage() {
-        return positions.get( 0 ).isFirst();
+        return positions.getFirst().isFirst();
     }
 
     public boolean isReversed() {
-        return positions.get( 0 ).reversed();
+        return positions.getFirst().reversed();
     }
 }

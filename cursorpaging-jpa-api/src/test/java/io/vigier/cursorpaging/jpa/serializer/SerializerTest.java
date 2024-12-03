@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,18 +34,35 @@ import static org.mockito.Mockito.when;
 class SerializerTest {
 
     @Data
-    private static class TestEntity {
+    private static class ValueClass implements Comparable<ValueClass> {
+        private final String theValue;
 
+        @Override
+        public int compareTo( final ValueClass o ) {
+            return theValue.compareTo( o.theValue );
+        }
+    }
+
+    @Data
+    private static class TestEntity {
         private Long id;
         private String name;
+        private ValueClass value;
     }
 
     private static class TestEntity_ {
-
         @SuppressWarnings( "unchecked" )
         public static volatile SingularAttribute<TestEntity, Long> id = Mockito.mock( SingularAttribute.class );
         @SuppressWarnings( "unchecked" )
         public static volatile SingularAttribute<TestEntity, String> name = Mockito.mock( SingularAttribute.class );
+        @SuppressWarnings( "unchecked" )
+        public static volatile SingularAttribute<TestEntity, ValueClass> value = Mockito.mock(
+                SingularAttribute.class );
+    }
+
+    private static class ValueClass_ {
+        @SuppressWarnings( "unchecked" )
+        public static volatile SingularAttribute<ValueClass, String> theValue = Mockito.mock( SingularAttribute.class );
     }
 
     @Mock
@@ -54,20 +72,88 @@ class SerializerTest {
     static void setup() {
         when( TestEntity_.name.getJavaType() ).thenReturn( String.class );
         when( TestEntity_.name.getName() ).thenReturn( "name" );
+        lenient().when( TestEntity_.value.getJavaType() ).thenReturn( ValueClass.class );
+        lenient().when( TestEntity_.value.getName() ).thenReturn( "value" );
         lenient().when( TestEntity_.id.getJavaType() ).thenReturn( Long.class );
         lenient().when( TestEntity_.id.getName() ).thenReturn( "id" );
+        lenient().when( ValueClass_.theValue.getJavaType() ).thenReturn( String.class );
+        lenient().when( ValueClass_.theValue.getName() ).thenReturn( "theValue" );
     }
 
     @Test
     void shouldSerializePageRequests() {
         final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.desc( TestEntity_.name ) );
 
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create(
-                b -> b.use( Attribute.of( TestEntity_.name ) ) );
-        final var serializedRequest = serializer.toBytes( pageRequest );
-        final var deserializeRequest = serializer.toPageRequest( serializedRequest );
+        final var deserializeRequest = serializeAndDeserialize( pageRequest );
 
         assertThat( deserializeRequest ).isEqualTo( pageRequest );
+    }
+
+    @Test
+    void shouldSerializePageRequestsWithPosition() {
+        final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
+                p -> p.order( Order.ASC ).attribute( Attribute.of( TestEntity_.id ) ).value( 4711L ) ) ) );
+
+        final var deserializeRequest = serializeAndDeserialize( pageRequest );
+
+        assertThat( deserializeRequest ).isEqualTo( pageRequest );
+        assertThat( deserializeRequest.isFirstPage() ).isFalse();
+        assertThat( deserializeRequest.positions() ).first()
+                .satisfies( p -> assertThat( p.value() ).isEqualTo( 4711L ) );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNotDeserializeable() {
+        // The 'value' in the position of type ValueClass is can be serialized (via toString)
+        // but not converted back (no converter configured)
+        final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
+                p -> p.order( Order.ASC )
+                        .attribute( Attribute.of( TestEntity_.value ) )
+                        .value( new ValueClass( "123" ) ) ) ) );
+
+        Assertions.assertThatThrownBy( () -> serializeAndDeserialize( pageRequest ) )
+                .isInstanceOf( SerializerException.class )
+                .hasMessageContaining( "Cannot convert value" );
+    }
+
+    @Test
+    void shouldDeserializePositionsWithPathAttributes() {
+        final PageRequest<TestEntity> request = PageRequest.create( r -> r.position( Position.create(
+                pos -> pos.attribute( Attribute.of( TestEntity_.value, ValueClass_.theValue ) )
+                        .value( "123" )
+                        .order( Order.ASC ) ) ) );
+
+        final var deserializeRequest = serializeAndDeserialize( request );
+
+        assertThat( deserializeRequest.positions() ).hasSize( 1 );
+        final var pos = deserializeRequest.positions().getFirst();
+        assertThat( pos.attribute().attributes() ).hasSize( 2 );
+    }
+
+    @Test
+    void shouldAcceptNullAsCursorString() {
+        assertThat( getRequestSerializer().stringToPageRequest( null ) ).isEmpty();
+    }
+
+    @Test
+    void shouldDeserializeFromCursorString() {
+        final PageRequest<TestEntity> request = PageRequest.create( r -> r.asc( TestEntity_.id ) );
+        final var requestSerializer = getRequestSerializer();
+        final String cursor = requestSerializer.toBase64( request ).toString();
+        assertThat( requestSerializer.stringToPageRequest( cursor ) ).isPresent().get().isEqualTo( request );
+    }
+
+    private static PageRequest<TestEntity> serializeAndDeserialize( final PageRequest<TestEntity> pageRequest ) {
+        final var serializer = getRequestSerializer();
+        final var serializedRequest = serializer.toBase64( pageRequest );
+        return serializer.toPageRequest( serializedRequest );
+    }
+
+    private static RequestSerializer<TestEntity> getRequestSerializer() {
+        return RequestSerializer.create( b -> b.use( Attribute.of( TestEntity_.id ) )
+                .use( Attribute.of( TestEntity_.name ) )
+                .use( Attribute.of( TestEntity_.value ) )
+                .use( Attribute.of( ValueClass_.theValue ) ) );
     }
 
     @Test

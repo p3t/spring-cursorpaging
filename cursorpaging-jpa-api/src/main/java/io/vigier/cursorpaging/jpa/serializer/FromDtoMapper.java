@@ -44,7 +44,7 @@ class FromDtoMapper<E> {
     private final ConversionService conversionService;
     private final Map<String, RuleFactory> ruleFactories;
 
-    public  static <T> FromDtoMapper<T> create( final Consumer<FromDtoMapperBuilder<T>> c ) {
+    public static <T> FromDtoMapper<T> create( final Consumer<FromDtoMapperBuilder<T>> c ) {
         final var builder = FromDtoMapper.<T>builder();
         c.accept( builder );
         return builder.build();
@@ -87,7 +87,7 @@ class FromDtoMapper<E> {
 
     private FilterList fromFilterListDto( final Cursor.FilterList dto ) {
         List<QueryElement> filters = new LinkedList<>();
-        
+
         filters.addAll( dto.getFiltersList().stream().map( this::fromFilterDto ).toList() );
         filters.addAll( dto.getFilterListsList().stream().map( this::fromFilterListDto ).toList() );
         return switch ( dto.getType() ) {
@@ -121,18 +121,25 @@ class FromDtoMapper<E> {
         if ( value.getValue().isEmpty() ) {
             return null;
         }
-        return conversionService.<T>convert( value.getValue(), attribute.type() );
+        final var convert = conversionService.<T>convert( value.getValue(), attribute.type() );
+        if ( convert == null ) {
+            throw new SerializerException(
+                    "Cannot convert value: " + value.getValue() + " to type: " + attribute.type() );
+        }
+        return convert;
     }
 
     private Position positionOf( final Cursor.Position position ) {
         final var attribute = attributeOf( position.getAttribute() );
 
-        return Position.create( b -> b.attribute( attribute ).value( valueOf( attribute, position.getValue() ) )
+        return Position.create( b -> b.attribute( attribute )
+                .value( valueOf( attribute, position.getValue() ) )
                 .order( switch ( position.getOrder() ) {
                     case ASC -> Order.ASC;
                     case DESC -> Order.DESC;
                     case UNRECOGNIZED -> throw new IllegalArgumentException( "Unrecognized order" );
-                } ).reversed( position.getReversed() ) );
+                } )
+                .reversed( position.getReversed() ) );
     }
 
     private Attribute attributeOf( final Cursor.Attribute attribute ) {

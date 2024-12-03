@@ -25,7 +25,7 @@ public class Page<E> implements Iterable<E> {
      * The content of this page.
      */
     private final List<E> content;
-    
+
     /**
      * The request used to fetching this page.
      */
@@ -47,6 +47,16 @@ public class Page<E> implements Iterable<E> {
         final var builder = Page.<E>builder();
         creator.accept( builder );
         return builder.build();
+    }
+
+    public static <E> Page<E> empty() {
+        return Page.<E>builder().content( Collections.emptyList() )
+                .build();
+    }
+
+    public static <E> Page<E> empty( final PageRequest<E> self ) {
+        return Page.<E>builder().content( Collections.emptyList() ).self( self )
+                .build();
     }
 
     /**
