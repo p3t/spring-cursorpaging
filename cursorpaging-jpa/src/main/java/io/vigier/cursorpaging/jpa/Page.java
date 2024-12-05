@@ -49,12 +49,17 @@ public class Page<E> implements Iterable<E> {
         return builder.build();
     }
 
-    public static <E> Page<E> empty() {
-        return Page.<E>builder().content( Collections.emptyList() )
-                .build();
+    /**
+     * Get an empty page, maybe useful for testing.
+     *
+     * @param <E>
+     * @return an empty page
+     */
+    public static <E> Page<E> create() {
+        return create( PageRequest.create( r -> r.pageSize( 0 ) ) );
     }
 
-    public static <E> Page<E> empty( final PageRequest<E> self ) {
+    public static <E> Page<E> create( final PageRequest<E> self ) {
         return Page.<E>builder().content( Collections.emptyList() ).self( self )
                 .build();
     }
@@ -100,7 +105,7 @@ public class Page<E> implements Iterable<E> {
     }
 
     public Optional<Long> getTotalCount() {
-        return self.totalCount();
+        return self != null ? self.totalCount() : Optional.empty();
     }
 
     /**

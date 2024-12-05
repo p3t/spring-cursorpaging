@@ -137,10 +137,16 @@ class SerializerTest {
 
     @Test
     void shouldDeserializeFromCursorString() {
-        final PageRequest<TestEntity> request = PageRequest.create( r -> r.asc( TestEntity_.id ) );
+        final PageRequest<TestEntity> request = PageRequest.create( r -> r.asc( TestEntity_.id ).pageSize( 42 ) );
         final var requestSerializer = getRequestSerializer();
         final String cursor = requestSerializer.toBase64( request ).toString();
-        assertThat( requestSerializer.stringToPageRequest( cursor ) ).isPresent().get().isEqualTo( request );
+        assertThat( requestSerializer.stringToPageRequest( cursor ) ).isPresent()
+                .get()
+                .isEqualTo( request )
+                .satisfies( r -> {
+                    assertThat( r.pageSize() ).isEqualTo( 42 );
+                    assertThat( r.positions() ).isNotEmpty();
+                } );
     }
 
     private static PageRequest<TestEntity> serializeAndDeserialize( final PageRequest<TestEntity> pageRequest ) {
