@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PageRequestTest {
 
@@ -29,5 +30,14 @@ class PageRequestTest {
             assertThat( p.attribute().name() ).isEqualTo( "id" );
             assertThat( p.order() ).isEqualTo( Order.ASC );
         } );
+    }
+
+    @Test
+    void shouldFailWhenRequestWithoutOrder() {
+        assertThatThrownBy( () -> PageRequest.create(
+                b -> b.filter( Filters.attribute( "test", String.class ).equalTo( "value" ) ) ) ).isInstanceOf(
+                        IllegalArgumentException.class )
+                .hasMessageContaining(
+                        "at least one order-attribute (asc/desc) for determine the position of the page start is required" );
     }
 }

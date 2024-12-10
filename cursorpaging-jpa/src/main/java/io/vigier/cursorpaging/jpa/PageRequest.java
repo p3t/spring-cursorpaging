@@ -198,6 +198,20 @@ public class PageRequest<E> {
         }
     }
 
+    public PageRequest( final List<Position> positions, final FilterList filters, final List<FilterRule> rules,
+            final int pageSize, final boolean enableTotalCount, final Long totalCount ) {
+        if ( positions == null || positions.isEmpty() ) {
+            throw new IllegalArgumentException(
+                    "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required" );
+        }
+        this.positions = positions;
+        this.filters = filters;
+        this.rules = rules;
+        this.pageSize = pageSize;
+        this.enableTotalCount = enableTotalCount;
+        this.totalCount = totalCount;
+    }
+
     /**
      * Create a new page-request with a builder
      *
