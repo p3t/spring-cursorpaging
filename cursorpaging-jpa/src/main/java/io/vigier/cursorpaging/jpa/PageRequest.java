@@ -297,13 +297,13 @@ public class PageRequest<E> {
     }
 
     /**
-     * Returns the first filter found given the attribute. Probably useful for tests to verify that the request is as
-     * expected.
+     * Returns the <b>first</b> filter found given the attribute. Probably useful for tests to verify that the request
+     * is as expected.
      *
      * @param attribute Attribute which should be used by the filter
      * @return a present query-element (filter) containing the attribute or an empty optional if no filter is found
      */
-    public Optional<QueryElement> findFilter( final Attribute attribute ) {
+    public Optional<QueryElement> firstFilterWith( final Attribute attribute ) {
         for ( final QueryElement ele : filters ) {
             if ( ele.attributes().stream().anyMatch( a -> a.equals( attribute ) ) ) {
                 return Optional.of( ele );

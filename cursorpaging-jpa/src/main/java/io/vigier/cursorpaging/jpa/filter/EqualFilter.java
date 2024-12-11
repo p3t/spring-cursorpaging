@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.ToString;
 
 
-@ToString(callSuper = true)
+@ToString( callSuper = true )
 public class EqualFilter extends Filter {
 
     public EqualFilter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
@@ -20,6 +20,6 @@ public class EqualFilter extends Filter {
         if ( cleanValues.size() > 1 ) {
             return qb.isIn( attribute(), cleanValues );
         }
-        return qb.equalTo( attribute(), cleanValues.get( 0 ) );
+        return qb.equalTo( attribute(), cleanValues.getFirst() );
     }
 }

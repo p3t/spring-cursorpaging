@@ -1,5 +1,6 @@
 package io.vigier.cursorpaging.jpa;
 
+import io.vigier.cursorpaging.jpa.filter.AndFilter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -44,9 +45,14 @@ class PageRequestTest {
     @Test
     void shouldFindFilterByAttribute() {
         final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) )
-                .filter( Filters.attribute( "test", String.class ).equalTo( "value" ) ) );
+                .filter( Filters.attribute( "test", String.class ).equalTo( "value" ) )
+                .filter( Filters.and( Filters.attribute( "test", String.class ).equalTo( "value2" ),
+                        Filters.attribute( "test2", String.class ).equalTo( "value3" ) ) ) );
 
-        assertThat( pageRequest.findFilter( Attribute.of( "test", String.class ) ) ).isPresent();
-        assertThat( pageRequest.findFilter( Attribute.of( "test", Long.class ) ) ).isEmpty();
+        assertThat( pageRequest.firstFilterWith( Attribute.of( "test", String.class ) ) ).isPresent();
+        assertThat( pageRequest.firstFilterWith( Attribute.of( "test", Long.class ) ) ).isEmpty();
+        assertThat( pageRequest.firstFilterWith( Attribute.of( "test2", String.class ) ) ).isPresent()
+                .get()
+                .isInstanceOf( AndFilter.class );
     }
 }

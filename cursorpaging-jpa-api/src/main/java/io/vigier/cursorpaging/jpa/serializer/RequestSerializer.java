@@ -4,6 +4,7 @@ package io.vigier.cursorpaging.jpa.serializer;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -47,19 +48,22 @@ public class RequestSerializer<E> {
         @Override
         public <T> T convert( final Object source, final Class<T> targetType ) {
             if ( targetType == String.class ) {
-                return (T) source.toString();
+                return targetType.cast( source.toString() );
             }
             if ( targetType == Integer.class ) {
-                return (T) Integer.valueOf( source.toString() );
+                return targetType.cast( Integer.valueOf( source.toString() ) );
             }
             if ( targetType == Long.class ) {
-                return (T) Long.valueOf( source.toString() );
+                return targetType.cast( Long.valueOf( source.toString() ) );
             }
             if ( targetType == Boolean.class ) {
-                return (T) Boolean.valueOf( source.toString().equals( "true" ) );
+                return targetType.cast( source.toString().equals( "true" ) );
+            }
+            if ( targetType == Instant.class ) {
+                return targetType.cast( Instant.parse( source.toString() ) );
             }
             if ( targetType == Object.class ) {
-                return (T) source;
+                return targetType.cast( source );
             }
             return null;
         }

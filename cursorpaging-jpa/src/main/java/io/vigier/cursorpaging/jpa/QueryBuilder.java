@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * Queries required by the cursor paging.
- *
  */
 public interface QueryBuilder {
     /**
@@ -20,7 +19,7 @@ public interface QueryBuilder {
      * @param value     the value to filter on
      * @return the created predicate
      */
-    Predicate isIn( Attribute attribute, Collection<? extends Comparable<?>> value );
+    Predicate isIn( Attribute attribute, Collection<?> value );
 
     /**
      * Low level access to the query for the root-entity
@@ -59,7 +58,7 @@ public interface QueryBuilder {
      * @param value     the value to be compared
      * @return the created predicate
      */
-    Predicate equalTo( Attribute attribute, Comparable<?> value );
+    Predicate equalTo( Attribute attribute, Object value );
 
     /**
      * Get a is like predicate

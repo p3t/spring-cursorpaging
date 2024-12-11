@@ -46,19 +46,22 @@ public abstract class Filter implements QueryElement {
 
     /**
      * Creator method to build a new Filter.
+     *
      * @param c the consumer for the builder
      * @return a new Filter instance
      */
     public static Filter create( final Consumer<FilterBuilder> c ) {
-        FilterBuilder builder = builder();
+        final FilterBuilder builder = builder();
         c.accept( builder );
         return builder.build();
     }
 
     /**
      * Constructs a Filter for the attribute and values.
+     *
      * @param attribute Attribute (must not be `null`)
-     * @param values the values used by the filter, must not be `null`, but can be empty or contain `null` or empty strings (which will be ignored)
+     * @param values    the values used by the filter, must not be `null`, but can be empty or contain `null` or empty
+     *                  strings (which will be ignored)
      */
     protected Filter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
         this.attribute = attribute;
@@ -68,7 +71,7 @@ public abstract class Filter implements QueryElement {
                 .toList();
     }
 
-    <T extends Comparable<? super T>> List<T> values( Class<T> valueType ) {
+    <T extends Comparable<? super T>> List<T> values( final Class<T> valueType ) {
         return values.stream()
                 .map( v -> valueType.isAssignableFrom( v.getClass() ) ? valueType.cast( v ) : null )
                 .toList();

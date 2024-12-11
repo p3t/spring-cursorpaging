@@ -21,8 +21,8 @@ import lombok.experimental.Accessors;
  * Wrapper of CriteriaQuery, CriteriaBuilder, Root and EntityType, and also adds some methods to build the
  * position-queries
  *
- * @param <E>        EntityType
- * @param <R>        ResultType
+ * @param <E> EntityType
+ * @param <R> ResultType
  */
 @Getter
 @Accessors( fluent = true )
@@ -109,7 +109,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
-    public Predicate isIn( final Attribute attribute, final Collection<? extends Comparable<?>> values ) {
+    public Predicate isIn( final Attribute attribute, final Collection<?> values ) {
         if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
             return cb.lower( attribute.path( root ) )
                     .in( values.stream().map( v -> v.toString().toLowerCase() ).toList() );
@@ -118,7 +118,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
-    public Predicate equalTo( final Attribute attribute, final Comparable<?> value ) {
+    public Predicate equalTo( final Attribute attribute, final Object value ) {
         if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
             return cb.equal( cb.lower( attribute.path( root ) ), value.toString().toLowerCase() );
         }
@@ -146,7 +146,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     private static List<Predicate> listOf( final Predicate restriction, final List<Predicate> conditions ) {
-        List<Predicate> allConditions = new ArrayList<>( conditions.size() + 1 );
+        final List<Predicate> allConditions = new ArrayList<>( conditions.size() + 1 );
         allConditions.add( restriction );
         allConditions.addAll( conditions );
         return allConditions;
