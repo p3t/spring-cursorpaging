@@ -48,6 +48,7 @@ class SerializerTest {
         private Long id;
         private String name;
         private ValueClass value;
+        private Instant time;
     }
 
     private static class TestEntity_ {
@@ -58,6 +59,8 @@ class SerializerTest {
         @SuppressWarnings( "unchecked" )
         public static volatile SingularAttribute<TestEntity, ValueClass> value = Mockito.mock(
                 SingularAttribute.class );
+        @SuppressWarnings( "unchecked" )
+        public static volatile SingularAttribute<TestEntity, Instant> time = Mockito.mock( SingularAttribute.class );
     }
 
     private static class ValueClass_ {
@@ -78,6 +81,8 @@ class SerializerTest {
         lenient().when( TestEntity_.id.getName() ).thenReturn( "id" );
         lenient().when( ValueClass_.theValue.getJavaType() ).thenReturn( String.class );
         lenient().when( ValueClass_.theValue.getName() ).thenReturn( "theValue" );
+        lenient().when( TestEntity_.time.getJavaType() ).thenReturn( Instant.class );
+        lenient().when( TestEntity_.time.getName() ).thenReturn( "time" );
     }
 
     @Test
@@ -285,4 +290,19 @@ class SerializerTest {
         return PageRequest.create( b -> b.pageSize( 42 ).asc( attribute1 ).desc( attribute2 ) );
     }
 
+    @Test
+    void shouldSerializeAndDeserializeNanosOfInstants() {
+        final var positionTime = "2022-01-01T12:34:56.123456789Z";
+        final var request = PageRequest.<TestEntity>create( r -> r.filter( Filters.attribute( "time", Instant.class )
+                        .greaterThan( Instant.parse( "2021-01-01T12:34:56.123456789Z" ) ) )
+                .position( Position.create( p -> p.attribute( Attribute.of( TestEntity_.time ) )
+                        .order( Order.ASC )
+                        .value( Instant.parse( positionTime ) ) ) ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create();
+        final var serializedRequest = serializer.toBase64( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+
+        assertThat( deserializedRequest ).isEqualTo( request );
+        assertThat( deserializedRequest.positions().getFirst().value().toString() ).isEqualTo( positionTime );
+    }
 }

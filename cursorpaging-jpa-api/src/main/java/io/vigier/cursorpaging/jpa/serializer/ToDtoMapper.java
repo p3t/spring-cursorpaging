@@ -15,7 +15,6 @@ import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.FilterList.FilterListType;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.FilterType;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.Rule.Parameter;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -83,38 +82,43 @@ class ToDtoMapper<E> {
         return toDto( pageRequest.filters() );
     }
 
-    private Cursor.FilterList toDto( FilterList list ) {
-        Cursor.FilterList.Builder b = Cursor.FilterList.newBuilder().setType( typeOf( list ) );
+    private Cursor.FilterList toDto( final FilterList list ) {
+        final Cursor.FilterList.Builder b = Cursor.FilterList.newBuilder().setType( typeOf( list ) );
         list.forEach( f -> {
-            if ( f instanceof Filter ff ) {
+            if ( f instanceof final Filter ff ) {
                 b.addFilters( Cursor.Filter.newBuilder()
                         .setAttribute( attributeOf( ff.attribute() ) )
                         .addAllValues( ff.values().stream().map( this::valueOf ).toList() )
                         .setType( typeOf( ff ) )
                         .build() );
-            } else if ( f instanceof FilterList fl ) {
+            } else if ( f instanceof final FilterList fl ) {
                 b.addFilterLists( toDto( fl ) );
             }
         } );
         return b.build();
     }
 
-    FilterType typeOf( Filter f ) {
+    FilterType typeOf( final Filter f ) {
         return TYPE_MAP.get( f.getClass() );
     }
 
-    FilterListType typeOf( FilterList f ) {
+    FilterListType typeOf( final FilterList f ) {
         return LISTTYPE_MAP.get( f.getClass() );
     }
 
     private Iterable<Cursor.Position> positions() {
-        return pageRequest.positions().stream()
-                .map( p -> Cursor.Position.newBuilder().setAttribute( attributeOf( p.attribute() ) )
-                        .setValue( valueOf( p.value() ) ).setOrder( switch ( p.order() ) {
+        return pageRequest.positions()
+                .stream()
+                .map( p -> Cursor.Position.newBuilder()
+                        .setAttribute( attributeOf( p.attribute() ) )
+                        .setValue( valueOf( p.value() ) )
+                        .setOrder( switch ( p.order() ) {
                             case ASC -> Cursor.Order.ASC;
                             case DESC -> Cursor.Order.DESC;
-                        } ).setReversed( p.reversed() )
-                        .build() ).toList();
+                        } )
+                        .setReversed( p.reversed() )
+                        .build() )
+                .toList();
     }
 
 
@@ -126,10 +130,6 @@ class ToDtoMapper<E> {
     private Cursor.Value valueOf( final Comparable<?> value ) {
         if ( value == null ) {
             return Cursor.Value.newBuilder().setValue( "" )
-                    .build();
-        }
-        if ( value instanceof final Instant i ) {
-            return Cursor.Value.newBuilder().setValue( "" + i.toEpochMilli() )
                     .build();
         }
         return Cursor.Value.newBuilder().setValue( value.toString() )

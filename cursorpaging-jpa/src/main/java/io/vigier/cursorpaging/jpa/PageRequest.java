@@ -198,6 +198,20 @@ public class PageRequest<E> {
         }
     }
 
+    public PageRequest( final List<Position> positions, final FilterList filters, final List<FilterRule> rules,
+            final int pageSize, final boolean enableTotalCount, final Long totalCount ) {
+        if ( positions == null || positions.isEmpty() ) {
+            throw new IllegalArgumentException(
+                    "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required" );
+        }
+        this.positions = positions;
+        this.filters = filters;
+        this.rules = rules;
+        this.pageSize = pageSize;
+        this.enableTotalCount = enableTotalCount;
+        this.totalCount = totalCount;
+    }
+
     /**
      * Create a new page-request with a builder
      *
@@ -280,5 +294,21 @@ public class PageRequest<E> {
 
     public boolean isReversed() {
         return positions.getFirst().reversed();
+    }
+
+    /**
+     * Returns the <b>first</b> filter found given the attribute. Probably useful for tests to verify that the request
+     * is as expected.
+     *
+     * @param attribute Attribute which should be used by the filter
+     * @return a present query-element (filter) containing the attribute or an empty optional if no filter is found
+     */
+    public Optional<QueryElement> firstFilterWith( final Attribute attribute ) {
+        for ( final QueryElement ele : filters ) {
+            if ( ele.attributes().stream().anyMatch( a -> a.equals( attribute ) ) ) {
+                return Optional.of( ele );
+            }
+        }
+        return Optional.empty();
     }
 }

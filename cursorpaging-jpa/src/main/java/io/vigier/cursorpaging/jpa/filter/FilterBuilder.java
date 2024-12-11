@@ -112,7 +112,7 @@ public class FilterBuilder {
 
     public Filter build() {
         if ( filterType == null ) {
-            throw new IllegalStateException( "No operation/value specificed" );
+            throw new IllegalStateException( "No operation/value specified" );
         }
         return switch ( filterType ) {
             case EQUAL -> new EqualFilter( attribute, values );
