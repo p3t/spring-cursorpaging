@@ -1,0 +1,20 @@
+# .github/release.yml
+
+changelog:
+  exclude:
+    labels:
+      - exclude
+      - documentation
+      - dependencies
+    authors:
+      - dependabot[bot]
+  categories:
+    - title: New features
+      labels:
+        - feature
+    - title: Enhancements
+      labels:
+        - enhancement
+    - title: Bugs fixed
+      labels:
+        - bug
