@@ -448,13 +448,14 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                r -> r.filter( attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) )
+                        .asc( DataRecord_.id ) ) ) ) //
                 .isEmpty();
-        assertThat( dataRecordRepository.loadPage(
-                PageRequest.create( r -> r.filter( attribute( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( attribute( DataRecord_.name ).equalTo( "alPHa" ) ).asc( DataRecord_.id ) ) ) ) //
                 .isEmpty();
-        assertThat( dataRecordRepository.loadPage(
-                PageRequest.create( r -> r.filter( attribute( DataRecord_.name ).in( "alPHa", "BRAVO" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( attribute( DataRecord_.name ).in( "alPHa", "BRAVO" ) ).asc( DataRecord_.id ) ) ) ) //
                 .isEmpty();
     }
 
@@ -464,11 +465,13 @@ class PostgreSqlCursorPageTest {
 
         // equal
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) ) ) ) ) //
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) )
+                        .asc( DataRecord_.id ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
 
-        assertThat( dataRecordRepository.loadPage(
-                PageRequest.create( r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( "alPHa" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create(
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).equalTo( "alPHa" ) )
+                        .asc( DataRecord_.id ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
     }
 
@@ -478,7 +481,8 @@ class PostgreSqlCursorPageTest {
 
         // in operation
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).in( "alPHa", NAME_BRAVO.toUpperCase() ) ) ) ) ) //
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).in( "alPHa", NAME_BRAVO.toUpperCase() ) )
+                        .asc( DataRecord_.id ) ) ) ) //
                 .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
 
@@ -487,13 +491,15 @@ class PostgreSqlCursorPageTest {
         testDataGenerator.generateData( TestDataGenerator.NAMES.length );
 
         // Like operation
-        assertThat( dataRecordRepository.loadPage(
-                PageRequest.create( r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%" ) ) ) ) ) //
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( //
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%" ) ) //
+                        .asc( DataRecord_.id ) ) ) ) //
                 .hasSize( 1 ).first().extracting( DataRecord::getName ).isEqualTo( NAME_ALPHA );
 
         // like-in operation
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%", "BRA%" ) ) ) ) )  //
+                r -> r.filter( Filters.ignoreCase( DataRecord_.name ).like( "ALPH%", "BRA%" ) )
+                        .asc( DataRecord_.id ) ) ) )  //
                 .hasSize( 2 ).first().extracting( DataRecord::getName ).isIn( NAME_ALPHA, NAME_BRAVO );
     }
 
