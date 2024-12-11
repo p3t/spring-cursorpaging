@@ -40,4 +40,13 @@ class PageRequestTest {
                 .hasMessageContaining(
                         "at least one order-attribute (asc/desc) for determine the position of the page start is required" );
     }
+
+    @Test
+    void shouldFindFilterByAttribute() {
+        final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) )
+                .filter( Filters.attribute( "test", String.class ).equalTo( "value" ) ) );
+
+        assertThat( pageRequest.findFilter( Attribute.of( "test", String.class ) ) ).isPresent();
+        assertThat( pageRequest.findFilter( Attribute.of( "test", Long.class ) ) ).isEmpty();
+    }
 }
