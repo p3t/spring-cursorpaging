@@ -504,6 +504,30 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldFilterWithGreaterAndLessThan() {
+        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+
+        final var all = dataRecordRepository.findAllOrderedByAuditInfoCreatedAtAsc();
+
+        final var createdAt = Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt );
+        final var firstCreatedAt = all.getFirst().getAuditInfo().getCreatedAt();
+        final var lastCreatedAt = all.getLast().getAuditInfo().getCreatedAt();
+
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filters.attribute( createdAt ).greaterThan( firstCreatedAt ) ) ) ) ) //
+                .hasSize( all.size() - 1 );
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filters.attribute( createdAt ).greaterThan( lastCreatedAt ) ) ) ) ) //
+                .isEmpty();
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filters.attribute( createdAt ).greaterThanOrEqualTo( lastCreatedAt ) ) ) ) ) //
+                .hasSize( 1 );
+        assertThat( dataRecordRepository.loadPage( PageRequest.create( r -> r.desc( DataRecord_.id )
+                .filter( Filters.attribute( createdAt ).lessThanOrEqualTo( firstCreatedAt ) ) ) ) ) //
+                .hasSize( 1 );
+    }
+
+    @Test
     void shouldFilterByEntryInManyToOneRelationship() {
         final List<DataRecord> all = testDataGenerator.generateData( 99 );
         final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();

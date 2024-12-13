@@ -56,6 +56,9 @@ public class Position {
                 throw new IllegalStateException( "Attribute must not be null" );
             } else if ( attribute.attributes().isEmpty() ) {
                 throw new IllegalStateException( "Attribute must not be empty" );
+            } else if ( order$value == null ) {
+                throw new IllegalStateException(
+                        "Order for position/attribute: '" + attribute.name() + "' must not be null" );
             } else {
                 attribute.attributes().forEach( a -> {
                     if ( a.name() == null || a.name().isBlank() ) {

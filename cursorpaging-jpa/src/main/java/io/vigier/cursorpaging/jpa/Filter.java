@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa;
 
 import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +23,7 @@ import org.springframework.util.StringUtils;
 @Accessors( fluent = true )
 @EqualsAndHashCode
 @ToString
-public abstract class Filter implements QueryElement {
+public class Filter implements QueryElement {
 
     /**
      * The attribute to filter on.
@@ -34,6 +35,8 @@ public abstract class Filter implements QueryElement {
      */
     @Singular
     private final List<? extends Comparable<?>> values;
+
+    private final FilterType operation;
 
     /**
      * Get a new {@linkplain FilterBuilder}
@@ -63,8 +66,9 @@ public abstract class Filter implements QueryElement {
      * @param values    the values used by the filter, must not be `null`, but can be empty or contain `null` or empty
      *                  strings (which will be ignored)
      */
-    protected Filter( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+    public Filter( final Attribute attribute, final FilterType operation, final List<? extends Comparable<?>> values ) {
         this.attribute = attribute;
+        this.operation = operation;
         this.values = values.stream()
                 .map( v -> v instanceof final CharSequence cs && !StringUtils.hasText( cs ) ? null : v )
                 .filter( Objects::nonNull )
@@ -94,10 +98,12 @@ public abstract class Filter implements QueryElement {
      */
     public Predicate toPredicate( final QueryBuilder qb ) {
         if ( !values.isEmpty() ) {
-            return toFilterPredicate( qb, values );
+            return toFilterPredicate( qb );
         }
         return qb.cb().and();
     }
 
-    protected abstract Predicate toFilterPredicate( final QueryBuilder qb, List<? extends Comparable<?>> cleanValues );
+    protected Predicate toFilterPredicate( final QueryBuilder qb ) {
+        return operation.apply( qb, attribute, values );
+    }
 }
