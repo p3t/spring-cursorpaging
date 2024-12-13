@@ -5,15 +5,11 @@ import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
-import io.vigier.cursorpaging.jpa.filter.EqualFilter;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
-import io.vigier.cursorpaging.jpa.filter.GreaterThanFilter;
-import io.vigier.cursorpaging.jpa.filter.LessThanFilter;
-import io.vigier.cursorpaging.jpa.filter.LikeFilter;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.FilterList.FilterListType;
-import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.FilterType;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.Rule.Parameter;
 import java.util.List;
 import java.util.Map;
@@ -25,15 +21,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor( staticName = "of" )
 class ToDtoMapper<E> {
 
-    private static final Map<Class<? extends Filter>, FilterType> TYPE_MAP;
+    private static final Map<FilterType, Cursor.FilterType> TYPE_MAP;
     private static final Map<Class<? extends FilterList>, FilterListType> LISTTYPE_MAP;
 
     static {
         TYPE_MAP = Map.of( //
-                EqualFilter.class, FilterType.EQ, //
-                GreaterThanFilter.class, FilterType.GT, //
-                LessThanFilter.class, FilterType.LT, //
-                LikeFilter.class, FilterType.LIKE //
+                FilterType.EQUAL_TO, Cursor.FilterType.EQ, //
+                FilterType.GREATER_THAN, Cursor.FilterType.GT, //
+                FilterType.LESS_THAN, Cursor.FilterType.LT, //
+                FilterType.LIKE, Cursor.FilterType.LIKE, //
+                FilterType.LESS_THAN_OR_EQUAL_TO, Cursor.FilterType.LE, //
+                FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE //
         );
         LISTTYPE_MAP = Map.of( //
                 AndFilter.class, FilterListType.AND, //
@@ -98,8 +96,8 @@ class ToDtoMapper<E> {
         return b.build();
     }
 
-    FilterType typeOf( final Filter f ) {
-        return TYPE_MAP.get( f.getClass() );
+    Cursor.FilterType typeOf( final Filter f ) {
+        return TYPE_MAP.get( f.operation() );
     }
 
     FilterListType typeOf( final FilterList f ) {

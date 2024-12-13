@@ -56,8 +56,9 @@ public class DtoPageRequest {
 
     @JsonTypeInfo( use = Id.NAME, include = As.WRAPPER_OBJECT )
     @JsonSubTypes( { @Type( value = DtoAndFilter.class, name = "AND" ), @Type( value = DtoOrFilter.class, name = "OR" ),
-            @Type( value = DtoEqFilter.class, name = "EQ" ), @Type( value = DtoGtFilter.class, name = "GT" ),
-            @Type( value = DtoLtFilter.class, name = "LT" ), @Type( value = DtoLikeFilter.class, name = "LIKE" ) } )
+            @Type( value = DtoEqFilter.class, name = "EQ" ), @Type( value = DtoLikeFilter.class, name = "LIKE" ),
+            @Type( value = DtoGtFilter.class, name = "GT" ), @Type( value = DtoGeFilter.class, name = "GE" ),
+            @Type( value = DtoLtFilter.class, name = "LT" ), @Type( value = DtoLeFilter.class, name = "LE" ) } )
     public interface DtoFilterElement {
 
     }
@@ -84,9 +85,9 @@ public class DtoPageRequest {
         }
 
         @JsonAnySetter
-        public void setAttribute( String name, Object value ) {
+        public void setAttribute( final String name, final Object value ) {
             this.attribute = name;
-            this.values = value instanceof List<?> l ? l.stream().map( Objects::toString ).toList() : List.of();
+            this.values = value instanceof final List<?> l ? l.stream().map( Objects::toString ).toList() : List.of();
         }
     }
 
@@ -120,12 +121,39 @@ public class DtoPageRequest {
     @NoArgsConstructor
     @EqualsAndHashCode( callSuper = true )
     @SuperBuilder
+    @JsonTypeName( "GE" )
+    public static class DtoGeFilter extends DtoFilter {
+
+        @Override
+        public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+            return Filters.attribute( attribute ).greaterThanOrEqualTo( values );
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode( callSuper = true )
+    @SuperBuilder
     @JsonTypeName( "LT" )
     public static class DtoLtFilter extends DtoFilter {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
             return Filters.attribute( attribute ).lessThan( values );
+        }
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode( callSuper = true )
+    @SuperBuilder
+    @JsonTypeName( "LE" )
+    public static class DtoLeFilter extends DtoFilter {
+
+        @Override
+        public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+            return Filters.attribute( attribute ).lessThanOrEqualTo( values );
         }
 
     }
@@ -175,15 +203,15 @@ public class DtoPageRequest {
 
     public abstract static class DtoFilterListDeserializer extends StdDeserializer<DtoFilterList> {
 
-        protected DtoFilterListDeserializer( Class<? extends DtoFilterList> vc ) {
+        protected DtoFilterListDeserializer( final Class<? extends DtoFilterList> vc ) {
             super( vc );
         }
 
         @Override
-        public DtoFilterList deserialize( JsonParser jp, DeserializationContext ctxt ) throws IOException {
-            JsonNode node = jp.getCodec().readTree( jp );
-            List<DtoFilterElement> filterList = new LinkedList<>();
-            for ( JsonNode n : node ) {
+        public DtoFilterList deserialize( final JsonParser jp, final DeserializationContext ctxt ) throws IOException {
+            final JsonNode node = jp.getCodec().readTree( jp );
+            final List<DtoFilterElement> filterList = new LinkedList<>();
+            for ( final JsonNode n : node ) {
                 filterList.add( jp.getCodec().treeToValue( n, DtoFilterElement.class ) );
             }
             return create( filterList );
@@ -199,7 +227,7 @@ public class DtoPageRequest {
         }
 
         @Override
-        protected DtoFilterList create( List<DtoFilterElement> filters ) {
+        protected DtoFilterList create( final List<DtoFilterElement> filters ) {
             return DtoAndFilter.builder().filters( filters )
                     .build();
         }
@@ -212,7 +240,7 @@ public class DtoPageRequest {
         }
 
         @Override
-        protected DtoFilterList create( List<DtoFilterElement> filters ) {
+        protected DtoFilterList create( final List<DtoFilterElement> filters ) {
             return DtoOrFilter.builder().filters( filters )
                     .build();
         }
@@ -227,7 +255,7 @@ public class DtoPageRequest {
     public static class DtoAndFilter extends DtoFilterList {
 
         @JsonAnySetter
-        public void setContent( Map<String, List<DtoFilterElement>> filters ) {
+        public void setContent( final Map<String, List<DtoFilterElement>> filters ) {
             setFilters( filters.entrySet().iterator().next().getValue() );
         }
     }
@@ -250,7 +278,7 @@ public class DtoPageRequest {
 
     private boolean withTotalCount;
 
-    public static DtoPageRequest create( Consumer<DtoPageRequestBuilder> c ) {
+    public static DtoPageRequest create( final Consumer<DtoPageRequestBuilder> c ) {
         final DtoPageRequestBuilder builder = DtoPageRequest.builder();
         c.accept( builder );
         return builder.build();
@@ -271,12 +299,12 @@ public class DtoPageRequest {
     }
 
     private QueryElement filterOf( final DtoFilterElement f, final Function<String, Attribute> attributeProvider ) {
-        if ( f instanceof DtoFilter filter ) {
+        if ( f instanceof final DtoFilter filter ) {
             final Attribute attribute = attributeProvider.apply( filter.getAttribute() );
             return filter.create( attribute, filter.getValues() );
-        } else if ( f instanceof DtoAndFilter list ) {
+        } else if ( f instanceof final DtoAndFilter list ) {
             return Filters.and( list.getFilters().stream().map( e -> filterOf( e, attributeProvider ) ).toList() );
-        } else if ( f instanceof DtoOrFilter list ) {
+        } else if ( f instanceof final DtoOrFilter list ) {
             return Filters.or( list.getFilters().stream().map( e -> filterOf( e, attributeProvider ) ).toList() );
         }
         throw new IllegalStateException( "Unknown filter element: " + (f != null ? f.getClass().getName() : "null") );
