@@ -20,6 +20,8 @@ enum FilterType {
   GT = 1;
   LT = 2;
   LIKE = 3;
+  GE = 4; // Greater or equal
+  LE = 5; // Less or equal
 }
 
 message Position {

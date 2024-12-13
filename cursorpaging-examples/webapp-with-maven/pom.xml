@@ -18,8 +18,8 @@
 
   <properties>
     <java.version>17</java.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <lombok.version>1.18.32</lombok.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
+    <lombok.version>1.18.36</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
   </properties>

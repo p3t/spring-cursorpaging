@@ -9,10 +9,6 @@ import java.util.List;
 
 public class FilterBuilder {
 
-    public enum FilterType {
-        EQUAL, GREATER_THAN, LESS_THAN, LIKE
-    }
-
     private FilterType filterType;
     private Attribute attribute;
     private List<Comparable<?>> values = new ArrayList<>();
@@ -42,7 +38,7 @@ public class FilterBuilder {
 
     public FilterBuilder equalTo( final Comparable<?> value ) {
         this.values( value );
-        this.filterType = FilterType.EQUAL;
+        this.filterType = FilterType.EQUAL_TO;
         return this;
     }
 
@@ -62,7 +58,7 @@ public class FilterBuilder {
 
     public FilterBuilder in( final List<? extends Comparable<?>> values ) {
         values( values );
-        this.filterType = FilterType.EQUAL;
+        this.filterType = FilterType.EQUAL_TO;
         return this;
     }
 
@@ -86,6 +82,16 @@ public class FilterBuilder {
         return this;
     }
 
+    public FilterBuilder greaterThanOrEqualTo( final Comparable<?>... values ) {
+        return greaterThanOrEqualTo( Arrays.asList( values ) );
+    }
+
+    public FilterBuilder greaterThanOrEqualTo( final List<? extends Comparable<?>> values ) {
+        this.values( values );
+        this.filterType = FilterType.GREATER_THAN_OR_EQUAL_TO;
+        return this;
+    }
+
     public FilterBuilder lessThan( final Comparable<?>... values ) {
         return lessThan( Arrays.asList( values ) );
     }
@@ -93,6 +99,16 @@ public class FilterBuilder {
     public FilterBuilder lessThan( final List<? extends Comparable<?>> values ) {
         this.values( values );
         this.filterType = FilterType.LESS_THAN;
+        return this;
+    }
+
+    public FilterBuilder lessThanOrEqualTo( final Comparable<?>... values ) {
+        return lessThanOrEqualTo( Arrays.asList( values ) );
+    }
+
+    public FilterBuilder lessThanOrEqualTo( final List<? extends Comparable<?>> values ) {
+        this.values( values );
+        this.filterType = FilterType.LESS_THAN_OR_EQUAL_TO;
         return this;
     }
 
@@ -114,11 +130,6 @@ public class FilterBuilder {
         if ( filterType == null ) {
             throw new IllegalStateException( "No operation/value specified" );
         }
-        return switch ( filterType ) {
-            case EQUAL -> new EqualFilter( attribute, values );
-            case GREATER_THAN -> new GreaterThanFilter( attribute, values );
-            case LESS_THAN -> new LessThanFilter( attribute, values );
-            case LIKE -> new LikeFilter( attribute, values );
-        };
+        return new Filter( attribute, filterType, values );
     }
 }
