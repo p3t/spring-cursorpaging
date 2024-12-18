@@ -74,7 +74,8 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
         return Page.create( b -> b.content( toContent( results, self ) ) //
                 .self( self ) //
-                .next( toNextRequest( results, self ) ) );
+                .next( toNextRequest( results, self ) ) //
+                .entityType( entityInformation.getJavaType() ) );
     }
 
     @Override

@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
@@ -24,6 +26,9 @@ public class RequestSerializer<E> {
 
     @Builder.Default
     private final Encrypter encrypter = Encrypter.getInstance();
+
+    @Getter
+    private Class<E> entityType;
 
     @Builder.Default
     private final ConversionService conversionService = new ConversionService() {
@@ -98,15 +103,17 @@ public class RequestSerializer<E> {
         }
     }
 
-    public static <E> RequestSerializer<E> create( final Consumer<RequestSerializerBuilder<E>> c ) {
-        final RequestSerializerBuilder<E> builder = builder();
-        c.accept( builder );
-        return builder.build();
+    public static <E> Function<Consumer<RequestSerializerBuilder<E>>, RequestSerializer<E>> create(
+            final Class<E> entityClass ) {
+        return c -> RequestSerializer.create( entityClass, c );
     }
 
-    public static <E> RequestSerializer<E> create() {
-        return create( b -> {
-        } );
+    public static <E> RequestSerializer<E> create( final Class<E> entityClass,
+            final Consumer<RequestSerializerBuilder<E>> c ) {
+        final RequestSerializerBuilder<E> builder = builder();
+        builder.entityType( entityClass );
+        c.accept( builder );
+        return builder.build();
     }
 
     public byte[] toBytes( final PageRequest<E> page ) {
@@ -115,7 +122,7 @@ public class RequestSerializer<E> {
         return encrypter.encrypt( dtoRequest.toByteArray() );
     }
 
-    private void updateAttributes( final PageRequest<E> page ) {
+    private void updateAttributes( final PageRequest<?> page ) {
         page.positions().forEach( p -> attributes.putIfAbsent( p.attribute().name(), p.attribute() ) );
         page.filters().attributes().forEach( a -> attributes.putIfAbsent( a.name(), a ) );
     }

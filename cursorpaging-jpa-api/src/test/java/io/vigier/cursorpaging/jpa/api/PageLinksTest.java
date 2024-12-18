@@ -6,6 +6,7 @@ import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.Position;
 import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializerFactory;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,14 +42,15 @@ public class PageLinksTest {
         }
     }
 
-    private final RequestSerializer<TestEntity> requestSerializer = RequestSerializer.create( r -> r //
-            .use( Attribute.of( "id", String.class ) ) //
-            .use( Attribute.of( "name", String.class ) ) );
+    private final RequestSerializerFactory requestSerializerFactory = RequestSerializerFactory.create(
+            b -> b.serialalizer( RequestSerializer.create( TestEntity.class ).apply( r -> r //
+                    .use( Attribute.of( "id", String.class ) ) //
+                    .use( Attribute.of( "name", String.class ) ) ) ) );
 
     @Test
     void shouldGenerateLinksWithoutTemplate() {
         final Page<TestEntity> page = createPage();
-        final var links = PageLinks.of( Controller.class, requestSerializer );
+        final var links = PageLinks.of( Controller.class, requestSerializerFactory );
         final Link selfLink = links.self( page )
                 .on( ( cursor, controller ) -> controller.getEntities( cursor, null, null ) );
         final Link nextLink = links.next( page )
@@ -66,7 +68,7 @@ public class PageLinksTest {
     @Test
     void shouldGenerateLinksWithoutTemplateButWithVariablesProvided() {
         final Page<TestEntity> page = createPage();
-        final var links = PageLinks.of( Controller.class, requestSerializer );
+        final var links = PageLinks.of( Controller.class, requestSerializerFactory );
         final Link selfLink = links.self( page )
                 .on( ( cursor, controller ) -> controller.getEntities( cursor, 10, null ) );
         final Link nextLink = links.next( page )
@@ -87,6 +89,7 @@ public class PageLinksTest {
                 .next( PageRequest.create( r -> r.position( Position.create(
                                 pos -> pos.attribute( Attribute.of( "id", String.class ) ).value( 1 ).order( Order.ASC ) ) )
                         .pageSize( 1 )
-                        .totalCount( 2L ) ) ) );
+                        .totalCount( 2L ) ) ) //
+                .entityType( TestEntity.class ) );
     }
 }
