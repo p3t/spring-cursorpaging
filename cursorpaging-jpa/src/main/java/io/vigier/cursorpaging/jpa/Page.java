@@ -37,6 +37,11 @@ public class Page<E> implements Iterable<E> {
     private final PageRequest<E> next;
 
     /**
+     * The entity type of this page.
+     */
+    private final Class<E> entityType;
+
+    /**
      * Creates a new page.
      *
      * @param <E>     the entity type
@@ -52,15 +57,11 @@ public class Page<E> implements Iterable<E> {
     /**
      * Get an empty page, maybe useful for testing.
      *
-     * @param <E>
+     * @param <E> Page content-entity type
      * @return an empty page
      */
-    public static <E> Page<E> create() {
-        return create( PageRequest.create( r -> r.pageSize( 0 ) ) );
-    }
-
-    public static <E> Page<E> create( final PageRequest<E> self ) {
-        return Page.<E>builder().content( Collections.emptyList() ).self( self )
+    public static <E> Page<E> create( final PageRequest<E> self, final Class<E> entityType ) {
+        return Page.<E>builder().content( Collections.emptyList() ).self( self ).entityType( entityType )
                 .build();
     }
 
