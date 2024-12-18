@@ -3,7 +3,9 @@ package io.vigier.cursorpaging.jpa.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.Order;
+import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoAndFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoEqFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoFilterList;
@@ -11,10 +13,7 @@ import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoGtFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoLikeFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoLtFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoOrFilter;
-import io.vigier.cursorpaging.jpa.filter.EqualFilter;
-import io.vigier.cursorpaging.jpa.filter.GreaterThanFilter;
-import io.vigier.cursorpaging.jpa.filter.LessThanFilter;
-import io.vigier.cursorpaging.jpa.filter.LikeFilter;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,7 @@ class DtoPageRequestTest {
 
     @Test
     void shouldDesrerializeFromJson() throws Exception {
-        String json = """
+        final String json = """
                 {
                     "orderBy": {
                         "id": "ASC"
@@ -48,7 +47,7 @@ class DtoPageRequestTest {
                 }
                 """;
 
-        DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
+        final DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
         assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.ASC ) );
         assertThat( request.getFilterBy() ).isNotNull().satisfies( fl -> {
             assertThat( fl ).isInstanceOf( DtoAndFilter.class );
@@ -64,37 +63,43 @@ class DtoPageRequestTest {
 
     @Test
     void shouldDeserializeWithOrRootList() throws Exception {
-        String json = """
+        final String json = """
                 {
                     "orderBy": {
                         "id": "ASC"
                     },
                     "filterBy": {
                         "OR": [
-                            { "GT": { "id": [ 666 ] } }
+                            { "GT": { "id": [ 666 ] } },
+                            { "GE": { "id": [ 666 ] } }
                         ]
                     },
                     "pageSize": 10,
                     "withTotalCount": false
                 }
                 """;
-        DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
+        final DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
         assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.ASC ) );
         assertThat( request.getFilterBy() ).isNotNull().satisfies( fl -> {
             assertThat( fl ).isInstanceOf( DtoOrFilter.class );
-            assertThat( ((DtoFilterList) fl).getFilters() ).hasSize( 1 );
+            assertThat( ((DtoFilterList) fl).getFilters() ).hasSize( 2 );
         } );
 
-        var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
-        assertThat( pageRequest.filters() ).hasSize( 1 )
-                .isInstanceOf( OrFilter.class )
-                .first()
-                .isInstanceOf( GreaterThanFilter.class );
+        final var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
+        assertThat( pageRequest.filters() ).hasSize( 2 ).isInstanceOf( OrFilter.class ).satisfies( orFilter -> {
+            final var iterator = orFilter.iterator();
+            assertThat( iterator.next() ).satisfies( f -> operationIs( f, FilterType.GREATER_THAN ) );
+            assertThat( iterator.next() ).satisfies( f -> operationIs( f, FilterType.GREATER_THAN_OR_EQUAL_TO ) );
+        } );
+    }
+
+    private static void operationIs( final QueryElement f, final FilterType type ) {
+        assertThat( ((Filter) f).operation() ).isEqualTo( type );
     }
 
     @Test
     void shouldSerializeDtoPageRequestsToJson() throws JsonProcessingException {
-        var request = DtoPageRequest.builder()
+        final var request = DtoPageRequest.builder()
                 .pageSize( 10 )
                 .orderBy( Map.of( "id", Order.ASC ) )
                 .filterBy( DtoAndFilter.builder()
@@ -116,7 +121,7 @@ class DtoPageRequestTest {
 
     @Test
     void shouldGenerateValidPageRequests() {
-        var request = DtoPageRequest.builder()
+        final var request = DtoPageRequest.builder()
                 .pageSize( 10 )
                 .orderBy( Map.of( "id", Order.ASC ) )
                 .filterBy( DtoAndFilter.builder()
@@ -133,16 +138,17 @@ class DtoPageRequestTest {
                         .build() )
                 .build();
 
-        var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
+        final var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
 
         assertThat( pageRequest.pageSize() ).isEqualTo( 10 );
         assertThat( pageRequest.filters() ).hasSize( 2 );
-        assertThat( pageRequest.filters().filters().get( 0 ) ).isInstanceOf( GreaterThanFilter.class );
+        assertThat( pageRequest.filters().filters().get( 0 ) ).satisfies(
+                f -> operationIs( f, FilterType.GREATER_THAN ) );
         assertThat( pageRequest.filters().filters().get( 1 ) ).isInstanceOf( OrFilter.class ).satisfies( of -> {
             assertThat( ((OrFilter) of).filters() ).hasSize( 3 );
-            assertThat( ((OrFilter) of).filters().get( 0 ) ).isInstanceOf( EqualFilter.class );
-            assertThat( ((OrFilter) of).filters().get( 1 ) ).isInstanceOf( LikeFilter.class );
-            assertThat( ((OrFilter) of).filters().get( 2 ) ).isInstanceOf( LessThanFilter.class );
+            assertThat( ((OrFilter) of).filters().get( 0 ) ).satisfies( f -> operationIs( f, FilterType.EQUAL_TO ) );
+            assertThat( ((OrFilter) of).filters().get( 1 ) ).satisfies( f -> operationIs( f, FilterType.LIKE ) );
+            assertThat( ((OrFilter) of).filters().get( 2 ) ).satisfies( f -> operationIs( f, FilterType.LESS_THAN ) );
         } );
     }
 

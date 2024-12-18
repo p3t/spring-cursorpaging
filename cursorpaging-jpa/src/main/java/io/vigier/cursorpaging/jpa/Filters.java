@@ -94,6 +94,26 @@ public final class Filters {
         }
 
         /**
+         * Filter to select all values greater-than the given one.
+         *
+         * @param value The value to compare to
+         * @return A filter for the operation
+         */
+        public Filter greaterThanOrEqualTo( final Comparable<?> value ) {
+            return Filter.create( f -> f.attribute( attribute ).greaterThanOrEqualTo( attribute.verify( value ) ) );
+        }
+
+        /**
+         * Greater than with multiple values means greaterThan max of all values
+         *
+         * @param values values to compare
+         * @return the filter
+         */
+        public Filter greaterThanOrEqualTo( final List<? extends Comparable<?>> values ) {
+            return Filter.create( f -> f.attribute( attribute ).greaterThanOrEqualTo( attribute.verify( values ) ) );
+        }
+
+        /**
          * Filter to select all values less-than the given one.
          *
          * @param value The value to compare to
@@ -111,6 +131,14 @@ public final class Filters {
          */
         public Filter lessThan( final List<? extends Comparable<?>> values ) {
             return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( values ) ) );
+        }
+
+        public Filter lessThanOrEqualTo( final Comparable<?> value ) {
+            return Filter.create( f -> f.attribute( attribute ).lessThanOrEqualTo( attribute.verify( value ) ) );
+        }
+
+        public Filter lessThanOrEqualTo( final List<? extends Comparable<?>> values ) {
+            return Filter.create( f -> f.attribute( attribute ).lessThanOrEqualTo( attribute.verify( values ) ) );
         }
     }
 

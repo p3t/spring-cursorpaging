@@ -8,8 +8,8 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.Position;
 import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
-import io.vigier.cursorpaging.jpa.filter.FilterBuilder.FilterType;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor.Value;
@@ -31,11 +31,13 @@ import org.springframework.core.convert.ConversionService;
 class FromDtoMapper<E> {
 
     private static final Map<Cursor.FilterType, FilterType> FILTER_TYPE_MAP = Map.of( //
-            Cursor.FilterType.EQ, FilterType.EQUAL, //
+            Cursor.FilterType.EQ, FilterType.EQUAL_TO, //
             Cursor.FilterType.GT, FilterType.GREATER_THAN, //
             Cursor.FilterType.LT, FilterType.LESS_THAN, //
             Cursor.FilterType.LIKE, FilterType.LIKE, //
-            Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL //
+            Cursor.FilterType.GE, FilterType.GREATER_THAN_OR_EQUAL_TO, //
+            Cursor.FilterType.LE, FilterType.LESS_THAN_OR_EQUAL_TO, //
+            Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL_TO //
     );
 
     private final Cursor.PageRequest request;
@@ -65,10 +67,10 @@ class FromDtoMapper<E> {
         return request.getFilterRulesList().stream().map( this::filterRuleOf ).filter( Objects::nonNull ).toList();
     }
 
-    private FilterRule filterRuleOf( Cursor.Rule rule ) {
+    private FilterRule filterRuleOf( final Cursor.Rule rule ) {
         final var factory = ruleFactories.get( rule.getName() );
         if ( factory != null ) {
-            Map<String, List<String>> parameters = new HashMap<>();
+            final Map<String, List<String>> parameters = new HashMap<>();
             rule.getParametersList()
                     .forEach( p -> parameters.put( p.getName(),
                             p.getValuesList().stream().map( Value::getValue ).toList() ) );
@@ -86,7 +88,7 @@ class FromDtoMapper<E> {
     }
 
     private FilterList fromFilterListDto( final Cursor.FilterList dto ) {
-        List<QueryElement> filters = new LinkedList<>();
+        final List<QueryElement> filters = new LinkedList<>();
 
         filters.addAll( dto.getFiltersList().stream().map( this::fromFilterDto ).toList() );
         filters.addAll( dto.getFilterListsList().stream().map( this::fromFilterListDto ).toList() );
@@ -96,7 +98,7 @@ class FromDtoMapper<E> {
         };
     }
 
-    private Filter fromFilterDto( Cursor.Filter dto ) {
+    private Filter fromFilterDto( final Cursor.Filter dto ) {
         final var attribute = attributeOf( dto.getAttribute() );
         final var values = valueListOf( attribute, dto.getValuesList() );
         return Filter.builder().attribute( attribute ).values( values ).type( getFilterType( dto ) )
@@ -110,7 +112,7 @@ class FromDtoMapper<E> {
     private List<? extends Comparable<?>> valueListOf( final Attribute attribute,
             final List<Cursor.Value> valuesList ) {
         return valuesList.stream().map( v -> {
-            Comparable<?> converted = valueOf( attribute, v );
+            final Comparable<?> converted = valueOf( attribute, v );
             log.trace( "Converted: {} into {} (value={})", v.getClass().getSimpleName(),
                     (converted != null ? converted.getClass().getSimpleName() : null), converted );
             return converted;
