@@ -48,6 +48,8 @@
     <mockito.version>5.14.2</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.20.3</testcontainer.version>
+    <sonar.organization>p3t</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
 
   <dependencyManagement>

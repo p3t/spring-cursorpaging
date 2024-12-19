@@ -45,6 +45,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -57,13 +59,30 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
 
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
       - name: Set version
         if: ${{ inputs.release_build }}
         run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
 
       - name: Build project, run unit and integration tests
         id: Build
-        run: ./mvnw -T1C --batch-mode clean install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./mvnw -T1C --batch-mode clean install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=p3t_spring-cursorpaging
 
       - name: Evaluate branch name where the scan results are added to in Sonarcloud
         if: ${{inputs.actor != 'dependabot[bot]' }}
