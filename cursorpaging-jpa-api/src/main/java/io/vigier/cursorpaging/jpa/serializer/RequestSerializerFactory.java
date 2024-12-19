@@ -9,6 +9,13 @@ import org.springframework.core.convert.ConversionService;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * The {@link RequestSerializerFactory} is a factory for creating {@link RequestSerializer}s for entities. It
+ * distributes the common parts, i.e. the encrypter and the conversion service, but also does a caching of the
+ * serializer in order to reuse them when they are requested more than once. Reuse is important as the serializer need
+ * to know the (java-) types of the properties/attributes when they <b>de</b>serialize a request. This mapping can be
+ * pre-configured (save in a cluster/multi-node setup) or they learn it when a request is serialized.
+ */
 @Builder
 @RequiredArgsConstructor
 public class RequestSerializerFactory {

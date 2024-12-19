@@ -103,8 +103,14 @@ public class RequestSerializer<E> {
         }
     }
 
-    public static <E> Function<Consumer<RequestSerializerBuilder<E>>, RequestSerializer<E>> create(
-            final Class<E> entityClass ) {
+    public interface RequestSerializerCreator<E> extends
+            Function<Consumer<RequestSerializerBuilder<E>>, RequestSerializer<E>> {
+        default RequestSerializer<E> withDefaults() {
+            return apply( b -> {} );
+        }
+    }
+
+    public static <E> RequestSerializerCreator<E> create( final Class<E> entityClass ) {
         return c -> RequestSerializer.create( entityClass, c );
     }
 
