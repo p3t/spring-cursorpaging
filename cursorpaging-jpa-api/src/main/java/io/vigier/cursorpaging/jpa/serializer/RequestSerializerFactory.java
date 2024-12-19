@@ -20,7 +20,8 @@ import static java.util.Objects.requireNonNull;
 @RequiredArgsConstructor
 public class RequestSerializerFactory {
 
-    private final ConversionService conversionService;
+    @Builder.Default
+    private final ConversionService conversionService = new SimpleConversionService();
 
     @Builder.Default
     private final Encrypter encrypter = Encrypter.getInstance();
@@ -44,6 +45,11 @@ public class RequestSerializerFactory {
         final RequestSerializerFactoryBuilder b = RequestSerializerFactory.builder();
         c.accept( b );
         return b.build();
+    }
+
+    public static RequestSerializerFactory create() {
+        return RequestSerializerFactory.builder()
+                .build();
     }
 
     @SuppressWarnings( "unchecked" )
