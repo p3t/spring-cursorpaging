@@ -209,7 +209,7 @@ class SerializerTest {
     void shouldSerializeReversedPageRequests() {
         final var request = PageRequest.create( r -> r.position( Position.create(
                 p -> p.reversed( true ).order( Order.ASC ).attribute( Attribute.of( "some_name", String.class ) ) ) ) );
-        final RequestSerializer<Object> serializer = RequestSerializer.create( Object.class, b -> {} );
+        final RequestSerializer<Object> serializer = RequestSerializer.create( Object.class ).withDefaults();
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
         assertThat( deserializedRequest.isReversed() ).isTrue();
@@ -220,7 +220,7 @@ class SerializerTest {
     @Test
     void shouldSerializeTotalCountIfPresent() {
         final var request = createPageRequest().copy( b -> b.enableTotalCount( true ).totalCount( 42L ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, b -> {} );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class ).withDefaults();
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
         assertThat( deserializedRequest ).isEqualTo( request ).satisfies( r -> {
@@ -234,7 +234,7 @@ class SerializerTest {
         final PageRequest<TestEntity> request = PageRequest.create( r -> r.filter(
                 Filters.and( attribute( TestEntity_.id ).equalTo( 123L ),
                         attribute( TestEntity_.name ).like( "%bumlux%" ) ) ).asc( TestEntity_.id ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, b -> {} );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class ).withDefaults();
         final var serializedRequest = serializer.toBytes( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 

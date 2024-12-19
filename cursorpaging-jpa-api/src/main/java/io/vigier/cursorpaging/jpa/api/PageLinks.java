@@ -51,10 +51,10 @@ public class PageLinks<T> {
 
     // actually the Link#expand method should do this, but there seems to be an issue,
     // even when setting relaxed-query-chars: "[,],{,},|" in application.yml
-    private static Link expand( final Link link ) {
+    static Link expand( final Link link ) {
         final var template = link.getHref();
         if ( template.indexOf( "&" ) > 0 ) {
-            final var href = template.replaceAll( "&[^=]+=\\{[^}]+\\}", "" );
+            final var href = template.replaceAll( "&[^=]+=\\{[^}]+\\}|\\{&[^}]+\\}", "" );
             return Link.of( href, link.getRel() )
                     .withName( link.getName() )
                     .withTitle( link.getTitle() )

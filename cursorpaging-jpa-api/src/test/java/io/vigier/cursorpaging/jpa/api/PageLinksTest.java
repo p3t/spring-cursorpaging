@@ -11,12 +11,13 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class PageLinksTest {
@@ -59,10 +60,17 @@ public class PageLinksTest {
         log.info( "Self link: {}", selfLink.getHref() );
         log.info( "next link: {}", nextLink.getHref() );
 
-        Assertions.assertThat( selfLink.getHref() ).contains( "?cursor=" );
-        Assertions.assertThat( nextLink.getHref() ).contains( "?cursor=" );
-        Assertions.assertThat( selfLink.getHref() ).doesNotContain( "pageSize", "names[]", "{", "}" );
-        Assertions.assertThat( nextLink.getHref() ).doesNotContain( "pageSize", "names[]", "{", "}" );
+        assertThat( selfLink.getHref() ).contains( "?cursor=" );
+        assertThat( nextLink.getHref() ).contains( "?cursor=" );
+        assertThat( selfLink.getHref() ).doesNotContain( "pageSize", "names[]", "{", "}" );
+        assertThat( nextLink.getHref() ).doesNotContain( "pageSize", "names[]", "{", "}" );
+    }
+
+    @Test
+    void shouldRemoveTemplateVariables() {
+        final var url = "/api/some/v1/what?cursor=RabarbarBarbar{&tag[],lastModifiedAt[gt],some[],}";
+        final Link result = PageLinks.expand( Link.of( url, "self" ) );
+        assertThat( result.getHref() ).doesNotContain( "&tag[]", "lastModifiedAt[gt]", ",", "{", "}" );
     }
 
     @Test
@@ -74,12 +82,12 @@ public class PageLinksTest {
         final Link nextLink = links.next( page )
                 .on( ( cursor, controller ) -> controller.getEntities( cursor, 15, null ) );
 
-        Assertions.assertThat( selfLink.getHref() ).contains( "?cursor=" );
-        Assertions.assertThat( nextLink.getHref() ).contains( "?cursor=" );
-        Assertions.assertThat( selfLink.getHref() ).contains( "pageSize=10" );
-        Assertions.assertThat( nextLink.getHref() ).contains( "pageSize=15" );
-        Assertions.assertThat( selfLink.getHref() ).doesNotContain( "names[]", "{", "}" );
-        Assertions.assertThat( nextLink.getHref() ).doesNotContain( "names[]", "{", "}" );
+        assertThat( selfLink.getHref() ).contains( "?cursor=" );
+        assertThat( nextLink.getHref() ).contains( "?cursor=" );
+        assertThat( selfLink.getHref() ).contains( "pageSize=10" );
+        assertThat( nextLink.getHref() ).contains( "pageSize=15" );
+        assertThat( selfLink.getHref() ).doesNotContain( "names[]", "{", "}" );
+        assertThat( nextLink.getHref() ).doesNotContain( "names[]", "{", "}" );
     }
 
     private static Page<TestEntity> createPage() {
