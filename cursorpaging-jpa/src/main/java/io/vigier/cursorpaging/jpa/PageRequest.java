@@ -17,6 +17,7 @@ import lombok.Singular;
 import lombok.ToString;
 import lombok.With;
 import lombok.experimental.Accessors;
+import org.springframework.lang.Nullable;
 
 /**
  * A request, which can be used to query a database for a page of entities.
@@ -161,7 +162,7 @@ public class PageRequest<E> {
          * @param filter A new filter definition
          * @return the builder
          */
-        public PageRequestBuilder<E> filter( final QueryElement filter ) {
+        public PageRequestBuilder<E> filter( @Nullable final QueryElement filter ) {
             final List<QueryElement> filters = new LinkedList<>();
             if ( this.filters$value != null ) {
                 filters.addAll( this.filters$value.filters() );
@@ -181,10 +182,26 @@ public class PageRequest<E> {
          * @param filters the list of filters to be added
          * @return the builder
          */
-        public PageRequestBuilder<E> filters( final FilterList filters ) {
+        public PageRequestBuilder<E> filters( @Nullable final FilterList filters ) {
             if ( filters != null ) {
                 this.filters$value = filters;
                 this.filters$set = true;
+            }
+            return this;
+        }
+
+        /**
+         * Add a filter-rule (custom filter implementation) to the request. A null-value is silently ignored.
+         *
+         * @param rule the rule to be added
+         * @return the builder
+         */
+        public PageRequestBuilder<E> filterRule( @Nullable final FilterRule rule ) {
+            if ( this.rules == null ) {
+                this.rules = new ArrayList<>( 3 );
+            }
+            if ( rule != null ) {
+                this.rules.add( rule );
             }
             return this;
         }

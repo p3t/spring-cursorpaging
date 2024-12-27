@@ -56,7 +56,7 @@ public class TestDataGenerator {
                 SecurityClass.builder().level( 2 ).name( "confidential" )
                         .build() );
 
-        for ( String tagName : TAGS ) {
+        for ( final String tagName : TAGS ) {
             tagRepository.save( Tag.builder().name( tagName )
                     .build() );
         }
@@ -83,7 +83,7 @@ public class TestDataGenerator {
     public List<DataRecord> generateDataRecords( final int count ) {
 
         final SecurityClass[] securityClasses = securityClassRepository.findAll().toArray( SecurityClass[]::new );
-        var tags = tagRepository.findAll();
+        final var tags = tagRepository.findAll();
 
         Instant created = Instant.parse( "1999-01-02T10:15:30.00Z" );
         final List<DataRecord> allRecords = new ArrayList<>( count );
@@ -102,7 +102,7 @@ public class TestDataGenerator {
     }
 
     private Set<Tag> someTags( final List<Tag> tags, final int i ) {
-        return Set.of( tags.get( i % tags.size() ), tags.get( (i + 1) % tags.size() ) );
+        return i % 10 == 0 ? Set.of() : Set.of( tags.get( i % tags.size() ), tags.get( (i + 1) % tags.size() ) );
     }
 
     private static Status nextStatus( final int i ) {

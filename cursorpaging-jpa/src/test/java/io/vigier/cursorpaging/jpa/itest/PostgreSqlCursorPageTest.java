@@ -7,6 +7,7 @@ import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
+import io.vigier.cursorpaging.jpa.Rules;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
@@ -39,6 +40,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
 import static io.vigier.cursorpaging.jpa.Filters.attribute;
+import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAMES;
 import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_ALPHA;
 import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_BRAVO;
 import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.READ;
@@ -629,6 +631,21 @@ class PostgreSqlCursorPageTest {
         assertThat( shouldBeEmpty ).isNotNull();
         assertThat( shouldBeEmpty.getContent() ).isEmpty();
         assertThat( dataRecordRepository.count( request2 ) ).isZero();
+    }
+
+    @Test
+    void shouldFilterByNotExists() {
+        testDataGenerator.generateData( NAMES.length * 2 );
+        final var allWithoutTag = dataRecordRepository.findAll().stream().filter( r -> r.getTags().isEmpty() ).toList();
+
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
+                .asc( DataRecord_.id )
+                .rule( Rules.withParameter( "do-it", "true" )
+                        .where( DataRecord_.tags )
+                        .withParameter( "yet-another", List.of( "parameter" ) )
+                        .isEmpty() ) ) );
+
+        assertThat( page ).containsExactlyInAnyOrderElementsOf( allWithoutTag );
     }
 
     @Test
