@@ -1,7 +1,7 @@
 package io.vigier.cursorpaging.jpa.api;
 
 import io.vigier.cursorpaging.jpa.Page;
-import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializerFactory;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.IanaLinkRelations;
@@ -13,9 +13,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RequiredArgsConstructor( staticName = "of" )
-public class PageLinks<T, E> {
+public class PageLinks<T> {
     private final Class<T> controllerClass;
-    private final RequestSerializer<E> requestSerializer;
+    private final RequestSerializerFactory requestSerializerFactory;
 
     @RequiredArgsConstructor
     public class LinkBuilder {
@@ -35,12 +35,14 @@ public class PageLinks<T, E> {
         }
     }
 
-    public LinkBuilder self( final Page<E> page ) {
+    public <E> LinkBuilder self( final Page<E> page ) {
+        final var requestSerializer = requestSerializerFactory.forEntity( page.entityType() );
         final String selfCursor = requestSerializer.toBase64( page.self() ).toString();
         return new LinkBuilder( selfCursor, IanaLinkRelations.SELF );
     }
 
-    public LinkBuilder next( final Page<E> page ) {
+    public <E> LinkBuilder next( final Page<E> page ) {
+        final var requestSerializer = requestSerializerFactory.forEntity( page.entityType() );
         final String nextCursor = page.next()
                 .map( next -> requestSerializer.toBase64( next ).toString() )
                 .orElse( null );
@@ -49,22 +51,11 @@ public class PageLinks<T, E> {
 
     // actually the Link#expand method should do this, but there seems to be an issue,
     // even when setting relaxed-query-chars: "[,],{,},|" in application.yml
-    private static Link expand( final Link link ) {
+    static Link expand( final Link link ) {
         final var template = link.getHref();
-        final StringBuilder href = new StringBuilder();
-        int idx = template.indexOf( "&" );
-        if ( idx > 0 ) {
-            href.append( template, 0, idx );
-            while ( idx > 0 ) {
-                final int idy = template.indexOf( "=", idx );
-                if ( idy > 0 && template.charAt( idy + 1 ) != '{' ) {
-                    int idz = template.indexOf( "&", idy );
-                    idz = idz < 0 ? template.length() : idz;
-                    href.append( template.substring( idx, idz ) );
-                }
-                idx = template.indexOf( "&", idx + 1 );
-            }
-            return Link.of( href.toString(), link.getRel() )
+        if ( template.indexOf( "&" ) > 0 ) {
+            final var href = template.replaceAll( "&[^=]+=\\{[^}]+\\}|\\{&[^}]+\\}", "" );
+            return Link.of( href, link.getRel() )
                     .withName( link.getName() )
                     .withTitle( link.getTitle() )
                     .withType( link.getType() )
