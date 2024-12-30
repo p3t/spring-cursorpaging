@@ -41,7 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.29.2</protobuf.version>
-    <hibernate.version>6.5.3.Final</hibernate.version>
+    <hibernate.version>6.6.4.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>3.4.1</springboot.version>
     <lombok.version>1.18.36</lombok.version>
@@ -102,7 +102,7 @@
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-jpamodelgen</artifactId>
-        <version>6.4.4.Final</version>
+        <version>6.6.4.Final</version>
         <scope>compile</scope>
       </dependency>
 
