@@ -55,4 +55,11 @@ class PageRequestTest {
                 .get()
                 .isInstanceOf( AndFilter.class );
     }
+
+    @Test
+    void shouldAcceptNullAsFilterRule() {
+        final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) ).filterRule( null ) );
+
+        assertThat( pageRequest.rules() ).isEmpty();
+    }
 }
