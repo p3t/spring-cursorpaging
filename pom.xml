@@ -45,7 +45,7 @@
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>3.4.1</springboot.version>
     <lombok.version>1.18.36</lombok.version>
-    <mockito.version>5.14.2</mockito.version>
+    <mockito.version>5.15.2</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.20.3</testcontainer.version>
   </properties>
