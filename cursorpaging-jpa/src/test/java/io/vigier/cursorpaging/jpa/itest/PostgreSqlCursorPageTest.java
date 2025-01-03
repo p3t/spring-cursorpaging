@@ -649,6 +649,17 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldFilterByExists() {
+        testDataGenerator.generateData( NAMES.length * 2 );
+        final var allWithTag = dataRecordRepository.findAll().stream().filter( r -> !r.getTags().isEmpty() ).toList();
+
+        final var page = dataRecordRepository.loadPage( PageRequest.create(
+                b -> b.pageSize( 99 ).asc( DataRecord_.id ).rule( Rules.where( DataRecord_.tags ).isNotEmpty() ) ) );
+
+        assertThat( page ).containsExactlyInAnyOrderElementsOf( allWithTag );
+    }
+
+    @Test
     void shouldCombineFilterByOrCondition() {
         final var all = testDataGenerator.generateData( 99 );
         final int expectedSize = (int) all.stream()

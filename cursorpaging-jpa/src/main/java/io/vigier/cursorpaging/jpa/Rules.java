@@ -74,6 +74,31 @@ public class Rules {
             };
         }
 
+        public FilterRule isNotEmpty() {
+            return new FilterRule() {
+                @Override
+                public Predicate toPredicate( final QueryBuilder cqb ) {
+                    final var subquery = cqb.query().subquery( Long.class );
+                    final var subRoot = subquery.from( attribute.getDeclaringType().getJavaType() );
+                    final var cb = cqb.cb();
+                    subquery.select( cb.literal( 1L ) )
+                            .where( cb.equal( subRoot, cqb.root() ),
+                                    cb.isNotEmpty( subRoot.get( attribute.getName() ) ) );
+                    return cb.exists( subquery );
+                }
+
+                @Override
+                public Map<String, List<String>> parameters() {
+                    return CollectionRuleCreator.this.parameters();
+                }
+
+                @Override
+                public String name() {
+                    return CollectionRuleCreator.this.name();
+                }
+            };
+        }
+
         public static CollectionRuleCreator where( final PluralAttribute<?, ?, ?> attribute ) {
             return new CollectionRuleCreator( attribute );
         }
