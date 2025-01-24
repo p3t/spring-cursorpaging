@@ -117,8 +117,7 @@ class SerializerTest {
                         .value( new ValueClass( "123" ) ) ) ) );
 
         Assertions.assertThatThrownBy( () -> serializeAndDeserialize( pageRequest ) )
-                .isInstanceOf( SerializerException.class )
-                .hasMessageContaining( "Cannot convert value" );
+                .isInstanceOf( SerializerException.class );
     }
 
     @Test

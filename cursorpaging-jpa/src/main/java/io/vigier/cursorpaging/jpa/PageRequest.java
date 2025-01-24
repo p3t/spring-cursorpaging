@@ -15,7 +15,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
-import lombok.With;
 import lombok.experimental.Accessors;
 import org.springframework.lang.Nullable;
 
@@ -64,7 +63,6 @@ public class PageRequest<E> {
     /**
      * The size of the page to fetch
      */
-    @With
     @Builder.Default
     private final int pageSize = DEFAULT_PAGE_SIZE;
 
@@ -274,6 +272,20 @@ public class PageRequest<E> {
      */
     public PageRequest<E> withEnableTotalCount( final boolean enable ) {
         return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
+    }
+
+    /**
+     * creates a new page request with the given size, or returns the current one if size is {@code null} or the same as
+     * the actual size.
+     *
+     * @param size the requested max page size. {@code null} is accepted and will return the current request.
+     * @return Page request with the provided size
+     */
+    public PageRequest<E> withPageSize( @Nullable final Integer size ) {
+        if ( size == null || pageSize() == size ) {
+            return this;
+        }
+        return copy( b -> b.pageSize( size ) );
     }
 
     /**

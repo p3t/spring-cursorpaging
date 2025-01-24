@@ -130,8 +130,15 @@ class ToDtoMapper<E> {
             return Cursor.Value.newBuilder().setValue( "" )
                     .build();
         }
-        return Cursor.Value.newBuilder().setValue( value.toString() )
-                .build();
+        if ( isSerializable( value ) ) {
+            return Cursor.Value.newBuilder().setValue( value.toString() )
+                    .build();
+        }
+        throw new SerializerException( "Not serializable value type: " + value.getClass() );
+    }
 
+    private boolean isSerializable( final Comparable<?> value ) {
+        return value instanceof String || value instanceof Number || value instanceof Boolean
+                || value instanceof Character || value instanceof Enum || value instanceof java.time.Instant;
     }
 }
