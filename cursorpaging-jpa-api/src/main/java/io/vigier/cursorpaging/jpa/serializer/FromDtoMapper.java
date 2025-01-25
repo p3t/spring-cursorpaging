@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.ConverterNotFoundException;
 
 @Slf4j
 @Builder
@@ -123,12 +124,13 @@ class FromDtoMapper<E> {
         if ( value.getValue().isEmpty() ) {
             return null;
         }
-        final var convert = conversionService.<T>convert( value.getValue(), attribute.type() );
-        if ( convert == null ) {
+        try {
+            return conversionService.<T>convert( value.getValue(), attribute.type() );
+        } catch ( final ConverterNotFoundException e ) {
             throw new SerializerException(
-                    "Cannot convert value: " + value.getValue() + " to type: " + attribute.type() );
+                    "Cannot convert value: '%s' (type: %s) to type: '%s' for attribute: %s".formatted( value.getValue(),
+                            value.getValue().getClass().getName(), attribute.type(), attribute.name() ) );
         }
-        return convert;
     }
 
     private Position positionOf( final Cursor.Position position ) {

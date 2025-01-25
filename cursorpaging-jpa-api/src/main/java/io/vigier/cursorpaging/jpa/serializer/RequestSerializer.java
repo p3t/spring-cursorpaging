@@ -39,6 +39,12 @@ public class RequestSerializer<E> {
     static ConversionService getConversionService() {
         final DefaultConversionService cs = new DefaultConversionService();
         Jsr310Converters.getConvertersToRegister().forEach( cs::addConverter );
+        // The Object to object converter would try to find a constructor or method in the target
+        // type for constrcuting the object from a string. This is not desired, as the
+        // Serializer used "toString" for serializing, and if this string is not by intend
+        // the string representation of the object, the conversion would create very strange
+        // deserialization results (SerializerTest -> shouldThrowExceptionWhenNotDeserializable).
+        cs.removeConvertible( Object.class, Object.class );
         return cs;
     }
 
