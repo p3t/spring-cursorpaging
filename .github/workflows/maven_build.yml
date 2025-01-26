@@ -82,7 +82,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw -T1C --batch-mode clean install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar\
+        run: ./mvnw -T1C --batch-mode clean install sonar:sonar\
           -Dsonar.projectKey=p3t_spring-cursorpaging\
           -Dsonar.token=${{ secrets.SONARCLOUD_TOKEN }}
 
