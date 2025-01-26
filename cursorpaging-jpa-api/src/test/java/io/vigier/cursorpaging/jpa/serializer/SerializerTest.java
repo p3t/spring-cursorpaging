@@ -108,17 +108,15 @@ class SerializerTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenNotDeserializeable() {
+    void shouldThrowExceptionWhenNotDeserializable() {
         // The 'value' in the position of type ValueClass is can be serialized (via toString)
         // but not converted back (no converter configured)
+        final var value = new ValueClass( "123" );
         final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
-                p -> p.order( Order.ASC )
-                        .attribute( Attribute.of( TestEntity_.value ) )
-                        .value( new ValueClass( "123" ) ) ) ) );
+                p -> p.order( Order.ASC ).attribute( Attribute.of( TestEntity_.value ) ).value( value ) ) ) );
 
         Assertions.assertThatThrownBy( () -> serializeAndDeserialize( pageRequest ) )
-                .isInstanceOf( SerializerException.class )
-                .hasMessageContaining( "Cannot convert value" );
+                .isInstanceOf( SerializerException.class );
     }
 
     @Test

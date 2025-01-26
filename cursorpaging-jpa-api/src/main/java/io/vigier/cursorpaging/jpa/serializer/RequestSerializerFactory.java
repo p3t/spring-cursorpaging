@@ -22,7 +22,7 @@ import static java.util.Objects.requireNonNull;
 public class RequestSerializerFactory {
 
     @Builder.Default
-    private final ConversionService conversionService = new SimpleConversionService();
+    private final ConversionService conversionService = RequestSerializer.getConversionService();
 
     @Builder.Default
     private final Encrypter encrypter = Encrypter.getInstance();
