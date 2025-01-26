@@ -1,5 +1,6 @@
 package io.vigier.cursorpaging.jpa.serializer;
 
+import io.vigier.cursorpaging.jpa.serializer.RequestSerializer.RequestSerializerBuilder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -21,7 +22,7 @@ import static java.util.Objects.requireNonNull;
 public class RequestSerializerFactory {
 
     @Builder.Default
-    private final ConversionService conversionService = new SimpleConversionService();
+    private final ConversionService conversionService = RequestSerializer.getConversionService();
 
     @Builder.Default
     private final Encrypter encrypter = Encrypter.getInstance();
@@ -57,6 +58,23 @@ public class RequestSerializerFactory {
         return (RequestSerializer<T>) entitySerializers.computeIfAbsent( entityClass,
                 k -> RequestSerializer.create( entityClass )
                         .apply( b -> b.encrypter( encrypter ).conversionService( conversionService ) ) );
+    }
+
+    /**
+     * Can be used to pre-configure serializers - builder will only be invoked one time per entity-class.
+     *
+     * @param entityClass class for which the serializers should serialize/deserialize page-requests
+     * @param b           the customizer to configure the serializer
+     * @param <T>         the entity-type
+     * @return this factory
+     */
+    public <T> RequestSerializerFactory configure( final Class<T> entityClass,
+            final Consumer<RequestSerializerBuilder<T>> b ) {
+        entitySerializers.computeIfAbsent( entityClass, k -> RequestSerializer.create( entityClass ).apply( c -> {
+            c.encrypter( encrypter ).conversionService( conversionService );
+            b.accept( c );
+        } ) );
+        return this;
     }
 
 }

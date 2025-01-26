@@ -132,6 +132,5 @@ class ToDtoMapper<E> {
         }
         return Cursor.Value.newBuilder().setValue( value.toString() )
                 .build();
-
     }
 }

@@ -14,6 +14,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.lang.Nullable;
 
 @Builder
@@ -29,10 +31,22 @@ public class RequestSerializer<E> {
     private Class<E> entityType;
 
     @Builder.Default
-    private final ConversionService conversionService = new SimpleConversionService();
+    private final ConversionService conversionService = getConversionService();
 
     @Builder.Default
     private final Map<String, RuleFactory> filterRuleFactories = new HashMap<>();
+
+    static ConversionService getConversionService() {
+        final DefaultConversionService cs = new DefaultConversionService();
+        Jsr310Converters.getConvertersToRegister().forEach( cs::addConverter );
+        // The Object to object converter would try to find a constructor or method in the target
+        // type for constrcuting the object from a string. This is not desired, as the
+        // Serializer used "toString" for serializing, and if this string is not by intend
+        // the string representation of the object, the conversion would create very strange
+        // deserialization results (SerializerTest -> shouldThrowExceptionWhenNotDeserializable).
+        cs.removeConvertible( Object.class, Object.class );
+        return cs;
+    }
 
     public static class RequestSerializerBuilder<E> {
 

@@ -15,8 +15,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
-import lombok.With;
 import lombok.experimental.Accessors;
+import org.springframework.lang.Nullable;
 
 /**
  * A request, which can be used to query a database for a page of entities.
@@ -63,7 +63,6 @@ public class PageRequest<E> {
     /**
      * The size of the page to fetch
      */
-    @With
     @Builder.Default
     private final int pageSize = DEFAULT_PAGE_SIZE;
 
@@ -161,7 +160,7 @@ public class PageRequest<E> {
          * @param filter A new filter definition
          * @return the builder
          */
-        public PageRequestBuilder<E> filter( final QueryElement filter ) {
+        public PageRequestBuilder<E> filter( @Nullable final QueryElement filter ) {
             final List<QueryElement> filters = new LinkedList<>();
             if ( this.filters$value != null ) {
                 filters.addAll( this.filters$value.filters() );
@@ -181,10 +180,26 @@ public class PageRequest<E> {
          * @param filters the list of filters to be added
          * @return the builder
          */
-        public PageRequestBuilder<E> filters( final FilterList filters ) {
+        public PageRequestBuilder<E> filters( @Nullable final FilterList filters ) {
             if ( filters != null ) {
                 this.filters$value = filters;
                 this.filters$set = true;
+            }
+            return this;
+        }
+
+        /**
+         * Add a filter-rule (custom filter implementation) to the request. A null-value is silently ignored.
+         *
+         * @param rule the rule to be added
+         * @return the builder
+         */
+        public PageRequestBuilder<E> filterRule( @Nullable final FilterRule rule ) {
+            if ( this.rules == null ) {
+                this.rules = new ArrayList<>( 3 );
+            }
+            if ( rule != null ) {
+                this.rules.add( rule );
             }
             return this;
         }
@@ -257,6 +272,20 @@ public class PageRequest<E> {
      */
     public PageRequest<E> withEnableTotalCount( final boolean enable ) {
         return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
+    }
+
+    /**
+     * creates a new page request with the given size, or returns the current one if size is {@code null} or the same as
+     * the actual size.
+     *
+     * @param size the requested max page size. {@code null} is accepted and will return the current request.
+     * @return Page request with the provided size
+     */
+    public PageRequest<E> withPageSize( @Nullable final Integer size ) {
+        if ( size == null || pageSize() == size ) {
+            return this;
+        }
+        return copy( b -> b.pageSize( size ) );
     }
 
     /**
