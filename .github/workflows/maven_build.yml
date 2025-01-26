@@ -82,9 +82,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw -T1C --batch-mode clean install sonar:sonar\
+        run: ./mvnw -T1C --batch-mode \
           -Dsonar.projectKey=p3t_spring-cursorpaging\
-          -Dsonar.token=${{ secrets.SONARCLOUD_TOKEN }}
+          -Dsonar.token=${{ secrets.SONARCLOUD_TOKEN }}\
+          clean install sonar:sonar
 
       - name: Evaluate branch name where the scan results are added to in Sonarcloud
         if: ${{inputs.actor != 'dependabot[bot]' }}
