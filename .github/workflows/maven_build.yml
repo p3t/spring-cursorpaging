@@ -81,11 +81,17 @@ jobs:
         id: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw -T1C --batch-mode \
-          -Dsonar.projectKey=p3t_spring-cursorpaging\
-          -Dsonar.token=${{ secrets.SONARCLOUD_TOKEN }}\
-          clean install sonar:sonar
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+        run: >
+          ./mvnw -T1C --batch-mode clean install
+
+      - name: Sonar scan
+        id: sonar_scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+        run: >
+          mvn --batch-mode --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.token=$SONAR_TOKEN
 
       - name: Evaluate branch name where the scan results are added to in Sonarcloud
         if: ${{inputs.actor != 'dependabot[bot]' }}
