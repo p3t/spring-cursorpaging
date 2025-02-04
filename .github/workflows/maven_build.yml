@@ -102,6 +102,7 @@ jobs:
         run: >
           mvn --batch-mode --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.branch.name=${{ steps.branch_to_scan.outputs.name }} -Dsonar.token=$SONAR_TOKEN
+          -Dsonar.projectKey=p3t_spring-cursorpaging
 
       - name: Javadoc and sign artifacts
         if: ${{ inputs.release_build }}
