@@ -85,24 +85,23 @@ jobs:
         run: >
           ./mvnw -T1C --batch-mode clean install
 
-      - name: Sonar scan
-        id: sonar_scan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
-        run: >
-          mvn --batch-mode --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.token=$SONAR_TOKEN
-
-      - name: Evaluate branch name where the scan results are added to in Sonarcloud
-        if: ${{inputs.actor != 'dependabot[bot]' }}
+      - name: Define branch name where the scan results are added to in Sonarcloud
         id: branch_to_scan
-        shell: bash
         run: |
           echo github.head_ref - pull request:   ${{ github.head_ref }} 
           echo github.ref_name - push:   ${{ github.ref_name }} 
           echo event: ${{ github.event_name }}
           echo branch name to scan: ${{ github.head_ref || github.ref_name }}
           echo name=${{ github.head_ref || github.ref_name }} >> $GITHUB_OUTPUT
+
+      - name: Sonar scan
+        id: sonar_scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+        run: >
+          mvn --batch-mode --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.branch.name=${{ steps.branch_to_scan.outputs.name }} -Dsonar.token=$SONAR_TOKEN
 
       - name: Javadoc and sign artifacts
         if: ${{ inputs.release_build }}
