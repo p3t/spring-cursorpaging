@@ -86,6 +86,7 @@ jobs:
           ./mvnw -T1C --batch-mode clean install
 
       - name: Define branch name where the scan results are added to in Sonarcloud
+        if: ${{inputs.actor != 'dependabot[bot]' }}
         id: branch_to_scan
         run: |
           echo github.head_ref - pull request:   ${{ github.head_ref }} 
@@ -95,6 +96,7 @@ jobs:
           echo name=${{ github.head_ref || github.ref_name }} >> $GITHUB_OUTPUT
 
       - name: Sonar scan
+        if: ${{inputs.actor != 'dependabot[bot]' }}
         id: sonar_scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
