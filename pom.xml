@@ -40,12 +40,12 @@
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <protobuf.version>4.30.0</protobuf.version>
+    <protobuf.version>4.30.1</protobuf.version>
     <hibernate.version>6.6.4.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>3.4.3</springboot.version>
+    <springboot.version>3.4.4</springboot.version>
     <lombok.version>1.18.36</lombok.version>
-    <mockito.version>5.16.0</mockito.version>
+    <mockito.version>5.16.1</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.20.3</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
@@ -150,7 +150,7 @@
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
-        <version>5.12.0</version>
+        <version>5.12.1</version>
       </dependency>
 
     </dependencies>
