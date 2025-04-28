@@ -43,7 +43,7 @@
     <protobuf.version>4.30.2</protobuf.version>
     <hibernate.version>6.6.4.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>3.4.4</springboot.version>
+    <springboot.version>3.4.5</springboot.version>
     <lombok.version>1.18.38</lombok.version>
     <mockito.version>5.16.1</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
