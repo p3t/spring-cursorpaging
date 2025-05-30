@@ -43,9 +43,9 @@
     <protobuf.version>4.31.0</protobuf.version>
     <hibernate.version>6.6.13.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>3.4.5</springboot.version>
+    <springboot.version>3.5.0</springboot.version>
     <lombok.version>1.18.38</lombok.version>
-    <mockito.version>5.17.0</mockito.version>
+    <mockito.version>5.18.0</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.20.3</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
