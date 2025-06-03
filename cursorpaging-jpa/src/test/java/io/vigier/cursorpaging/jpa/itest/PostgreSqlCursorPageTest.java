@@ -21,18 +21,21 @@ import io.vigier.cursorpaging.jpa.itest.model.Tag;
 import io.vigier.cursorpaging.jpa.itest.model.Tag_;
 import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
+import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,9 +43,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
 import static io.vigier.cursorpaging.jpa.Filters.attribute;
-import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAMES;
-import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_ALPHA;
-import static io.vigier.cursorpaging.jpa.itest.TestDataGenerator.NAME_BRAVO;
+import static io.vigier.cursorpaging.jpa.itest.TestData.NAMES;
+import static io.vigier.cursorpaging.jpa.itest.TestData.NAME_ALPHA;
+import static io.vigier.cursorpaging.jpa.itest.TestData.NAME_BRAVO;
+import static io.vigier.cursorpaging.jpa.itest.TestData.TAG_RED;
 import static io.vigier.cursorpaging.jpa.itest.model.AccessEntry.Action.READ;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,9 +67,10 @@ class PostgreSqlCursorPageTest {
     @Autowired
     private SecurityClassRepository securityClassRepository;
     @Autowired
-    private TestDataGenerator testDataGenerator;
+    private TestDataPersister testDataPersister;
     @Autowired
     private TagRepository tagRepository;
+
 
     @Test
     void contextLoads() {
@@ -77,14 +82,26 @@ class PostgreSqlCursorPageTest {
     @AfterEach
     @Transactional
     void cleanup() {
-        accessEntryRepository.deleteAllInBatch();
-        dataRecordRepository.deleteAllInBatch();
-        securityClassRepository.deleteAllInBatch();
+        testDataPersister.deleteAll();
+    }
+
+    @BeforeEach
+    @Transactional
+    void beforeEach() {
+        testDataPersister.deleteAll();
+    }
+
+    private TestData defaultData() {
+        return testDataPersister.persist( TestData.create( td -> td.recordCount( 100 ) ) );
+    }
+
+    private TestData defaultData( final int count ) {
+        return testDataPersister.persist( TestData.create( td -> td.recordCount( count ) ) );
     }
 
     @Test
     void shouldFetchFirstPage() {
-        testDataGenerator.generateData( 100 );
+        defaultData();
         final var all = dataRecordRepository.findAll();
 
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 ).asc( DataRecord_.id ) );
@@ -104,7 +121,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchNextPage() {
-        testDataGenerator.generateData( 30 );
+        defaultData( 30 );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 10 ).asc( Attribute.of( DataRecord.Fields.id, UUID.class ) ) );
 
@@ -121,7 +138,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchPagesOrderedByCreatedDesc() {
-        testDataGenerator.generateData( 15 );
+        defaultData( 15 );
 
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
@@ -162,9 +179,9 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFetchPagesOrderedByNameAsc() {
-        testDataGenerator.generateData( 5 );
+        final TestData testData = defaultData( 5 );
         // duplicate names
-        testDataGenerator.generateDataRecords( 10 );
+        testDataPersister.persist( testData.generateRecords( 10 ) );
 
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ) );
@@ -208,7 +225,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResults() {
-        testDataGenerator.generateData( 100 );
+        defaultData();
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
@@ -223,7 +240,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResultsWithInPredicate() {
-        testDataGenerator.generateData( 100 );
+        defaultData();
         final Filter nameIsAlphaOrBravo = Filter.create( b -> b.attribute( DataRecord_.name ).in( "Alpha", "Bravo" ) );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
@@ -240,7 +257,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResultsWithLikeExpression() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        defaultData( TestData.NAMES.length * 2 );
         final Filter nameLikeAlp = Filter.create( b -> b.attribute( DataRecord_.name ).like( "Alp%" ) );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLikeAlp ) );
@@ -254,7 +271,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResultsWithLikeExpression2() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        defaultData( TestData.NAMES.length * 2 );
         final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "%r%" ) );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
@@ -268,7 +285,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterResultsWithMultipleLikeExpressions() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length * 2 );
+        defaultData( TestData.NAMES.length * 2 );
         final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "A%", "B%" ) );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
@@ -283,8 +300,8 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByGreaterAndLowerThan() {
-        final var count = TestDataGenerator.NAMES.length;
-        testDataGenerator.generateData( count );
+        final var count = TestData.NAMES.length;
+        defaultData( count );
         final var all = dataRecordRepository.loadPage( PageRequest.create(
                         r -> r.asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) ).pageSize( count ) ) )
                 .content();
@@ -308,7 +325,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterAndFetchNextWithAndFilter() {
-        testDataGenerator.generateData( 100 );
+        defaultData();
         final var names = List.of( NAME_ALPHA, NAME_BRAVO, "Charlie", "Delta", "Echo" );
         final var status = List.of( Status.DRAFT, Status.ACTIVE );
 
@@ -329,7 +346,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldCountWhereFilterWithLikeExpressions() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
         final Filter nameLike = Filter.create( b -> b.attribute( DataRecord_.name ).like( "A%", "B%" ) );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 100 ).asc( DataRecord_.id ).filter( nameLike ) );
@@ -342,7 +359,7 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldAddCountInPageRequestWhenRequested() {
         // Given
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        final TestData testData = defaultData( NAMES.length );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 5 ).enableTotalCount( true ).asc( DataRecord_.id ) );
 
@@ -350,22 +367,22 @@ class PostgreSqlCursorPageTest {
         final var page = dataRecordRepository.loadPage( request );
 
         assertThat( page ).isNotNull();
-        assertThat( page.getTotalCount() ).isPresent().get().isEqualTo( (long) TestDataGenerator.NAMES.length );
+        assertThat( page.getTotalCount() ).isPresent().get().isEqualTo( (long) NAMES.length );
 
-        testDataGenerator.generateDataRecords( 66 );
+        testDataPersister.persist( testData.generateRecords( 1 ) );
         final var secondPage = dataRecordRepository.loadPage( page.next().orElseThrow() );
 
         // THEN the totalCount should not be re-calculated
-        assertThat( secondPage.getTotalCount() ).isPresent().get().isEqualTo( (long) TestDataGenerator.NAMES.length );
+        assertThat( secondPage.getTotalCount() ).isPresent().get().isEqualTo( (long) NAMES.length );
 
         final var thirdPage = dataRecordRepository.loadPage(
                 secondPage.next().orElseThrow().withEnableTotalCount( true ) );
-        assertThat( thirdPage.getTotalCount() ).isPresent().get().isEqualTo( TestDataGenerator.NAMES.length + 66L );
+        assertThat( thirdPage.getTotalCount() ).isPresent().get().isEqualTo( NAMES.length + 1L );
     }
 
     @Test
     void shouldReturnTotalCountWhenNoFilterPresent() {
-        testDataGenerator.generateData( 42 );
+        defaultData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id ) );
@@ -377,7 +394,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReturnZeroCountWhenNoRecordsMatches() {
-        testDataGenerator.generateData( 42 );
+        defaultData( 42 );
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
@@ -414,7 +431,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReturnFilteredEntityCountWhenFilterPresent() {
-        final List<DataRecord> all = testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        final List<DataRecord> all = defaultData( TestData.NAMES.length ).records();
         final long countPublicAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 5 ).asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
@@ -428,7 +445,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByEnumAttribute() {
-        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final List<DataRecord> all = defaultData( 99 ).records();
         final int countDraft = (int) all.stream().filter( r -> r.getStatus() == Status.DRAFT ).count();
         final int countActive = (int) all.stream().filter( r -> r.getStatus() == Status.ACTIVE ).count();
 
@@ -447,7 +464,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldNotIgnoreCaseInEqualFilter() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
 
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
                 r -> r.filter( attribute( DataRecord_.name ).equalTo( NAME_ALPHA.toUpperCase() ) )
@@ -463,7 +480,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldIgnoreCaseInEqualFilter() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
 
         // equal
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
@@ -479,7 +496,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldIgnoreCaseInWithInFilter() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
 
         // in operation
         assertThat( dataRecordRepository.loadPage( PageRequest.create(
@@ -490,7 +507,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldIgnoreCaseWithLikeFilter() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
 
         // Like operation
         assertThat( dataRecordRepository.loadPage( PageRequest.create( //
@@ -507,7 +524,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterWithGreaterAndLessThan() {
-        testDataGenerator.generateData( TestDataGenerator.NAMES.length );
+        defaultData( TestData.NAMES.length );
 
         final var all = dataRecordRepository.findAllOrderedByAuditInfoCreatedAtAsc();
 
@@ -531,7 +548,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByEntryInManyToOneRelationship() {
-        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final List<DataRecord> all = defaultData( 99 ).records();
         final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
 
@@ -552,7 +569,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByAttributeOfEntryInManyToOneRelationship() {
-        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final List<DataRecord> all = defaultData( 99 ).records();
         final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
 
@@ -572,7 +589,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByAttributeOfEntryInManyToManyRelationship() {
-        final List<DataRecord> all = testDataGenerator.generateData( 99 );
+        final List<DataRecord> all = defaultData( 99 ).records();
         final var redTag = tagRepository.findByName( "red" );
         final var greenTag = tagRepository.findByName( "green" );
         final int redOrGreenCount = (int) all.stream()
@@ -611,7 +628,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldUseMoreComplicateFilterRulesForAclChecks() {
-        testDataGenerator.generateData( 100 );
+        defaultData();
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
@@ -635,7 +652,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByNotExists() {
-        testDataGenerator.generateData( NAMES.length * 2 );
+        defaultData( NAMES.length * 2 );
         final var allWithoutTag = dataRecordRepository.findAll().stream().filter( r -> r.getTags().isEmpty() ).toList();
 
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
@@ -650,7 +667,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterByExists() {
-        testDataGenerator.generateData( NAMES.length * 2 );
+        defaultData( NAMES.length * 2 );
         final var allWithTag = dataRecordRepository.findAll().stream().filter( r -> !r.getTags().isEmpty() ).toList();
 
         final var page = dataRecordRepository.loadPage( PageRequest.create(
@@ -661,7 +678,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldCombineFilterByOrCondition() {
-        final var all = testDataGenerator.generateData( 99 );
+        final var all = defaultData( 99 ).records();
         final int expectedSize = (int) all.stream()
                 .filter( r -> r.getName().equals( NAME_ALPHA ) || r.getName().equals( NAME_BRAVO ) )
                 .count();
@@ -679,7 +696,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldCombineAndWithOrFilter() {
-        final var all = testDataGenerator.generateData( 99 );
+        final var all = defaultData( 99 ).records();
         final Tag red = tagRepository.findByName( "red" );
         final Tag green = tagRepository.findByName( "green" );
         final int expectedSize = (int) all.stream()
@@ -708,7 +725,7 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldReverseDirectionOfCursors() {
-        testDataGenerator.generateData( 10 );
+        defaultData( 10 );
         final PageRequest<DataRecord> request = PageRequest.create(
                 b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ) );
 
@@ -728,6 +745,85 @@ class PostgreSqlCursorPageTest {
 
         assertThat( reversedFirstPage ).isNotNull().containsExactlyElementsOf( firstPage );
         assertThat( reversedFirstPage.next() ).isNotPresent();
+    }
+
+    @Test
+    void shouldMixRulesWithFilters() {
+        final var data = testDataPersister.persist( td -> td.recordCount( 10 ).recordNames( NAME_ALPHA, NAME_BRAVO ) )
+                .records();
+        final var recordsWithSecClass0 = data.stream()
+                .filter( r -> r.getSecurityClass().getLevel() == 0 && r.getName().startsWith( "A" ) )
+                .toList();
+
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
+                .asc( DataRecord_.name )
+                .asc( DataRecord_.id )
+                .filter( Filters.and( Filters.attribute( DataRecord_.name ).like( "A%" ),
+                        new OnlyPublicFilterRule() ) ) );
+        final var page = dataRecordRepository.loadPage( request );
+        assertThat( page ).hasSize( recordsWithSecClass0.size() )
+                .allSatisfy( r -> assertThat( r.getName() ).startsWith( "A" ) )
+                .allSatisfy( r -> assertThat( r.getSecurityClass().getLevel() ).isEqualTo( 0 ) );
+    }
+
+    @Test
+    void shouldFilterDataRecordsWithNoTags() {
+        final TestData data = testDataPersister.persist(
+                td -> td.recordCount( 100 ).tagNames( TestData.TAG_RED, TestData.TAG_BLUE ) );
+        final var redTag = tagRepository.findByName( TestData.TAG_RED );
+        final var recordsWithoutRedTag = new LinkedList<DataRecord>();
+        final var recordsWithoutAnyTag = new LinkedList<DataRecord>();
+        final var recordsWithRedTag = new LinkedList<DataRecord>();
+        final var alphaBrovoRecordsWithoutRedTag = new LinkedList<DataRecord>();
+
+        data.records().forEach( r -> {
+            if ( r.getTags().isEmpty() ) {
+                recordsWithoutAnyTag.add( r );
+            }
+            if ( r.getTags().contains( redTag ) ) {
+                recordsWithRedTag.add( r );
+            } else {
+                recordsWithoutRedTag.add( r );
+                if ( List.of( NAME_ALPHA, NAME_BRAVO ).contains( r.getName() ) ) {
+                    alphaBrovoRecordsWithoutRedTag.add( r );
+                }
+            }
+        } );
+        assertThat( recordsWithoutAnyTag ).isNotEmpty();
+        assertThat( recordsWithoutRedTag ).isNotEmpty();
+        assertThat( recordsWithRedTag ).isNotEmpty();
+
+        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+                .asc( DataRecord_.name )
+                .asc( DataRecord_.id )
+                .filter( NoTagFilterRule.of( List.of( TAG_RED ) ) )
+                .enableTotalCount( true ) );
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( recordsWithoutRedTag.size() )
+                .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) );
+        assertThat( page ).allSatisfy( r -> assertThat( r.getName() ).isNotEqualTo( TAG_RED ) );
+
+        final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+                .asc( DataRecord_.name )
+                .asc( DataRecord_.id )
+                .filter( NoTagFilterRule.of( List.of() ) )
+                .enableTotalCount( true ) );
+        final var page2 = dataRecordRepository.loadPage( requestForNoTags );
+
+        assertThat( page2 ).hasSize( recordsWithoutAnyTag.size() );
+
+        // now we mix filters with ruled
+        final var request3 = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+                .asc( DataRecord_.name )
+                .asc( DataRecord_.id )
+                .filter( Filters.and( NoTagFilterRule.of( List.of( TAG_RED ) ),
+                        Filters.attribute( DataRecord_.name ).in( NAME_ALPHA, NAME_BRAVO ) ) )
+                .enableTotalCount( true ) );
+        final var page3 = dataRecordRepository.loadPage( request3 );
+        assertThat( page3 ).hasSize( alphaBrovoRecordsWithoutRedTag.size() )
+                .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) )
+                .allSatisfy( r -> assertThat( r.getName() ).isIn( NAME_ALPHA, NAME_BRAVO ) );
     }
 
     private static void logNames( final String message, final Page<DataRecord> allRecords ) {
