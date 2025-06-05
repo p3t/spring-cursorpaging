@@ -8,6 +8,7 @@ import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
 import jakarta.transaction.Transactional;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -47,12 +48,10 @@ public class TestDataPersister {
                 .map( t -> t.getId() != null ? tagRepository.getReferenceById( t.getId() ) : tagRepository.save( t ) )
                 .collect( Collectors.toMap( Tag::getName, identity() ) ) );
 
-        persisted.securityClasses( testData.securityClasses()
-                .values()
-                .stream()
+        persisted.securityClasses( Arrays.stream( testData.securityClasses() )
                 .map( sc -> securityClassRepository.findById( sc.getLevel() )
                         .orElseGet( () -> securityClassRepository.save( sc ) ) )
-                .collect( Collectors.toMap( SecurityClass::getLevel, identity() ) ) );
+                .toArray( SecurityClass[]::new ) );
 
         persisted.accessEntries( testData.accessEntries()
                 .stream()

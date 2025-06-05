@@ -47,7 +47,7 @@ public class TestData {
     private final List<DataRecord> records;
     private final Map<String, Tag> tags;
     private final List<AccessEntry> accessEntries;
-    private final Map<Integer, SecurityClass> securityClasses;
+    private final SecurityClass[] securityClasses;
 
     @Builder.Default
     private String[] recordNames = NAMES;
@@ -88,27 +88,27 @@ public class TestData {
                                 .build() )
                         .collect( Collectors.toMap( Tag::getName, t -> t ) ) );
             }
-            if ( isEmpty( super.securityClasses ) ) {
-                securityClasses( Map.of( 0, SecurityClass.builder().level( 0 ).name( "public" )
-                        .build(), 1, SecurityClass.builder().level( 1 ).name( "standard" )
-                        .build(), 2, SecurityClass.builder().level( 2 ).name( "confidential" )
-                        .build() ) );
+            if ( super.securityClasses == null ) {
+                securityClasses( List.of( SecurityClass.builder().level( 0 ).name( "public" )
+                        .build(), SecurityClass.builder().level( 1 ).name( "standard" )
+                        .build(), SecurityClass.builder().level( 2 ).name( "confidential" )
+                        .build() ).toArray( SecurityClass[]::new ) );
             }
             if ( isEmpty( super.accessEntries ) ) {
                 accessEntries( List.of( AccessEntry.builder()
                                 .subject( SUBJECT_READ_STANDARD )
                                 .action( READ )
-                                .securityClass( super.securityClasses.get( 1 ) )
+                                .securityClass( super.securityClasses[1] )
                                 .build(),  //
                         AccessEntry.builder()
                                 .subject( SUBJECT_READ_SENSITIVE )
                                 .action( READ )
-                                .securityClass( super.securityClasses.get( 2 ) )
+                                .securityClass( super.securityClasses[2] )
                                 .build(), //
                         AccessEntry.builder()
                                 .subject( SUBJECT_WRITE_SENSITIVE )
                                 .action( WRITE )
-                                .securityClass( super.securityClasses.get( 2 ) )
+                                .securityClass( super.securityClasses[2] )
                                 .build() ) );
             }
             if ( super.records == null ) {
@@ -138,11 +138,8 @@ public class TestData {
 
     public TestData generateRecords( final int count, final Consumer<DataRecord.DataRecordBuilder> consumer ) {
         Objects.requireNonNull( this.securityClasses );
-        final SecurityClass[] securityClasses = this.securityClasses.values().toArray( SecurityClass[]::new );
-
-        Instant created = Instant.parse( "1999-01-02T10:15:30.00Z" );
-        for ( int i = 0; i < count; i++ ) {
-            created = created.plus( 1, ChronoUnit.DAYS );
+        for ( int i = 0; i < count; ++i ) {
+            final var created = Instant.parse( "1999-01-02T10:15:30.00Z" ).plus( i, ChronoUnit.DAYS );
             final var builder = DataRecord.builder()
                     .name( nextName( i ) )
                     .securityClass( securityClasses[i % securityClasses.length] )

@@ -800,9 +800,10 @@ class PostgreSqlCursorPageTest {
                 .enableTotalCount( true ) );
         final var page = dataRecordRepository.loadPage( request );
 
-        assertThat( page ).hasSize( recordsWithoutRedTag.size() )
-                .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) );
-        assertThat( page ).allSatisfy( r -> assertThat( r.getName() ).isNotEqualTo( TAG_RED ) );
+        assertThat( page ).hasSize( recordsWithoutRedTag.size() ).allSatisfy( r -> {
+            assertThat( r.getTags() ).doesNotContain( redTag );
+            assertThat( r.getName() ).isNotEqualTo( TAG_RED );
+        } );
 
         final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
                 .asc( DataRecord_.name )
