@@ -768,8 +768,9 @@ class PostgreSqlCursorPageTest {
 
     @Test
     void shouldFilterDataRecordsWithNoTags() {
+        final var recordCount = 1000;
         final TestData data = testDataPersister.persist(
-                td -> td.recordCount( 100 ).tagNames( TestData.TAG_RED, TestData.TAG_BLUE ) );
+                td -> td.recordCount( recordCount ).tagNames( TestData.TAG_RED, TestData.TAG_BLUE ) );
         final var redTag = tagRepository.findByName( TestData.TAG_RED );
         final var recordsWithoutRedTag = new LinkedList<DataRecord>();
         final var recordsWithoutAnyTag = new LinkedList<DataRecord>();
@@ -793,7 +794,7 @@ class PostgreSqlCursorPageTest {
         assertThat( recordsWithoutRedTag ).isNotEmpty();
         assertThat( recordsWithRedTag ).isNotEmpty();
 
-        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
                 .asc( DataRecord_.name )
                 .asc( DataRecord_.id )
                 .filter( NoTagFilterRule.of( List.of( TAG_RED ) ) )
@@ -805,7 +806,7 @@ class PostgreSqlCursorPageTest {
             assertThat( r.getName() ).isNotEqualTo( TAG_RED );
         } );
 
-        final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+        final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
                 .asc( DataRecord_.name )
                 .asc( DataRecord_.id )
                 .filter( NoTagFilterRule.of( List.of() ) )
@@ -815,7 +816,7 @@ class PostgreSqlCursorPageTest {
         assertThat( page2 ).hasSize( recordsWithoutAnyTag.size() );
 
         // now we mix filters with ruled
-        final var request3 = PageRequest.<DataRecord>create( b -> b.pageSize( 100 )
+        final var request3 = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
                 .asc( DataRecord_.name )
                 .asc( DataRecord_.id )
                 .filter( Filters.and( NoTagFilterRule.of( List.of( TAG_RED ) ),
@@ -825,6 +826,9 @@ class PostgreSqlCursorPageTest {
         assertThat( page3 ).hasSize( alphaBrovoRecordsWithoutRedTag.size() )
                 .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) )
                 .allSatisfy( r -> assertThat( r.getName() ).isIn( NAME_ALPHA, NAME_BRAVO ) );
+        assertThat( page3.getTotalCount() ).isPresent()
+                .get()
+                .isEqualTo( Long.valueOf( alphaBrovoRecordsWithoutRedTag.size() ).longValue() );
     }
 
     private static void logNames( final String message, final Page<DataRecord> allRecords ) {
