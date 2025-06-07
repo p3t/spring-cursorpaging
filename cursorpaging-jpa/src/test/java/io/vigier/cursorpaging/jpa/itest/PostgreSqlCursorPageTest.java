@@ -801,10 +801,12 @@ class PostgreSqlCursorPageTest {
                 .enableTotalCount( true ) );
         final var page = dataRecordRepository.loadPage( request );
 
+        final long expectedSize1 = recordsWithoutRedTag.size();
         assertThat( page ).hasSize( recordsWithoutRedTag.size() ).allSatisfy( r -> {
             assertThat( r.getTags() ).doesNotContain( redTag );
             assertThat( r.getName() ).isNotEqualTo( TAG_RED );
         } );
+        assertThat( page.getTotalCount() ).isPresent().get().isEqualTo( expectedSize1 );
 
         final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
                 .asc( DataRecord_.name )
@@ -813,7 +815,9 @@ class PostgreSqlCursorPageTest {
                 .enableTotalCount( true ) );
         final var page2 = dataRecordRepository.loadPage( requestForNoTags );
 
+        final long expectedSize2 = recordsWithoutAnyTag.size();
         assertThat( page2 ).hasSize( recordsWithoutAnyTag.size() );
+        assertThat( page2.getTotalCount() ).isPresent().get().isEqualTo( expectedSize2 );
 
         // now we mix filters with ruled
         final var request3 = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
@@ -826,9 +830,8 @@ class PostgreSqlCursorPageTest {
         assertThat( page3 ).hasSize( alphaBrovoRecordsWithoutRedTag.size() )
                 .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) )
                 .allSatisfy( r -> assertThat( r.getName() ).isIn( NAME_ALPHA, NAME_BRAVO ) );
-        assertThat( page3.getTotalCount() ).isPresent()
-                .get()
-                .isEqualTo( Long.valueOf( alphaBrovoRecordsWithoutRedTag.size() ).longValue() );
+        final long expectedSize3 = alphaBrovoRecordsWithoutRedTag.size();
+        assertThat( page3.getTotalCount() ).isPresent().get().isEqualTo( expectedSize3 );
     }
 
     private static void logNames( final String message, final Page<DataRecord> allRecords ) {
