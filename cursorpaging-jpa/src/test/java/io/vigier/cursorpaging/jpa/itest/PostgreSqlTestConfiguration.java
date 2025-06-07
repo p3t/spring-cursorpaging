@@ -26,7 +26,7 @@ public class PostgreSqlTestConfiguration {
     @SneakyThrows
     PostgreSQLContainer<?> postgresContainer() {
         final PostgreSQLContainer<?> container = new PostgreSQLContainer<>(
-                DockerImageName.parse( "postgres:latest" ) );
+                DockerImageName.parse( "postgres:latest" ) ).withPassword( "secret" ).withUsername( "admin" );
         container.start();
 
         waitForConnectionReady( container );
