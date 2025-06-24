@@ -14,6 +14,7 @@ import lombok.Singular;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.lang.Nullable;
 
 
 /**
@@ -111,15 +112,16 @@ public class Attribute {
                 SingleAttribute.of( name3, type3 ) ) );
     }
 
-    Comparable<?> valueOf( final Object entity ) {
+    @Nullable
+    Comparable<?> valueOf( @Nullable final Object entity ) {
         Object result = entity;
         for ( final SingleAttribute a : attributes ) {
             result = a.valueOf( result );
         }
-        if ( !(result instanceof Comparable<?>) ) {
-            throw new IllegalStateException( "Attribute %s is not a comparable: %s".formatted( toString(), result ) );
+        if ( result == null || result instanceof Comparable<?> ) {
+            return (Comparable<?>) result;
         }
-        return (Comparable<?>) result;
+        throw new IllegalStateException( "Attribute %s is not a comparable: %s".formatted( toString(), result ) );
     }
 
     public List<SingleAttribute> attributes() {

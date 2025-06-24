@@ -32,7 +32,7 @@ public class Position {
     private final Attribute attribute;
 
     /**
-     * The current position from where on the results should be queried
+     * The current position-value from where on the next results should be queried
      */
     private final Comparable<?> value;
 
@@ -85,12 +85,12 @@ public class Position {
     }
 
     /**
-     * Checks if this is the position at the start of the first page.
+     * Checks if this is the position has a value.
      *
-     * @return true if the position is at the start of the first page.
+     * @return true if the position has a value.
      */
-    public boolean isFirst() {
-        return value == null;
+    public boolean hasValue() {
+        return value != null;
     }
 
     private Order direction() {
