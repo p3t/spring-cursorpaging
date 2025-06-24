@@ -12,6 +12,7 @@ import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
+import io.vigier.cursorpaging.jpa.itest.model.AuditInfo;
 import io.vigier.cursorpaging.jpa.itest.model.AuditInfo_;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord;
 import io.vigier.cursorpaging.jpa.itest.model.DataRecord_;
@@ -27,6 +28,7 @@ import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -215,6 +217,86 @@ class PostgreSqlCursorPageTest {
         assertThat( firstPageContent ).containsExactlyElementsOf( all.subList( 0, 5 ) );
         assertThat( secondPageContent ).containsExactlyElementsOf( all.subList( 5, 15 ) );
         assertThat( secondPage.next() ).isEmpty();
+    }
+
+    @Test
+    void shouldOrderRecordsAlsoWhenSomePropertiesContainNullValues() {
+        final TestData testData = defaultData( 4 );
+        testData.generateRecords( 5, td -> td.auditInfo( AuditInfo.create( Instant.now(), null ) ) );
+        testData.generateRecords( 1 );
+
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
+                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                .asc( DataRecord_.id ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( 10 );
+        assertThat( page.getContent().subList( 0, 5 ) ).allMatch( r -> r.getAuditInfo().getModifiedAt() != null );
+        assertThat( page.getContent().subList( 5, 10 ) ).allMatch( r -> r.getAuditInfo().getModifiedAt() == null );
+    }
+
+    @Test
+    void shouldOrderRecordsAlsoWhenCompleteEmbeddedEntityIsNull() {
+        final TestData testData = defaultData( 4 );
+        testData.generateRecords( 5, td -> td.auditInfo( null ) );
+        testData.generateRecords( 1 );
+
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
+                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                .asc( DataRecord_.id ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( 10 );
+        assertThat( page.getContent().subList( 0, 5 ) ).allMatch( r -> r.getAuditInfo().getModifiedAt() != null );
+        assertThat( page.getContent().subList( 5, 10 ) ).allMatch( r -> r.getAuditInfo() == null );
+    }
+
+    @Test
+    void shouldOrderRecordsAlsoWhenCompleteEmbeddedEntityIsNullWithinMultipleRequests() {
+        final TestData testData = defaultData( 4 );
+        testData.generateRecords( 10, td -> td.auditInfo( null ) );
+        testData.generateRecords( 1 );
+
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
+                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                .asc( DataRecord_.id )
+                .pageSize( 10 ) );
+
+        final var page1 = dataRecordRepository.loadPage( request );
+        final var page2 = dataRecordRepository.loadPage( page1.next().orElseThrow() );
+
+        assertThat( page1 ).hasSize( 10 );
+        assertThat( page1.getContent().subList( 0, 5 ) ).allMatch( r -> r.getAuditInfo() != null );
+        assertThat( page1.getContent().subList( 5, 10 ) ).allMatch( r -> r.getAuditInfo() == null );
+
+        assertThat( page2 ).hasSize( 5 );
+        assertThat( page2.getContent() ).allMatch( r -> r.getAuditInfo() == null );
+    }
+
+    @Test
+    void shouldOrderRecordsAlsoWhenOrderedEmbeddedEntityIsNull() {
+        final TestData testData = defaultData( 4 );
+        testData.generateRecords( 5, td -> td.auditInfo( null ) );
+        testData.generateRecords( 1 );
+
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 10 ).asc( Attribute.of( DataRecord_.auditInfo ) ).asc( DataRecord_.id ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( 10 );
+        assertThat( page.getContent().subList( 0, 5 ) ).allMatch( r -> r.getAuditInfo().getModifiedAt() != null );
+        assertThat( page.getContent().subList( 5, 10 ) ).allMatch( r -> r.getAuditInfo() == null );
     }
 
     @Test

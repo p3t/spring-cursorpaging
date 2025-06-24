@@ -41,7 +41,9 @@ public class PageRequest<E> {
     public static final int DEFAULT_PAGE_SIZE = 100;
 
     /**
-     * The positions used to address the start of a page.
+     * The positions used to address the start of a page. It is essential, that at least one position (order-by,
+     * asc/dsc) is provided, and that it cannot happen, that all positions can contain null-values (are nullable columns
+     * in the DB)!
      */
     @Singular( "position" )
     private final List<Position> positions;
@@ -301,8 +303,8 @@ public class PageRequest<E> {
      * Create a new {@linkplain PageRequest} pointing to the position defined through the attributes of the provided
      * entity.
      *
-     * @param entity The entity used as source for the position
-     * @return A new PageRequest with the positions set to the values of the provided entity
+     * @param entity The entity used as a source for the position
+     * @return A new {@code PageRequest} with the positions set to the values of the provided entity
      */
     public PageRequest<E> positionOf( final E entity ) {
         return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity ) ).toList() )
@@ -317,8 +319,19 @@ public class PageRequest<E> {
         return copy( b -> b.positions( positions.stream().map( Position::toReversed ).toList() ) );
     }
 
+    /**
+     * Checks if any position in the request has a value. If there is no value in any position, it is asumed that this
+     * is a request for the first page
+     *
+     * @return {@code true} if the request is for the first page, {@code false} otherwise
+     */
     public boolean isFirstPage() {
-        return positions.getFirst().isFirst();
+        for ( final Position position : positions ) {
+            if ( position.hasValue() ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isReversed() {

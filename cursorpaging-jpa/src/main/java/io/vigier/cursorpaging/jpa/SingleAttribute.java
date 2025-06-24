@@ -2,6 +2,7 @@ package io.vigier.cursorpaging.jpa;
 
 import java.util.Objects;
 import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
+import org.springframework.lang.Nullable;
 
 /**
  * Single attribute of an entity, i.e. not an embedded entity
@@ -37,9 +38,9 @@ public record SingleAttribute(
      * Get the value of the attribute from the entity.
      *
      * @param entity entity which does have the attribute defined by this instance.
-     * @return the value of the attribute if found.
+     * @return the value of the attribute if found, or {@code null} if entity is {@code null}.
      */
-    Comparable<?> valueOf( final Object entity ) {
-        return (Comparable<?>) new DirectFieldAccessFallbackBeanWrapper( entity ).getPropertyValue( name );
+    Object valueOf( @Nullable final Object entity ) {
+        return entity != null ? new DirectFieldAccessFallbackBeanWrapper( entity ).getPropertyValue( name ) : null;
     }
 }

@@ -119,6 +119,9 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
 
     @Override
     public Predicate equalTo( final Attribute attribute, final Object value ) {
+        if ( value == null ) {
+            return cb.isNull( attribute.path( root ) );
+        }
         if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
             return cb.equal( cb.lower( attribute.path( root ) ), value.toString().toLowerCase() );
         }
