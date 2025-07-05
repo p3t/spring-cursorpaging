@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -306,8 +307,8 @@ public class PageRequest<E> {
      * @param entity The entity used as a source for the position
      * @return A new {@code PageRequest} with the positions set to the values of the provided entity
      */
-    public PageRequest<E> positionOf( final E entity ) {
-        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity ) ).toList() )
+    public PageRequest<E> positionOf( @NonNull final E entity, @NonNull final E nextEntity ) {
+        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity, nextEntity ) ).toList() )
                 .pageSize( this.pageSize )
                 .totalCount( this.totalCount )
                 .filters( this.filters )

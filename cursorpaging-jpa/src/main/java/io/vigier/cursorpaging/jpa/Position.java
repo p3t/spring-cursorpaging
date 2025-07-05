@@ -1,9 +1,5 @@
 package io.vigier.cursorpaging.jpa;
 
-import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -32,9 +28,15 @@ public class Position {
     private final Attribute attribute;
 
     /**
-     * The current position-value from where on the next results should be queried
+     * The current position-value from where on the next results should be queried. I.e. the last value on the current
+     * page.
      */
     private final Comparable<?> value;
+
+    /**
+     * The position-value from where on the next results should be queried I.e. the first value on the next page.
+     */
+    private final Comparable<?> nextValue;
 
     /**
      * The order in which the results should be queried
@@ -68,7 +70,7 @@ public class Position {
                     }
                 } );
             }
-            return new Position( attribute, value, order$value, reversed );
+            return new Position( attribute, value, nextValue, order$value, reversed );
         }
     }
 
@@ -93,6 +95,11 @@ public class Position {
         return value != null;
     }
 
+    public boolean hasNextValue() {
+        return nextValue != null;
+    }
+
+
     private Order direction() {
         return switch ( order ) {
             case ASC -> reversed ? Order.DESC : Order.ASC;
@@ -106,8 +113,8 @@ public class Position {
      * @param entity the entity.
      * @return the new {@link Position}.
      */
-    public Position positionOf( final Object entity ) {
-        return toBuilder().value( attribute.valueOf( entity ) )
+    public Position positionOf( final Object entity, final Object nextEntity ) {
+        return toBuilder().value( attribute.valueOf( entity ) ).nextValue( attribute.valueOf( nextEntity ) )
                 .build();
     }
 
@@ -117,84 +124,8 @@ public class Position {
      * @return the new reversed position
      */
     public Position toReversed() {
+        // maybe switch nextValue and value?
         return toBuilder().reversed( true )
                 .build();
-    }
-
-    /**
-     * Create a predicate for this position using equal to.
-     *
-     * @param cqb the query builder
-     * @return the predicate
-     */
-    public Predicate equalTo( final QueryBuilder cqb ) {
-        return cqb.equalTo( attribute, value );
-    }
-
-    /**
-     * Create a predicate for this position using greater than.
-     *
-     * @param cqb the query builder
-     * @return the predicate
-     */
-    public Predicate greaterThan( final QueryBuilder cqb ) {
-        return cqb.greaterThan( attribute, value );
-    }
-
-    /**
-     * Create a predicate for this position using greater than.
-     *
-     * @param cqb the query builder
-     * @return the predicate
-     */
-    public Predicate greaterThanOrEqualTo( final QueryBuilder cqb ) {
-        return cqb.greaterThanOrEqualTo( attribute, value );
-    }
-
-    /**
-     * Create a predicate for this position using less than.
-     *
-     * @param cqb the query builder
-     * @return the predicate
-     */
-    public Predicate lessThan( final QueryBuilder cqb ) {
-        return cqb.lessThan( attribute, value );
-    }
-
-    /**
-     * Create a predicate for this position using less than or equal to.
-     *
-     * @param cqb the query builder
-     * @return the predicate
-     */
-    public Predicate lessThanOrEqualTo( final QueryBuilder cqb ) {
-        return cqb.lessThanOrEqualTo( attribute, value );
-    }
-
-    /**
-     * Create a condition for this position.
-     *
-     * @param cqb the query builder
-     * @return the condition
-     */
-    public Predicate condition( final QueryBuilder cqb ) {
-        return switch ( direction() ) {
-            case ASC -> reversed() ? greaterThanOrEqualTo( cqb ) : greaterThan( cqb );
-            case DESC -> reversed() ? lessThanOrEqualTo( cqb ) : lessThan( cqb );
-        };
-    }
-
-    /**
-     * Create condition for this position and combine it with the given conditions using AND.
-     *
-     * @param cqb           the query builder
-     * @param andConditions the conditions to combine with
-     * @return the combined conditions
-     */
-    public List<Predicate> conditionsAnd( final QueryBuilder cqb, final List<Predicate> andConditions ) {
-        final List<Predicate> conditions = new ArrayList<>( andConditions.size() + 1 );
-        conditions.addAll( andConditions );
-        conditions.add( condition( cqb ) );
-        return Collections.unmodifiableList( conditions );
     }
 }

@@ -186,4 +186,8 @@ public class TestData {
     private String nextName( final int i ) {
         return NAMES[i % NAMES.length];
     }
+
+    public static Instant randomInstant() {
+        return Instant.now().minusSeconds( (long) (Math.random() * 500L) );
+    }
 }
