@@ -97,14 +97,37 @@ class SerializerTest {
     @Test
     void shouldSerializePageRequestsWithPosition() {
         final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
-                p -> p.order( Order.ASC ).attribute( Attribute.of( TestEntity_.id ) ).value( 4711L ) ) ) );
+                p -> p.order( Order.ASC )
+                        .attribute( Attribute.of( TestEntity_.id ) )
+                        .value( 4711L )
+                        .nextValue( 4712L ) ) ) );
 
         final var deserializeRequest = serializeAndDeserialize( pageRequest );
 
         assertThat( deserializeRequest ).isEqualTo( pageRequest );
         assertThat( deserializeRequest.isFirstPage() ).isFalse();
-        assertThat( deserializeRequest.positions() ).first()
-                .satisfies( p -> assertThat( p.value() ).isEqualTo( 4711L ) );
+        assertThat( deserializeRequest.positions() ).first().satisfies( p -> {
+            assertThat( p.value() ).isEqualTo( 4711L );
+            assertThat( p.nextValue() ).isEqualTo( 4712L );
+        } );
+    }
+
+    @Test
+    void shouldSerializePageRequestsWithPositionWhereValueIsNull() {
+        final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
+                p -> p.order( Order.ASC )
+                        .attribute( Attribute.of( TestEntity_.id ) )
+                        .value( null )
+                        .nextValue( 4712L ) ) ) );
+
+        final var deserializeRequest = serializeAndDeserialize( pageRequest );
+
+        assertThat( deserializeRequest ).isEqualTo( pageRequest );
+        assertThat( deserializeRequest.isFirstPage() ).isFalse();
+        assertThat( deserializeRequest.positions() ).first().satisfies( p -> {
+            assertThat( p.value() ).isNull();
+            assertThat( p.nextValue() ).isEqualTo( 4712L );
+        } );
     }
 
     @Test

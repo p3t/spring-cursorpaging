@@ -138,6 +138,7 @@ class FromDtoMapper<E> {
 
         return Position.create( b -> b.attribute( attribute )
                 .value( valueOf( attribute, position.getValue() ) )
+                .nextValue( valueOf( attribute, position.getNextValue() ) )
                 .order( switch ( position.getOrder() ) {
                     case ASC -> Order.ASC;
                     case DESC -> Order.DESC;
