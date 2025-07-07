@@ -99,14 +99,6 @@ public class Position {
         return nextValue != null;
     }
 
-
-    private Order direction() {
-        return switch ( order ) {
-            case ASC -> reversed ? Order.DESC : Order.ASC;
-            case DESC -> reversed ? Order.ASC : Order.DESC;
-        };
-    }
-
     /**
      * Will create a new {@link Position} taking over the attribute-values from the given entity.
      *
@@ -125,7 +117,11 @@ public class Position {
      */
     public Position toReversed() {
         // maybe switch nextValue and value?
+        final var theValue = value();
         return toBuilder().reversed( true )
+                .value( nextValue )
+                .nextValue( theValue )
+                .order( order == Order.ASC ? Order.DESC : Order.ASC )
                 .build();
     }
 }

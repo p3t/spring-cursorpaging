@@ -158,6 +158,14 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
      * @return the truncated list
      */
     private List<E> toContent( final List<E> results, final PageRequest<E> request ) {
+        final var pageContent = truncateResultsToRequestSize( results, request );
+        if ( request.isReversed() ) {
+            Collections.reverse( pageContent );
+        }
+        return pageContent;
+    }
+
+    private static <E> List<E> truncateResultsToRequestSize( final List<E> results, final PageRequest<E> request ) {
         if ( hasNextPage( results, request ) ) {
             return results.subList( 0, request.pageSize() );
         }
