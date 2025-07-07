@@ -120,7 +120,7 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     @Override
     public Predicate equalTo( final Attribute attribute, final Object value ) {
         if ( value == null ) {
-            return cb.isNull( attribute.path( root ) );
+            return isNull( attribute );
         }
         if ( attribute.ignoreCase() && CharSequence.class.isAssignableFrom( attribute.type() ) ) {
             return cb.equal( cb.lower( attribute.path( root ) ), value.toString().toLowerCase() );
@@ -166,6 +166,11 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     }
 
     @Override
+    public void orWhere( final Predicate condition ) {
+        orWhere( List.of( condition ) );
+    }
+
+    @Override
     public void andWhere( final Predicate predicate ) {
         andWhere( List.of( predicate ) );
     }
@@ -178,5 +183,11 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
             case DESC -> cb().desc( attribute.path( root ) );
         } );
         query().orderBy( orderSpecs );
+    }
+
+
+    @Override
+    public Predicate isNull( final Attribute attribute ) {
+        return cb.isNull( attribute.path( root ) );
     }
 }

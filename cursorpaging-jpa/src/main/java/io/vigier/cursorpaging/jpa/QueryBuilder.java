@@ -105,6 +105,9 @@ public interface QueryBuilder {
      */
     Predicate lessThanOrEqualTo( final Attribute attribute, final Comparable<?> value );
 
+
+    Predicate isNull( Attribute attribute );
+
     /**
      * Low level access to add custom filter rules.
      *
@@ -122,6 +125,13 @@ public interface QueryBuilder {
     /**
      * Low level access to add custom filter rules. This method modifies the query of the builder!
      *
+     * @param condition
+     */
+    void orWhere( final Predicate condition );
+
+    /**
+     * Low level access to add custom filter rules. This method modifies the query of the builder!
+     *
      * @param predicate the predicate to be added to the query
      */
     void andWhere( final Predicate predicate );
@@ -133,4 +143,5 @@ public interface QueryBuilder {
      * @param order     the order (ASC or DESC)
      */
     void orderBy( Attribute attribute, Order order );
+
 }

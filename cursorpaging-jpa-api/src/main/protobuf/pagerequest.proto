@@ -29,6 +29,7 @@ message Position {
   Value value = 2;
   Order order = 3;
   optional bool reversed = 4;
+  Value next_value = 5;
 }
 
 message Filter {
