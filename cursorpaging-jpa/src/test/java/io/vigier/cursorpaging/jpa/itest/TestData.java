@@ -143,6 +143,7 @@ public class TestData {
             final var builder = DataRecord.builder()
                     .name( nextName( i ) )
                     .securityClass( securityClasses[i % securityClasses.length] )
+                    .integrityClass( null )
                     .auditInfo( AuditInfo.create( created, created.plus( 10, ChronoUnit.MINUTES ) ) )
                     .status( nextStatus( i ) )
                     .tags( someTags( i ) );

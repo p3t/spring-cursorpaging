@@ -2,6 +2,9 @@ package io.vigier.cursorpaging.jpa;
 
 
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
@@ -11,6 +14,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -26,6 +30,7 @@ import org.springframework.lang.Nullable;
 @Builder( toBuilder = true )
 @RequiredArgsConstructor
 @EqualsAndHashCode
+@Slf4j
 public class Attribute {
 
     private static final ConversionService CONVERSION_SERVICE = new DefaultConversionService();
@@ -151,11 +156,22 @@ public class Attribute {
      * @return The path-expression to the attribute
      */
     public <E, V extends Comparable<? super V>> Expression<V> path( final Root<E> root ) {
+        if ( attributes.size() == 1 ) {
+            return root.get( attributes.getFirst().name() );
+        }
         Path<?> path = root;
         String name = "";
-        for ( final SingleAttribute a : attributes ) {
+        final var attrIter = attributes.iterator();
+        while ( attrIter.hasNext() ) {
+            final var a = attrIter.next();
             name = a.name();
-            path = path.get( name );
+            // Intermediate attribute - create explicit join
+            if ( path instanceof Root || (path instanceof Join<?, ?> && attrIter.hasNext()) ) {
+                path = ((From<?, ?>) path).join( name, JoinType.LEFT );
+            } else {
+                // Fallback to implicit join (might create inner join)
+                path = path.get( name );
+            }
         }
         return path.getParentPath().get( name );
     }

@@ -54,6 +54,12 @@ public class DataRecord {
             foreignKey = @ForeignKey( name = "fk_datarecord_securityclass_id" ) )
     private SecurityClass securityClass;
 
+    @ManyToOne( cascade = CascadeType.DETACH )
+    @JoinColumn( name = "integrityclass_id",
+            referencedColumnName = "level",
+            foreignKey = @ForeignKey( name = "fk_datarecord_integityclass_id" ) )
+    private SecurityClass integrityClass;
+
     @ManyToMany( cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER )
     @JoinTable( name = "datarecord_tag",
             joinColumns = @JoinColumn( name = "datarecord_id", referencedColumnName = "id" ),
