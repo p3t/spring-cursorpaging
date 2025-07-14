@@ -110,6 +110,7 @@ class ToDtoMapper<E> {
                 .map( p -> Cursor.Position.newBuilder()
                         .setAttribute( attributeOf( p.attribute() ) )
                         .setValue( valueOf( p.value() ) )
+                        .setNextValue( valueOf( p.nextValue() ) )
                         .setOrder( switch ( p.order() ) {
                             case ASC -> Cursor.Order.ASC;
                             case DESC -> Cursor.Order.DESC;
