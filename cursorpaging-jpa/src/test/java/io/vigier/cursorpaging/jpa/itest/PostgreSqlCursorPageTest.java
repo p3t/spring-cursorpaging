@@ -39,7 +39,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -630,6 +629,23 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldFilterWithOrCondition() {
+        final var data = defaultData( 100 );
+        final long countPublicAccess = data.records()
+                .stream()
+                .filter( r -> r.getSecurityClass().getLevel() == 0 )
+                .count();
+        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( 5 )
+                .asc( DataRecord_.id )
+                .filter( Filters.or( attribute( DataRecord_.securityClass, SecurityClass_.level ).equalTo( 0 ),
+                        attribute( DataRecord_.integrityClass, SecurityClass_.level ).equalTo( 0 ) ) ) );
+
+        final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
+
+        assertThat( page ).hasSize( (int) countPublicAccess );
+    }
+
+    @Test
     void shouldFilterByEnumAttribute() {
         final List<DataRecord> all = defaultData( 99 ).records();
         final int countDraft = (int) all.stream().filter( r -> r.getStatus() == Status.DRAFT ).count();
@@ -910,7 +926,6 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
-    @Disabled
     void shouldReverseDirectionOfCursors() {
         defaultData( 10 );
         final PageRequest<DataRecord> request = PageRequest.create(
