@@ -43,7 +43,7 @@
     <protobuf.version>4.31.1</protobuf.version>
     <hibernate.version>6.6.13.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>3.5.3</springboot.version>
+    <springboot.version>3.5.4</springboot.version>
     <lombok.version>1.18.38</lombok.version>
     <mockito.version>5.18.0</mockito.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
@@ -150,7 +150,7 @@
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
-        <version>5.13.3</version>
+        <version>5.13.4</version>
       </dependency>
 
     </dependencies>
@@ -183,7 +183,7 @@
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
           <configuration>
             <protocVersion>${protobuf.version}</protocVersion>
           </configuration>
