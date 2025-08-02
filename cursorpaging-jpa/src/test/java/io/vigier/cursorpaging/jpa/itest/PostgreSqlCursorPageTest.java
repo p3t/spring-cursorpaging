@@ -306,9 +306,8 @@ class PostgreSqlCursorPageTest {
 
         final var pages = loadAll( request, 5, 5, 1 );
 
-        assertThat( pages.get( 0 ).getContent() ).allSatisfy( r -> {
-            assertThat( r.getAuditInfo().getModifiedAt() ).isNull();
-        } );
+        assertThat( pages.get( 0 ).getContent() ).allSatisfy(
+                r -> assertThat( r.getAuditInfo().getModifiedAt() ).isNull() );
         assertThat( pages.get( 0 ).getContent().getFirst() ).satisfies(
                 r -> assertThat( r.getAuditInfo().getCreatedAt() ).isNull() );
 
@@ -596,14 +595,6 @@ class PostgreSqlCursorPageTest {
         public Predicate toPredicate( final QueryBuilder cqb ) {
             final var builder = cqb.cb();
             final var root = cqb.root();
-            root.fetch( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
-            return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), 0 );
-        }
-
-        @Override
-        public Predicate toCountPredicate( final QueryBuilder cqb ) {
-            final var builder = cqb.cb();
-            final var root = cqb.root();
             root.join( DataRecord_.SECURITY_CLASS, JoinType.LEFT );
             return builder.equal( root.get( DataRecord_.SECURITY_CLASS ).get( SecurityClass_.LEVEL ), 0 );
         }
@@ -619,7 +610,7 @@ class PostgreSqlCursorPageTest {
         final List<DataRecord> all = defaultData( TestData.NAMES.length ).records();
         final long countPublicAccess = all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final PageRequest<DataRecord> request = PageRequest.create(
-                b -> b.pageSize( 5 ).asc( DataRecord_.id ).rule( new OnlyPublicFilterRule() ) );
+                b -> b.pageSize( 5 ).asc( DataRecord_.id ).filter( new OnlyPublicFilterRule() ) );
 
         final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
         final var count = dataRecordRepository.count( request );
@@ -834,7 +825,7 @@ class PostgreSqlCursorPageTest {
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
-                .rule( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
+                .filter( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
@@ -844,7 +835,7 @@ class PostgreSqlCursorPageTest {
         final PageRequest<DataRecord> request2 = PageRequest.create( b -> b.pageSize( 100 )
                 .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
                 .asc( DataRecord_.id )
-                .rule( new AclCheckFilterRule( "does not exist", READ ) ) );
+                .filter( new AclCheckFilterRule( "does not exist", READ ) ) );
 
         final var shouldBeEmpty = dataRecordRepository.loadPage( request2 );
         assertThat( shouldBeEmpty ).isNotNull();
@@ -859,7 +850,7 @@ class PostgreSqlCursorPageTest {
 
         final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
                 .asc( DataRecord_.id )
-                .rule( Rules.withParameter( "do-it", "true" )
+                .filter( Rules.withParameter( "do-it", "true" )
                         .where( DataRecord_.tags )
                         .withParameter( "yet-another", List.of( "parameter" ) )
                         .isEmpty() ) ) );
@@ -873,7 +864,7 @@ class PostgreSqlCursorPageTest {
         final var allWithTag = dataRecordRepository.findAll().stream().filter( r -> !r.getTags().isEmpty() ).toList();
 
         final var page = dataRecordRepository.loadPage( PageRequest.create(
-                b -> b.pageSize( 99 ).asc( DataRecord_.id ).rule( Rules.where( DataRecord_.tags ).isNotEmpty() ) ) );
+                b -> b.pageSize( 99 ).asc( DataRecord_.id ).filter( Rules.where( DataRecord_.tags ).isNotEmpty() ) ) );
 
         assertThat( page ).containsExactlyInAnyOrderElementsOf( allWithTag );
     }

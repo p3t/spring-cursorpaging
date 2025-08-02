@@ -61,7 +61,6 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         addPositionQuery( request, cqb );
 
         cqb.andWhere( request.filters().toPredicate( cqb ) );
-        request.rules().forEach( rule -> cqb.andWhere( rule.toPredicate( cqb ) ) );
 
         request.positions().forEach( position -> cqb.orderBy( position.attribute(), position.order() ) );
 
@@ -139,7 +138,6 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
                 entityManager );
 
         request.filters().forEach( filter -> cqb.andWhere( filter.toPredicate( cqb ) ) );
-        request.rules().forEach( rule -> cqb.andWhere( rule.toCountPredicate( cqb ) ) );
 
         return entityManager.createQuery( cqb.query() ).getSingleResult();
     }
@@ -174,7 +172,6 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
     private PageRequest<E> toNextRequest( final List<E> results, final PageRequest<E> request ) {
         if ( hasNextPage( results, request ) ) {
-            // FIXME: Only one value or last & next value?
             return request.positionOf( getLastOnPage( results, request ), getFirstOnNextPage( results, request ) );
         }
         return null;

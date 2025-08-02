@@ -3,7 +3,6 @@ package io.vigier.cursorpaging.jpa;
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
-import jakarta.persistence.Transient;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -54,14 +53,6 @@ public class PageRequest<E> {
      */
     @Builder.Default
     private final FilterList filters = AndFilter.of();
-
-    /**
-     * The filter rules to apply to the query (removing results). Note that filter rules are <i>not</i> passed to the
-     * client in serialized form, and must be added every-time the cursor is deserialized.
-     */
-    @Transient
-    @Singular
-    private final List<FilterRule> rules;
 
     /**
      * The size of the page to fetch
@@ -191,22 +182,6 @@ public class PageRequest<E> {
             return this;
         }
 
-        /**
-         * Add a filter-rule (custom filter implementation) to the request. A null-value is silently ignored.
-         *
-         * @param rule the rule to be added
-         * @return the builder
-         */
-        public PageRequestBuilder<E> filterRule( @Nullable final FilterRule rule ) {
-            if ( this.rules == null ) {
-                this.rules = new ArrayList<>( 3 );
-            }
-            if ( rule != null ) {
-                this.rules.add( rule );
-            }
-            return this;
-        }
-
         private PageRequestBuilder<E> addPosition( final Position pos ) {
             if ( this.positions == null ) {
                 this.positions = new ArrayList<>( 3 );
@@ -216,15 +191,14 @@ public class PageRequest<E> {
         }
     }
 
-    public PageRequest( final List<Position> positions, final FilterList filters, final List<FilterRule> rules,
-            final int pageSize, final boolean enableTotalCount, final Long totalCount ) {
+    public PageRequest( final List<Position> positions, final FilterList filters, final int pageSize,
+            final boolean enableTotalCount, final Long totalCount ) {
         if ( positions == null || positions.isEmpty() ) {
             throw new IllegalArgumentException(
                     "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required" );
         }
         this.positions = positions;
         this.filters = filters;
-        this.rules = rules;
         this.pageSize = pageSize;
         this.enableTotalCount = enableTotalCount;
         this.totalCount = totalCount;
@@ -257,9 +231,6 @@ public class PageRequest<E> {
         c.accept( builder );
         if ( !builder.filters$set && !filters.isEmpty() ) {
             builder.filters( filters );
-        }
-        if ( (builder.rules == null || builder.rules.isEmpty()) && !rules.isEmpty() ) {
-            builder.rules( rules );
         }
         if ( (builder.positions == null || builder.positions.isEmpty()) && !positions.isEmpty() ) {
             builder.positions( positions );
@@ -312,7 +283,6 @@ public class PageRequest<E> {
                 .pageSize( this.pageSize )
                 .totalCount( this.totalCount )
                 .filters( this.filters )
-                .rules( this.rules )
                 .enableTotalCount( this.enableTotalCount ) );
     }
 
