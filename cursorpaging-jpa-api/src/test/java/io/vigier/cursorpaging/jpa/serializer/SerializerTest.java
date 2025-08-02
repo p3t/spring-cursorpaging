@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -265,16 +266,19 @@ class SerializerTest {
     @Test
     void shouldSerializeParametersOfFilterRules() {
         final Map<String, List<String>> parameters = Map.of( "Test1", List.of( "Value1" ) );
-        final var request = createPageRequest().copy( b -> b.rule( newTestRule( "TestRule", parameters ) ) );
+        final var request = createPageRequest().copy( b -> b.filter( newTestRule( "TestRule", parameters ) ) );
         final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class,
                 c -> c.filterRuleFactory( "TestRule", p -> newTestRule( "TestRule", p ) ) );
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
-        assertThat( deserializedRequest.rules() ).hasSize( 1 ).first().satisfies( r -> {
-            assertThat( r.name() ).isEqualTo( "TestRule" );
-            assertThat( r.parameters() ).containsEntry( "Test1", List.of( "Value1" ) );
-        } );
+        assertThat( deserializedRequest.filters() ).hasSize( 1 )
+                .first()
+                .asInstanceOf( InstanceOfAssertFactories.type( FilterRule.class ) )
+                .satisfies( r -> {
+                    assertThat( r.name() ).isEqualTo( "TestRule" );
+                    assertThat( r.parameters() ).containsEntry( "Test1", List.of( "Value1" ) );
+                } );
     }
 
     private FilterRule newTestRule( final String name, final Map<String, List<String>> parameters ) {
@@ -292,6 +296,17 @@ class SerializerTest {
             @Override
             public Map<String, List<String>> parameters() {
                 return parameters;
+            }
+
+            @Override
+            public boolean equals( final Object obj ) {
+                if ( this == obj ) {
+                    return true;
+                }
+                if ( !(obj instanceof final FilterRule that) ) {
+                    return false;
+                }
+                return name.equals( that.name() ) && parameters.equals( that.parameters() );
             }
         };
     }
@@ -327,5 +342,24 @@ class SerializerTest {
 
         assertThat( deserializedRequest ).isEqualTo( request );
         assertThat( deserializedRequest.positions().getFirst().value().toString() ).isEqualTo( positionTime );
+    }
+
+    @Test
+    void shouldSerializeAndDeserializeRulesAddedAsFilters() {
+        final var request = createPageRequest().copy( b -> b.filter(
+                newTestRule( "TestRule", Map.of( "param1", List.of( "value1" ), "param2", List.of( "value2" ) ) ) ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class,
+                c -> c.filterRuleFactory( "TestRule", p -> newTestRule( "TestRule", p ) ) );
+
+        final var serializedRequest = serializer.toBase64( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+
+        assertThat( deserializedRequest ).isEqualTo( request );
+        assertThat( deserializedRequest.filters() ).hasSize( 1 ).first().satisfies( r -> {
+            assertThat( r ).isInstanceOf( FilterRule.class );
+            assertThat( ((FilterRule) r).parameters() ) //
+                    .containsEntry( "param1", List.of( "value1" ) ) //
+                    .containsEntry( "param2", List.of( "value2" ) );
+        } );
     }
 }

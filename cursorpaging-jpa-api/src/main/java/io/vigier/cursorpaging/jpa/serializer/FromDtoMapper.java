@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -60,12 +59,7 @@ class FromDtoMapper<E> {
                 .pageSize( request.getPageSize() )
                 .enableTotalCount( request.hasTotalCount() )
                 .totalCount( request.hasTotalCount() ? request.getTotalCount() : null ) //
-                .rules( filterRules() )
                 .build();
-    }
-
-    private List<FilterRule> filterRules() {
-        return request.getFilterRulesList().stream().map( this::filterRuleOf ).filter( Objects::nonNull ).toList();
     }
 
     private FilterRule filterRuleOf( final Cursor.Rule rule ) {
@@ -93,6 +87,8 @@ class FromDtoMapper<E> {
 
         filters.addAll( dto.getFiltersList().stream().map( this::fromFilterDto ).toList() );
         filters.addAll( dto.getFilterListsList().stream().map( this::fromFilterListDto ).toList() );
+        filters.addAll( dto.getRulesList().stream().map( this::filterRuleOf ).toList() );
+
         return switch ( dto.getType() ) {
             case AND, UNRECOGNIZED -> AndFilter.of( filters );
             case OR -> OrFilter.of( filters );

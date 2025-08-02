@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.springframework.lang.NonNull;
 
 @Getter
 @Accessors( fluent = true )
@@ -33,7 +34,7 @@ public abstract class FilterList implements QueryElement, Iterable<QueryElement>
      * @return an Iterator.
      */
     @Override
-    public Iterator<QueryElement> iterator() {
+    public @NonNull Iterator<QueryElement> iterator() {
         return filters.iterator();
     }
 

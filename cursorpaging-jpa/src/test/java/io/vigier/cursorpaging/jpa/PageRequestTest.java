@@ -57,9 +57,9 @@ class PageRequestTest {
     }
 
     @Test
-    void shouldAcceptNullAsFilterRule() {
-        final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) ).filterRule( null ) );
+    void shouldAcceptNullAsFilter() {
+        final var pageRequest = PageRequest.create( b -> b.asc( Attribute.of( "id", Long.class ) ).filter( null ) );
 
-        assertThat( pageRequest.rules() ).isEmpty();
+        assertThat( pageRequest.filters() ).isEmpty();
     }
 }

@@ -50,18 +50,9 @@ class ToDtoMapper<E> {
         final var builder = Cursor.PageRequest.newBuilder()
                 .addAllPositions( positions() )
                 .setPageSize( pageRequest.pageSize() )
-                .setFilters( filters() )
-                .addAllFilterRules( filterRules() );
+                .setFilters( filters() );
         pageRequest.totalCount().ifPresent( builder::setTotalCount );
         return builder.build();
-    }
-
-    private Iterable<Cursor.Rule> filterRules() {
-        return pageRequest.rules()
-                .stream()
-                .map( r -> Cursor.Rule.newBuilder().setName( r.name() ).addAllParameters( toDtoParameters( r ) )
-                        .build() )
-                .toList();
     }
 
     private List<Parameter> toDtoParameters( final FilterRule r ) {
@@ -91,6 +82,9 @@ class ToDtoMapper<E> {
                         .build() );
             } else if ( f instanceof final FilterList fl ) {
                 b.addFilterLists( toDto( fl ) );
+            } else if ( f instanceof final FilterRule fr ) {
+                b.addRules( Cursor.Rule.newBuilder().setName( fr.name() ).addAllParameters( toDtoParameters( fr ) )
+                        .build() );
             }
         } );
         return b.build();
