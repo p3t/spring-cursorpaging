@@ -22,6 +22,7 @@ enum FilterType {
   LIKE = 3;
   GE = 4; // Greater or equal
   LE = 5; // Less or equal
+  ALWAYS = 6; // Filter evaluates always to true/false
 }
 
 message Position {

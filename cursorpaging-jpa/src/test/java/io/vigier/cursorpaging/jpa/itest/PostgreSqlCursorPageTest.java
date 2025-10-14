@@ -9,6 +9,7 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.Rules;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
+import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
@@ -20,7 +21,6 @@ import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.model.Status;
 import io.vigier.cursorpaging.jpa.itest.model.Tag;
 import io.vigier.cursorpaging.jpa.itest.model.Tag_;
-import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
@@ -65,8 +65,6 @@ class PostgreSqlCursorPageTest {
     ApplicationContext applicationContext;
     @Autowired
     private DataRecordRepository dataRecordRepository;
-    @Autowired
-    private AccessEntryRepository accessEntryRepository;
     @Autowired
     private SecurityClassRepository securityClassRepository;
     @Autowired
@@ -1031,6 +1029,31 @@ class PostgreSqlCursorPageTest {
         if ( log.isDebugEnabled() ) {
             log.debug( message + ": {}", allRecords.content().stream().map( DataRecord::getName ).toList() );
         }
+    }
+
+    @Test
+    void shouldFilterAllResults() {
+        defaultData();
+        final var all = dataRecordRepository.findAll();
+
+        final var result1 = dataRecordRepository.loadPage( PageRequest.create(
+                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filters.filterAll() ).enableTotalCount( true ) ) );
+        assertThat( result1.getContent() ).isEmpty();
+        assertThat( result1.getTotalCount() ).isPresent().get().isEqualTo( 0L );
+
+        final var result2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
+                .asc( DataRecord_.id )
+                .filter( Filter.create( FilterBuilder::always ) )
+                .enableTotalCount( true ) ) );
+        assertThat( result2.getContent() ).isEmpty();
+        assertThat( result2.getTotalCount() ).isPresent().get().isEqualTo( 0L );
+
+        final var result3 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
+                .asc( DataRecord_.id )
+                .filter( Filter.create( f -> f.always().values( true ) ) )
+                .enableTotalCount( true ) ) );
+        assertThat( result3.getContent() ).isNotEmpty();
+        assertThat( result3.getTotalCount() ).isPresent().get().isEqualTo( (long) all.size() );
     }
 }
 

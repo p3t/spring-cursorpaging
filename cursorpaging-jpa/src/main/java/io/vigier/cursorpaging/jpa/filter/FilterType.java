@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.filter;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.List;
@@ -16,9 +17,19 @@ public enum FilterType implements FilterOperation {
     GREATER_THAN_OR_EQUAL_TO( FilterType::greaterThanOrEqualTo ),
     LESS_THAN( FilterType::lessThan ),
     LESS_THAN_OR_EQUAL_TO( FilterType::lessThanOrEqualTo ),
-    LIKE( FilterType::like );
+    LIKE( FilterType::like ),
+    ALWAYS( FilterType::always ) {
+        @Override
+        public boolean isEmpty( final Filter filter ) {
+            return false; // does not need values
+        }
+    };
 
     private final FilterOperation operation;
+
+    public boolean isEmpty( final Filter filter ) {
+        return filter.values().isEmpty();
+    }
 
     private static Predicate equalTo( final QueryBuilder qb, final Attribute attribute,
             final List<? extends Comparable<?>> values ) {
@@ -75,6 +86,13 @@ public enum FilterType implements FilterOperation {
         }
         return predicates[0];
     }
+
+    private static Predicate always( final QueryBuilder queryBuilder, final Attribute attribute,
+            final List<? extends Comparable<?>> values ) {
+        final var value = !values.isEmpty() && Boolean.TRUE.equals( values.getFirst() );
+        return queryBuilder.always( value );
+    }
+
 
     @Override
     public Predicate apply( final QueryBuilder qb, final Attribute attribute,

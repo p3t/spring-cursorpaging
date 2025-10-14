@@ -31,7 +31,8 @@ class ToDtoMapper<E> {
                 FilterType.LESS_THAN, Cursor.FilterType.LT, //
                 FilterType.LIKE, Cursor.FilterType.LIKE, //
                 FilterType.LESS_THAN_OR_EQUAL_TO, Cursor.FilterType.LE, //
-                FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE //
+                FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE, //
+                FilterType.ALWAYS, Cursor.FilterType.ALWAYS //
         );
         LISTTYPE_MAP = Map.of( //
                 AndFilter.class, FilterListType.AND, //

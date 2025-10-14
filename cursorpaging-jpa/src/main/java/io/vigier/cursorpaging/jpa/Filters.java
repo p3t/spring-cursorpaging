@@ -254,4 +254,13 @@ public final class Filters {
     public static AndFilter and( final List<QueryElement> filters ) {
         return AndFilter.of( filters );
     }
+
+    /**
+     * Creates a filter evaluating to false, i.e. will lead to filtering all results.
+     *
+     * @return a filter when added filtering all results
+     */
+    public static Filter filterAll() {
+        return Filter.create( b -> b.always().values( false ) );
+    }
 }
