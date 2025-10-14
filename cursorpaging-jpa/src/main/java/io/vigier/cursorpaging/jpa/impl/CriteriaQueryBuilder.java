@@ -190,4 +190,9 @@ public class CriteriaQueryBuilder<E, R> implements QueryBuilder {
     public Predicate isNull( final Attribute attribute ) {
         return cb.isNull( attribute.path( root ) );
     }
+
+    @Override
+    public Predicate always( final boolean value ) {
+        return value ? cb.and() : cb.disjunction();
+    }
 }

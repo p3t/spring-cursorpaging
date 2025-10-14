@@ -37,7 +37,8 @@ class FromDtoMapper<E> {
             Cursor.FilterType.LIKE, FilterType.LIKE, //
             Cursor.FilterType.GE, FilterType.GREATER_THAN_OR_EQUAL_TO, //
             Cursor.FilterType.LE, FilterType.LESS_THAN_OR_EQUAL_TO, //
-            Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL_TO //
+            Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL_TO, //
+            Cursor.FilterType.ALWAYS, FilterType.ALWAYS //
     );
 
     private final Cursor.PageRequest request;

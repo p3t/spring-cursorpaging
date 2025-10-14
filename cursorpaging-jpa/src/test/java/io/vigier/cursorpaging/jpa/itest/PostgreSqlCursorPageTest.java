@@ -20,7 +20,6 @@ import io.vigier.cursorpaging.jpa.itest.model.SecurityClass_;
 import io.vigier.cursorpaging.jpa.itest.model.Status;
 import io.vigier.cursorpaging.jpa.itest.model.Tag;
 import io.vigier.cursorpaging.jpa.itest.model.Tag_;
-import io.vigier.cursorpaging.jpa.itest.repository.AccessEntryRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
@@ -65,8 +64,6 @@ class PostgreSqlCursorPageTest {
     ApplicationContext applicationContext;
     @Autowired
     private DataRecordRepository dataRecordRepository;
-    @Autowired
-    private AccessEntryRepository accessEntryRepository;
     @Autowired
     private SecurityClassRepository securityClassRepository;
     @Autowired
@@ -1031,6 +1028,19 @@ class PostgreSqlCursorPageTest {
         if ( log.isDebugEnabled() ) {
             log.debug( message + ": {}", allRecords.content().stream().map( DataRecord::getName ).toList() );
         }
+    }
+
+    @Test
+    void shouldFilterAllResults() {
+        defaultData();
+        final var all = dataRecordRepository.findAll();
+
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filters.filterAll() ).enableTotalCount( true ) );
+
+        final var firstPage = dataRecordRepository.loadPage( request );
+        assertThat( firstPage.getContent() ).isEmpty();
+        assertThat( firstPage.getTotalCount() ).isPresent().get().isEqualTo( 0L );
     }
 }
 

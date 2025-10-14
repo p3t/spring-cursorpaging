@@ -106,26 +106,34 @@ public interface QueryBuilder {
     Predicate lessThanOrEqualTo( final Attribute attribute, final Comparable<?> value );
 
 
-    Predicate isNull( Attribute attribute );
+    Predicate isNull( final Attribute attribute );
+
+    /**
+     * Evaluated always to true or false depending on the given (boolean) value
+     *
+     * @param value defines if the condition should evaluate to true or false
+     * @return a predicate evaluating to the given value
+     */
+    Predicate always( final boolean value );
 
     /**
      * Low level access to add custom filter rules.
      *
      * @param conditions the predicates to be added to the query with an AND semantic
      */
-    void andWhere( List<Predicate> conditions );
+    void andWhere( final List<Predicate> conditions );
 
     /**
      * Low level access to add custom filter rules. This method modifies the query of the builder!
      *
      * @param conditions the predicates to be added to the query with an OR semantic
      */
-    void orWhere( List<Predicate> conditions );
+    void orWhere( final List<Predicate> conditions );
 
     /**
      * Low level access to add custom filter rules. This method modifies the query of the builder!
      *
-     * @param condition
+     * @param condition predicated to be added to the query with an OR semantic
      */
     void orWhere( final Predicate condition );
 
@@ -142,6 +150,6 @@ public interface QueryBuilder {
      * @param attribute the attribute to order by
      * @param order     the order (ASC or DESC)
      */
-    void orderBy( Attribute attribute, Order order );
+    void orderBy( final Attribute attribute, final Order order );
 
 }

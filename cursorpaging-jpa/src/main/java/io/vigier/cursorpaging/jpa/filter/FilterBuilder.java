@@ -112,6 +112,11 @@ public class FilterBuilder {
         return this;
     }
 
+    public FilterBuilder always() {
+        this.filterType = FilterType.ALWAYS;
+        return this;
+    }
+
     public FilterBuilder values( final Comparable<?>... values ) {
         return values( Arrays.asList( values ) );
     }

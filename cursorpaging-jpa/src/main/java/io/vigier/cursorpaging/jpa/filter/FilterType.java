@@ -16,7 +16,8 @@ public enum FilterType implements FilterOperation {
     GREATER_THAN_OR_EQUAL_TO( FilterType::greaterThanOrEqualTo ),
     LESS_THAN( FilterType::lessThan ),
     LESS_THAN_OR_EQUAL_TO( FilterType::lessThanOrEqualTo ),
-    LIKE( FilterType::like );
+    LIKE( FilterType::like ),
+    ALWAYS( FilterType::always );
 
     private final FilterOperation operation;
 
@@ -75,6 +76,13 @@ public enum FilterType implements FilterOperation {
         }
         return predicates[0];
     }
+
+    private static Predicate always( final QueryBuilder queryBuilder, final Attribute attribute,
+            final List<? extends Comparable<?>> values ) {
+        final var value = !values.isEmpty() && Boolean.TRUE.equals( values.getFirst() );
+        return queryBuilder.always( value );
+    }
+
 
     @Override
     public Predicate apply( final QueryBuilder qb, final Attribute attribute,
