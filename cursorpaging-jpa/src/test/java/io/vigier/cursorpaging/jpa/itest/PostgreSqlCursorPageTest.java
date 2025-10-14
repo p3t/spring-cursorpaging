@@ -9,6 +9,7 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.Rules;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
+import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
@@ -1035,12 +1036,24 @@ class PostgreSqlCursorPageTest {
         defaultData();
         final var all = dataRecordRepository.findAll();
 
-        final PageRequest<DataRecord> request = PageRequest.create(
-                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filters.filterAll() ).enableTotalCount( true ) );
+        final var result1 = dataRecordRepository.loadPage( PageRequest.create(
+                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filters.filterAll() ).enableTotalCount( true ) ) );
+        assertThat( result1.getContent() ).isEmpty();
+        assertThat( result1.getTotalCount() ).isPresent().get().isEqualTo( 0L );
 
-        final var firstPage = dataRecordRepository.loadPage( request );
-        assertThat( firstPage.getContent() ).isEmpty();
-        assertThat( firstPage.getTotalCount() ).isPresent().get().isEqualTo( 0L );
+        final var result2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
+                .asc( DataRecord_.id )
+                .filter( Filter.create( FilterBuilder::always ) )
+                .enableTotalCount( true ) ) );
+        assertThat( result2.getContent() ).isEmpty();
+        assertThat( result2.getTotalCount() ).isPresent().get().isEqualTo( 0L );
+
+        final var result3 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
+                .asc( DataRecord_.id )
+                .filter( Filter.create( f -> f.always().values( true ) ) )
+                .enableTotalCount( true ) ) );
+        assertThat( result3.getContent() ).isNotEmpty();
+        assertThat( result3.getTotalCount() ).isPresent().get().isEqualTo( (long) all.size() );
     }
 }
 

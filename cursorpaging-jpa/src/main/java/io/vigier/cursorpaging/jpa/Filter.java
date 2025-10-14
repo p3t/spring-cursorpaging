@@ -88,7 +88,7 @@ public class Filter implements QueryElement {
 
     @Override
     public boolean isEmpty() {
-        return values.isEmpty();
+        return operation.isEmpty( this );
     }
 
     /**
@@ -97,10 +97,7 @@ public class Filter implements QueryElement {
      * @param qb the query builder
      */
     public Predicate toPredicate( final QueryBuilder qb ) {
-        if ( !values.isEmpty() ) {
-            return toFilterPredicate( qb );
-        }
-        return qb.cb().and();
+        return isEmpty() ? qb.cb().and() : toFilterPredicate( qb );
     }
 
     protected Predicate toFilterPredicate( final QueryBuilder qb ) {
