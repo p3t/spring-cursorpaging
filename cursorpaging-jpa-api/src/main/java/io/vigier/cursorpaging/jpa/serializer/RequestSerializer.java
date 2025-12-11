@@ -104,13 +104,10 @@ public class RequestSerializer<E> {
 
     private void verifyFilterRuleFactories( final QueryElement f ) {
         switch ( f ) {
-            case final FilterRule fr -> {
-                if ( filterRuleFactories.get( fr.name() ) == null ) {
+            case final FilterRule fr when (filterRuleFactories.get( fr.name() ) == null) ->
                     throw new SerializerException(
                             "No factory registered for filter rule with name: " + fr.name() + " (" + fr.getClass()
                                     .getName() + ")" );
-                }
-            }
             case final FilterList fl -> fl.forEach( this::verifyFilterRuleFactories );
             default -> {
                 // nothing to do

@@ -372,10 +372,7 @@ class SerializerTest {
         } );
 
         Assertions.setMaxStackTraceElementsDisplayed( 50 );
-        Assertions.assertThatThrownBy( () -> {
-                    final var serializedRequest = serializer.toBase64( request );
-                    serializer.toPageRequest( serializedRequest );
-                } )
+        Assertions.assertThatThrownBy( () -> serializer.toBase64( request ) )
                 .isInstanceOf( SerializerException.class )
                 .hasMessageContaining( "No factory registered for filter rule with name" );
     }
