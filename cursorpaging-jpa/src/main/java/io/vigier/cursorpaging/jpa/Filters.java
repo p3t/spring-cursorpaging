@@ -167,13 +167,16 @@ public final class Filters {
     }
 
     /**
-     * Starts filter-creation for the provided attributes
+     * Starts filter-creation for the provided nested attribute ("someProperty.nestedProperty")<br> Example:
+     * <p><code>
+     * Filter f = attribute( "auther", Auther.class, "name", String.class  ).equalTo( "Goethe" ) )
+     * </code></p>
      *
-     * @param name1 of the first attribute in the of
-     * @param type1 of the first attribute in the of
-     * @param name2 of the second attribute in the of
-     * @param type2 of the second attribute in the of
-     * @return the filter creator for the operation
+     * @param name1 of the first attribute
+     * @param type1 of the first attribute
+     * @param name2 of the nested attribute
+     * @param type2 of the nested attribute
+     * @return the filter creator for defining the operation of the filter
      */
     public static FilterCreator attribute( final String name1, final Class<? extends Comparable<?>> type1,
             final String name2, final Class<? extends Comparable<?>> type2 ) {
@@ -181,42 +184,42 @@ public final class Filters {
     }
 
     /**
-     * Starts filter-creation for the provided attributes
+     * Starts filter-creation for the provided attribute-path
      */
     public static FilterCreator attribute( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return attribute( Attribute.of( path ) );
     }
 
     /**
-     * Starts filter-creation for the provided attributes
+     * Starts filter-creation for the provided attribute
      */
     public static FilterCreator attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return attribute( Attribute.of( attribute ) );
     }
 
     /**
-     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
      */
     public static FilterCreator ignoreCase( final Attribute attribute ) {
         return FilterCreator.create( attribute.withIgnoreCase() );
     }
 
     /**
-     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
      */
     public static FilterCreator ignoreCase( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return ignoreCase( Attribute.of( path ) );
     }
 
     /**
-     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operations.
+     * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
      */
     public static FilterCreator ignoreCase( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return ignoreCase( Attribute.of( attribute ) );
     }
 
     /**
-     * Create in filter combining the given filters by 'or'
+     * Create in filter combining the given filters by an 'or' condition
      *
      * @param filters the filters to combine
      * @return the combined filter
@@ -226,7 +229,7 @@ public final class Filters {
     }
 
     /**
-     * Create in filter combining the given filters by 'or'
+     * Create in filter combining the given filters by an 'or' condition
      *
      * @param filters the filters to combine
      * @return the combined filter
