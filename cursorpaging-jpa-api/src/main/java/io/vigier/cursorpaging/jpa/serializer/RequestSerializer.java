@@ -2,7 +2,10 @@ package io.vigier.cursorpaging.jpa.serializer;
 
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.PageRequest;
+import io.vigier.cursorpaging.jpa.QueryElement;
+import io.vigier.cursorpaging.jpa.filter.FilterList;
 import io.vigier.cursorpaging.jpa.serializer.dto.Cursor;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,8 +93,29 @@ public class RequestSerializer<E> {
 
     public byte[] toBytes( final PageRequest<E> page ) {
         updateAttributes( page );
+        verifyFilterRuleFactories( page );
         final Cursor.PageRequest dtoRequest = ToDtoMapper.<E>create( c -> c.pageRequest( page ) ).map();
         return encrypter.encrypt( dtoRequest.toByteArray() );
+    }
+
+    private void verifyFilterRuleFactories( final PageRequest<E> page ) {
+        page.filters().forEach( this::verifyFilterRuleFactories );
+    }
+
+    private void verifyFilterRuleFactories( final QueryElement f ) {
+        switch ( f ) {
+            case final FilterRule fr -> {
+                if ( filterRuleFactories.get( fr.name() ) == null ) {
+                    throw new SerializerException(
+                            "No factory registered for filter rule with name: " + fr.name() + " (" + fr.getClass()
+                                    .getName() + ")" );
+                }
+            }
+            case final FilterList fl -> fl.forEach( this::verifyFilterRuleFactories );
+            default -> {
+                // nothing to do
+            }
+        }
     }
 
     private void updateAttributes( final PageRequest<?> page ) {
