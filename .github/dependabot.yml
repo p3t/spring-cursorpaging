@@ -14,9 +14,15 @@ updates:
         update-types: [ "patch" ]
         applies-to: version-updates
     labels: [ "dependencies" ]
-#  - package-ecosystem: "github-actions"
-#    directory: "/"
-#    schedule:
-#      interval: "weekly"
-#      day: "sunday"
-#    labels: [ "dependencies" ]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    labels: [ "dependencies" ]
+    groups:
+      gha-patch-and-minor:
+        applies-to: version-updates
+        update-types:
+        - "minor"
+        - "patch"

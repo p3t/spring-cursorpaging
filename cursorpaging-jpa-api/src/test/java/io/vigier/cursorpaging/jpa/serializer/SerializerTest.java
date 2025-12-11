@@ -362,4 +362,18 @@ class SerializerTest {
                     .containsEntry( "param2", List.of( "value2" ) );
         } );
     }
+
+    @Test
+    void shouldThrowExceptionWhenFilterRuleFactoryNotPresentButRuleIsDefinedInTheFilterList() {
+        final var request = createPageRequest().copy( b -> b.filter(
+                newTestRule( "TestRule", Map.of( "param1", List.of( "value1" ), "param2", List.of( "value2" ) ) ) ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, c -> {
+            // No filter rule factory defined
+        } );
+
+        Assertions.setMaxStackTraceElementsDisplayed( 50 );
+        Assertions.assertThatThrownBy( () -> serializer.toBase64( request ) )
+                .isInstanceOf( SerializerException.class )
+                .hasMessageContaining( "No factory registered for filter rule with name" );
+    }
 }
