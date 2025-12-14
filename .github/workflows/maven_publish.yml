@@ -38,7 +38,7 @@ jobs:
         run: echo ${{ inputs.build_version }}
 
       #      - name: Download build artifacts
-      #        uses: actions/download-artifact@v4
+      #        uses: actions/download-artifact@v7
       #        with:
       #          merge-multiple: true
       #          name: build-artifacts-${{ inputs.build_version }}
@@ -78,7 +78,7 @@ jobs:
           gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           merge-multiple: true
           name: build-artifacts-${{ inputs.build_version }}
