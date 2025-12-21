@@ -23,7 +23,7 @@ providing a respective repository-facet interface.
 
 - Query of pages of records by cursor position without limit/offset via JPA
 - Filtering of records:
-    - by arbitrary attributes (equals, like, in, greater-than, less-than)
+    - by arbitrary attributes (equals, like, in, greater-than, less-than, greater-than-or-equal-to, less-than-or-equal-to)
     - with and/or-conditions
     - with ignore-case (equals, like, in)
 - Ordering by multiple attributes
@@ -35,9 +35,9 @@ providing a respective repository-facet interface.
 
 # Quickstart / how to use it
 
-Please check also the example/webapp sourcecode and README, as well as the courserpaging-jpa-api/README.md.
+Please check also the example/webapp sourcecode and README, as well as the cursorpaging-jpa-api/README.md.
 
-## Include the Spring-CursorPaging library in you maven pom / build.gradle
+## Include the Spring-CursorPaging library in your maven pom / build.gradle
 
 There are two dependencies:
 
@@ -497,6 +497,51 @@ The serializer "learns" about the entity attributes by serializing them.
 There might be situations where it could be useful to pre-configure the attributes used to filter and order the
 records.
 
+### Example: Filtering by relationships
+
+It is also possible to filter by attributes of related entities. This works for to-one and to-many relationships.
+
+```java
+public void queryData() {
+    // Filter by attribute of a related entity (to-one)
+    final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
+            .asc( DataRecord_.id )
+            // DataRecord has a Many-To-One relationship to SecurityClass
+            .filter( attribute( DataRecord_.securityClass, SecurityClass_.level ).equalTo( 0 ) ) );
+
+    // Filter by attribute of a related entity (to-many)
+    final PageRequest<DataRecord> request2 = PageRequest.create( b -> b.pageSize( 100 )
+            .asc( DataRecord_.id )
+            // DataRecord has a Many-To-Many relationship to Tags
+            .filter( attribute( DataRecord_.tags, Tag_.name ).in( "green", "red" ) ) );
+             
+    final Page<DataRecord> page = dataRecordRepository.loadPage( request );
+    // ...
+}
+```
+
+### Example: Filtering by existence (Rules)
+
+Sometimes it is required to filter by the existence of a related entity (e.g. "records without tags").
+This is supported by the `Rules` utility class, which allows to create `FilterRules` for standard cases.
+
+```java
+public void queryData() {
+    // specific rule to filter for empty relations:
+    final FilterRule noTags = Rules.where( DataRecord_.tags ).isEmpty();
+    
+    final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
+            .asc( DataRecord_.id )
+            .filter( noTags ) );
+
+    final Page<DataRecord> page = dataRecordRepository.loadPage( request );
+    // ...
+    
+    // or the opposite:
+    final FilterRule hasTags = Rules.where( DataRecord_.tags ).isNotEmpty();
+}
+```
+
 # Background: Concept description
 ## Basic idea
 
@@ -524,7 +569,7 @@ In real life this is a little more complicated as the desired order of the recor
 ## Design model(s)
 ![Basic concept of cursor/positions and pages](media/basic-concept.png "Basic concept of cursor/positions and pages")
 
-# Making things more complicate
+# Making things more complicated
 Potentially, a cursor can be reversed, meaning  the query direction can be changed. This can be used add the feature to the cursor page to not only point to the next page but also to the previous result-set. Still - this must not be misunderstood as the previous page! This is not easily possible, because for doing this it would require to keep all previous pages in memory or at least keep them somehow stored with the cursor (making the serialized size constantly growing).
 Therefor, a reversed cursor is: Changing the direction of the query, but not the sort-order.
 
@@ -533,7 +578,7 @@ Therefor, a reversed cursor is: Changing the direction of the query, but not the
 There is only value in this feature, if the client is not able to cache the previous requested pages by himself, i.e. forgets them while moving forward. This might be the case in a very memory limited client scenario which is usually _not_ a web application/web browser.
 
 ## API for reverting page-requests (=cursor positions)
-There is an API (`PageReqiest::toReversed`) for getting a page-request from an existing page-request, which will traverse the results in the opposite direction - while maintaining the sort order.
+There is an API (`PageRequest::toReversed`) for getting a page-request from an existing page-request, which will traverse the results in the opposite direction - while maintaining the sort order.
 Example:
 ```java
         // Extracted from test-case
