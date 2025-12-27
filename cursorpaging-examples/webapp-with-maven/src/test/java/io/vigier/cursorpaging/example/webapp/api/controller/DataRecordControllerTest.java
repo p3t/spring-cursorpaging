@@ -1,6 +1,6 @@
 package io.vigier.cursorpaging.example.webapp.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.vigier.cursorpaging.example.webapp.api.model.mapper.DtoDataRecordMapper;
 import io.vigier.cursorpaging.example.webapp.model.DataRecord;
 import io.vigier.cursorpaging.example.webapp.model.DataRecord_;
@@ -21,8 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(DataRecordController.class)
 // @ExtendWith( MockitoExtension.class )
 @Slf4j
+@TestPropertySource( properties = { "logging.level.io,vigier=DEBUG" } )
 class DataRecordControllerTest {
 
         private static final String PATH_COUNT = PATH + DataRecordController.COUNT;
@@ -104,7 +106,8 @@ class DataRecordControllerTest {
                                 .orderBy(Map.of(DataRecord_.NAME, Order.ASC))
                                 .pageSize(10)
                                 .build();
-                final String json = new ObjectMapper().writeValueAsString(request);
+                final String json = JsonMapper.builder()
+                .build().writeValueAsString(request);
                 log.debug("Json:, {}", json);
 
                 when(serializer.toBase64(any())).thenReturn(new Base64String(CURSOR));

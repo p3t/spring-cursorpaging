@@ -12,11 +12,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.Filters;
@@ -26,7 +21,6 @@ import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +35,11 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
 /**
  * {@link PageRequest} representation, which can be used in a REST API as request body.
@@ -208,11 +207,11 @@ public class DtoPageRequest {
         }
 
         @Override
-        public DtoFilterList deserialize( final JsonParser jp, final DeserializationContext ctxt ) throws IOException {
-            final JsonNode node = jp.getCodec().readTree( jp );
+        public DtoFilterList deserialize( final JsonParser jp, final DeserializationContext ctxt ) {
+            final JsonNode node = jp.readValueAsTree();
             final List<DtoFilterElement> filterList = new LinkedList<>();
             for ( final JsonNode n : node ) {
-                filterList.add( jp.getCodec().treeToValue( n, DtoFilterElement.class ) );
+                filterList.add( jp.readValueAs( DtoFilterElement.class ) );
             }
             return create( filterList );
         }

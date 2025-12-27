@@ -3,6 +3,8 @@ package io.vigier.cursorpaging.jpa;
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -15,22 +17,23 @@ import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 /**
  * A request, which can be used to query a database for a page of entities.
  * <p>
- * The request uses a list of `positions` (one for each attribute which should be used to address the start of the
- * page). The combination of all positions must uniquely address a certain record in the table. This can be achieved by
- * adding the primary id of the entity as secondary position, if the first position is not unique (like a `name`, or
+ * The request uses a list of `positions` (one for each attribute which should
+ * be used to address the start of the
+ * page). The combination of all positions must uniquely address a certain
+ * record in the table. This can be achieved by
+ * adding the primary id of the entity as secondary position, if the first
+ * position is not unique (like a `name`, or
  * date), but should be the primary order.
  *
  * @param <E> the entity type
  */
 @Builder
 @Getter
-@Accessors( fluent = true )
+@Accessors(fluent = true)
 @EqualsAndHashCode
 @ToString
 public class PageRequest<E> {
@@ -41,11 +44,13 @@ public class PageRequest<E> {
     public static final int DEFAULT_PAGE_SIZE = 100;
 
     /**
-     * The positions used to address the start of a page. It is essential, that at least one position (order-by,
-     * asc/dsc) is provided, and that it cannot happen, that all positions can contain null-values (are nullable columns
+     * The positions used to address the start of a page. It is essential, that at
+     * least one position (order-by,
+     * asc/dsc) is provided, and that it cannot happen, that all positions can
+     * contain null-values (are nullable columns
      * in the DB)!
      */
-    @Singular( "position" )
+    @Singular("position")
     private final List<Position> positions;
 
     /**
@@ -61,7 +66,8 @@ public class PageRequest<E> {
     private final int pageSize = DEFAULT_PAGE_SIZE;
 
     /**
-     * Control if the total element count should be calculated if missing in the request
+     * Control if the total element count should be calculated if missing in the
+     * request
      */
     private final boolean enableTotalCount;
 
@@ -80,29 +86,9 @@ public class PageRequest<E> {
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> firstPage( final Order order,
-                final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
-        }
-
-        /**
-         * Shortcut for adding a position spec of an attribute in ascending  order
-         *
-         * @param attribute the attribute used to create a position (ascending ordered)
-         * @return the builder
-         */
-        public PageRequestBuilder<E> asc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return firstPage( Order.ASC, attribute );
-        }
-
-        /**
-         * Shortcut for adding a position spec of an attribute in descending  order
-         *
-         * @param attribute the attribute used to create a position (descending ordered)
-         * @return the builder
-         */
-        public PageRequestBuilder<E> desc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return firstPage( Order.DESC, attribute );
+        public PageRequestBuilder<E> firstPage(final Order order,
+                final SingularAttribute<? super E, ? extends Comparable<?>> attribute) {
+            return addPosition(Position.create(b -> b.attribute(Attribute.of(attribute)).order(order)));
         }
 
         /**
@@ -111,8 +97,8 @@ public class PageRequest<E> {
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> asc( final Attribute attribute ) {
-            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.ASC ) ) );
+        public PageRequestBuilder<E> asc(final SingularAttribute<? super E, ? extends Comparable<?>> attribute) {
+            return firstPage(Order.ASC, attribute);
         }
 
         /**
@@ -121,8 +107,28 @@ public class PageRequest<E> {
          * @param attribute the attribute used to create a position (descending ordered)
          * @return the builder
          */
-        public PageRequestBuilder<E> desc( final Attribute attribute ) {
-            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
+        public PageRequestBuilder<E> desc(final SingularAttribute<? super E, ? extends Comparable<?>> attribute) {
+            return firstPage(Order.DESC, attribute);
+        }
+
+        /**
+         * Shortcut for adding a position spec of an attribute in ascending order
+         *
+         * @param attribute the attribute used to create a position (ascending ordered)
+         * @return the builder
+         */
+        public PageRequestBuilder<E> asc(final Attribute attribute) {
+            return addPosition(Position.create(b -> b.attribute(attribute).order(Order.ASC)));
+        }
+
+        /**
+         * Shortcut for adding a position spec of an attribute in descending order
+         *
+         * @param attribute the attribute used to create a position (descending ordered)
+         * @return the builder
+         */
+        public PageRequestBuilder<E> desc(final Attribute attribute) {
+            return addPosition(Position.create(b -> b.attribute(attribute).order(Order.DESC)));
         }
 
         /**
@@ -132,8 +138,8 @@ public class PageRequest<E> {
          * @param type the type of the attribute
          * @return the builder
          */
-        public PageRequestBuilder<E> asc( final String name, final Class<? extends Comparable<?>> type ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.ASC ) ) );
+        public PageRequestBuilder<E> asc(final String name, final Class<? extends Comparable<?>> type) {
+            return addPosition(Position.create(b -> b.attribute(Attribute.of(name, type)).order(Order.ASC)));
         }
 
         /**
@@ -143,59 +149,63 @@ public class PageRequest<E> {
          * @param type the type of the attribute
          * @return the builder
          */
-        public PageRequestBuilder<E> desc( final String name, final Class<? extends Comparable<?>> type ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.DESC ) ) );
+        public PageRequestBuilder<E> desc(final String name, final Class<? extends Comparable<?>> type) {
+            return addPosition(Position.create(b -> b.attribute(Attribute.of(name, type)).order(Order.DESC)));
         }
 
         /**
-         * Add a filter to the request. Filter which do not contain a filter value or empty char-sequences as values are
-         * silently ignored for convenience reasons when creating page requests out of query parameters.
+         * Add a filter to the request. Filter which do not contain a filter value or
+         * empty char-sequences as values are
+         * silently ignored for convenience reasons when creating page requests out of
+         * query parameters.
          *
          * @param filter A new filter definition
          * @return the builder
          */
-        public PageRequestBuilder<E> filter( @Nullable final QueryElement filter ) {
+        public PageRequestBuilder<E> filter(@Nullable final QueryElement filter) {
             final List<QueryElement> filters = new LinkedList<>();
-            if ( this.filters$value != null ) {
-                filters.addAll( this.filters$value.filters() );
+            if (this.filters$value != null) {
+                filters.addAll(this.filters$value.filters());
             }
-            if ( filter != null && !filter.isEmpty() ) {
-                filters.add( filter );
+            if (filter != null && !filter.isEmpty()) {
+                filters.add(filter);
             }
-            this.filters$value = (filters$value instanceof OrFilter ? OrFilter.of( filters ) : AndFilter.of( filters ));
+            this.filters$value = (filters$value instanceof OrFilter ? OrFilter.of(filters) : AndFilter.of(filters));
             this.filters$set = true;
             return this;
         }
 
         /**
-         * Add a list of filters to the page request. Filter which do not contain a filter value or empty char-sequences
-         * as values are silently ignored for convenience reasons when creating page requests out of query parameters.
+         * Add a list of filters to the page request. Filter which do not contain a
+         * filter value or empty char-sequences
+         * as values are silently ignored for convenience reasons when creating page
+         * requests out of query parameters.
          *
          * @param filters the list of filters to be added
          * @return the builder
          */
-        public PageRequestBuilder<E> filters( @Nullable final FilterList filters ) {
-            if ( filters != null ) {
+        public PageRequestBuilder<E> filters(@Nullable final FilterList filters) {
+            if (filters != null) {
                 this.filters$value = filters;
                 this.filters$set = true;
             }
             return this;
         }
 
-        private PageRequestBuilder<E> addPosition( final Position pos ) {
-            if ( this.positions == null ) {
-                this.positions = new ArrayList<>( 3 );
+        private PageRequestBuilder<E> addPosition(final Position pos) {
+            if (this.positions == null) {
+                this.positions = new ArrayList<>(3);
             }
-            this.positions.add( pos );
+            this.positions.add(pos);
             return this;
         }
     }
 
-    public PageRequest( final List<Position> positions, final FilterList filters, final int pageSize,
-            final boolean enableTotalCount, final Long totalCount ) {
-        if ( positions == null || positions.isEmpty() ) {
+    public PageRequest(final List<Position> positions, final FilterList filters, final int pageSize,
+            final boolean enableTotalCount, final Long totalCount) {
+        if (positions == null || positions.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required" );
+                    "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required");
         }
         this.positions = positions;
         this.filters = filters;
@@ -211,55 +221,61 @@ public class PageRequest<E> {
      * @param <E>     Entity type
      * @return the created page request
      */
-    public static <E> PageRequest<E> create( final Consumer<PageRequestBuilder<E>> creator ) {
+    public static <E> PageRequest<E> create(final Consumer<PageRequestBuilder<E>> creator) {
         final var builder = PageRequest.<E>builder();
-        creator.accept( builder );
+        creator.accept(builder);
         return builder.build();
     }
 
     /**
-     * Create a new page-request from the current one, but with the provided customizer applied
+     * Create a new page-request from the current one, but with the provided
+     * customizer applied
      *
      * @param c customizer for the copy
      * @return A new page-request with existing and customized attributes
      */
-    public PageRequest<E> copy( final Consumer<PageRequestBuilder<E>> c ) {
+    public PageRequest<E> copy(final Consumer<PageRequestBuilder<E>> c) {
         final PageRequestBuilder<E> builder = PageRequest.<E>builder()
-                .totalCount( totalCount )
-                .enableTotalCount( enableTotalCount )
-                .pageSize( pageSize );
-        c.accept( builder );
-        if ( !builder.filters$set && !filters.isEmpty() ) {
-            builder.filters( filters );
+                .totalCount(totalCount)
+                .enableTotalCount(enableTotalCount)
+                .pageSize(pageSize);
+        c.accept(builder);
+        if (!builder.filters$set && !filters.isEmpty()) {
+            builder.filters(filters);
         }
-        if ( (builder.positions == null || builder.positions.isEmpty()) && !positions.isEmpty() ) {
-            builder.positions( positions );
+        if ((builder.positions == null || builder.positions.isEmpty()) && !positions.isEmpty()) {
+            builder.positions(positions);
         }
         return builder.build();
     }
 
     /**
-     * Enable the total count calculation for the request.<br> Setting {@code enable = true} forces also the
-     * re-calculation of the total count for a page-request where the total-count is already present.
+     * Enable the total count calculation for the request.<br>
+     * Setting {@code enable = true} forces also the
+     * re-calculation of the total count for a page-request where the total-count is
+     * already present.
      *
-     * @return A copy of the page-request where the total-count is removed and the enable flag is set accordingly
+     * @return A copy of the page-request where the total-count is removed and the
+     *         enable flag is set accordingly
      */
-    public PageRequest<E> withEnableTotalCount( final boolean enable ) {
-        return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
+    public PageRequest<E> withEnableTotalCount(final boolean enable) {
+        return copy(b -> b.enableTotalCount(enable).totalCount(null));
     }
 
     /**
-     * creates a new page request with the given size, or returns the current one if size is {@code null} or the same as
+     * creates a new page request with the given size, or returns the current one if
+     * size is {@code null} or the same as
      * the actual size.
      *
-     * @param size the requested max page size. {@code null} is accepted and will return the current request.
+     * @param size the requested max page size. {@code null} is accepted and will
+     *             return the current request.
      * @return Page request with the provided size
      */
-    public PageRequest<E> withPageSize( @Nullable final Integer size ) {
-        if ( size == null || pageSize() == size ) {
+    public PageRequest<E> withPageSize(@Nullable final Integer size) {
+        if (size == null || pageSize() == size) {
             return this;
         }
-        return copy( b -> b.pageSize( size ) );
+        return copy(b -> b.pageSize(size));
     }
 
     /**
@@ -268,37 +284,41 @@ public class PageRequest<E> {
      * @return the total count if present
      */
     public Optional<Long> totalCount() {
-        return Optional.ofNullable( totalCount );
+        return Optional.ofNullable(totalCount);
     }
 
     /**
-     * Create a new {@linkplain PageRequest} pointing to the position defined through the attributes of the provided
+     * Create a new {@linkplain PageRequest} pointing to the position defined
+     * through the attributes of the provided
      * entity.
      *
      * @param entity The entity used as a source for the position
-     * @return A new {@code PageRequest} with the positions set to the values of the provided entity
+     * @return A new {@code PageRequest} with the positions set to the values of the
+     *         provided entity
      */
-    public PageRequest<E> positionOf( @NonNull final E entity, @NonNull final E nextEntity ) {
-        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity, nextEntity ) ).toList() )
-                .pageSize( this.pageSize )
-                .totalCount( this.totalCount )
-                .filters( this.filters )
-                .enableTotalCount( this.enableTotalCount ) );
+    public PageRequest<E> positionOf(@Nonnull final E entity, @Nonnull final E nextEntity) {
+        return create(b -> b.positions(positions.stream().map(p -> p.positionOf(entity, nextEntity)).toList())
+                .pageSize(this.pageSize)
+                .totalCount(this.totalCount)
+                .filters(this.filters)
+                .enableTotalCount(this.enableTotalCount));
     }
 
     public PageRequest<E> toReversed() {
-        return copy( b -> b.positions( positions.stream().map( Position::toReversed ).toList() ) );
+        return copy(b -> b.positions(positions.stream().map(Position::toReversed).toList()));
     }
 
     /**
-     * Checks if any position in the request has a value. If there is no value in any position, it is asumed that this
+     * Checks if any position in the request has a value. If there is no value in
+     * any position, it is asumed that this
      * is a request for the first page
      *
-     * @return {@code true} if the request is for the first page, {@code false} otherwise
+     * @return {@code true} if the request is for the first page, {@code false}
+     *         otherwise
      */
     public boolean isFirstPage() {
-        for ( final Position position : positions ) {
-            if ( position.hasValue() || position.hasNextValue() ) {
+        for (final Position position : positions) {
+            if (position.hasValue() || position.hasNextValue()) {
                 return false;
             }
         }
@@ -310,16 +330,18 @@ public class PageRequest<E> {
     }
 
     /**
-     * Returns the <b>first</b> filter found given the attribute. Probably useful for tests to verify that the request
+     * Returns the <b>first</b> filter found given the attribute. Probably useful
+     * for tests to verify that the request
      * is as expected.
      *
      * @param attribute Attribute which should be used by the filter
-     * @return a present query-element (filter) containing the attribute or an empty optional if no filter is found
+     * @return a present query-element (filter) containing the attribute or an empty
+     *         optional if no filter is found
      */
-    public Optional<QueryElement> firstFilterWith( final Attribute attribute ) {
-        for ( final QueryElement ele : filters ) {
-            if ( ele.attributes().stream().anyMatch( a -> a.equals( attribute ) ) ) {
-                return Optional.of( ele );
+    public Optional<QueryElement> firstFilterWith(final Attribute attribute) {
+        for (final QueryElement ele : filters) {
+            if (ele.attributes().stream().anyMatch(a -> a.equals(attribute))) {
+                return Optional.of(ele);
             }
         }
         return Optional.empty();
