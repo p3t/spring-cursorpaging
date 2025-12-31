@@ -2,6 +2,8 @@ package io.vigier.cursorpaging.jpa.filter;
 
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.QueryElement;
+import jakarta.annotation.Nonnull;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -9,23 +11,22 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.springframework.lang.NonNull;
 
 @Getter
-@Accessors( fluent = true )
+@Accessors(fluent = true)
 @EqualsAndHashCode
 @ToString
 public abstract class FilterList implements QueryElement, Iterable<QueryElement> {
 
     private final List<QueryElement> filters;
 
-    protected FilterList( final List<QueryElement> filters ) {
-        this.filters = List.copyOf( filters );
+    protected FilterList(final List<QueryElement> filters) {
+        this.filters = List.copyOf(filters);
     }
 
     @Override
     public List<Attribute> attributes() {
-        return filters.stream().flatMap( e -> e.attributes().stream() ).toList();
+        return filters.stream().flatMap(e -> e.attributes().stream()).toList();
     }
 
     /**
@@ -34,13 +35,13 @@ public abstract class FilterList implements QueryElement, Iterable<QueryElement>
      * @return an Iterator.
      */
     @Override
-    public @NonNull Iterator<QueryElement> iterator() {
+    public @Nonnull Iterator<QueryElement> iterator() {
         return filters.iterator();
     }
 
     @Override
-    public void forEach( final Consumer<? super QueryElement> action ) {
-        filters.forEach( action );
+    public void forEach(final Consumer<? super QueryElement> action) {
+        filters.forEach(action);
     }
 
     public int size() {
