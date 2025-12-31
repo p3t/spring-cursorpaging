@@ -19,6 +19,7 @@ import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.filter.FilterList;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.Iterator;
@@ -63,7 +64,7 @@ public class DtoPageRequest {
     }
 
     @Builder.Default
-    private final DtoFilterList filterBy = new DtoAndFilter();
+    private DtoFilterList filterBy = new DtoAndFilter();
 
     @Data
     @NoArgsConstructor
@@ -186,7 +187,7 @@ public class DtoPageRequest {
         }
 
         @Override
-        public Iterator<DtoFilterElement> iterator() {
+        public @Nonnull Iterator<DtoFilterElement> iterator() {
             return filters.iterator();
         }
 
@@ -211,7 +212,7 @@ public class DtoPageRequest {
             final JsonNode node = jp.readValueAsTree();
             final List<DtoFilterElement> filterList = new LinkedList<>();
             for ( final JsonNode n : node ) {
-                filterList.add( jp.readValueAs( DtoFilterElement.class ) );
+                filterList.add( ctxt.readTreeAsValue( n, DtoFilterElement.class ) );
             }
             return create( filterList );
         }
