@@ -110,9 +110,9 @@
 
       <dependency>
         <groupId>org.hibernate.orm</groupId>
-        <artifactId>hibernate-jpamodelgen</artifactId>
-        <version>6.6.13.Final</version>
-        <scope>compile</scope>
+        <artifactId>hibernate-processor</artifactId>
+        <version>${hibernate.version}</version>
+        <scope>provided</scope>
       </dependency>
 
       <!-- Use: Provided -->
@@ -186,7 +186,7 @@
             <annotationProcessorPaths>
               <path>
                 <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-jpamodelgen</artifactId>
+                <artifactId>hibernate-processor</artifactId>
                 <version>${hibernate.version}</version>
               </path>
               <path>
@@ -201,7 +201,7 @@
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>4.1.1</version>
+          <version>4.1.2</version>
           <configuration>
             <protocVersion>${protobuf.version}</protocVersion>
           </configuration>
