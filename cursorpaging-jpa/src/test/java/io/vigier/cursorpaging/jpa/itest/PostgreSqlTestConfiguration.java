@@ -8,8 +8,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -17,7 +16,6 @@ import org.testcontainers.utility.DockerImageName;
 @Configuration
 @TestConfiguration( proxyBeanMethods = false )
 @Testcontainers
-@EnableRetry
 @Slf4j
 public class PostgreSqlTestConfiguration {
 
@@ -34,9 +32,7 @@ public class PostgreSqlTestConfiguration {
         return container;
     }
 
-    @Retryable( retryFor = SQLException.class,
-            maxAttempts = 5,
-            backoff = @org.springframework.retry.annotation.Backoff( delay = 1000 ) )
+    @Retryable( includes = SQLException.class, maxRetries = 5, delay = 1000 )
     private static void waitForConnectionReady( final PostgreSQLContainer<?> container ) throws SQLException {
         final String jdbcUrl = container.getJdbcUrl();
         try ( final Connection con = container.createConnection( jdbcUrl.substring( jdbcUrl.indexOf( '?' ) ) ) ) {

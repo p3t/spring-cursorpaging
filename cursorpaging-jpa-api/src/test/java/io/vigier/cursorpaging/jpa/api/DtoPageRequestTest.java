@@ -1,7 +1,5 @@
 package io.vigier.cursorpaging.jpa.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.Order;
@@ -18,6 +16,7 @@ import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DtoPageRequestTest {
 
     @Test
-    void shouldDesrerializeFromJson() throws Exception {
+    void shouldDeserializeFromJson() {
         final String json = """
                 {
                     "orderBy": {
@@ -47,7 +46,9 @@ class DtoPageRequestTest {
                 }
                 """;
 
-        final DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
+        final var mapper = JsonMapper.builder()
+                .build();
+        final DtoPageRequest request = mapper.readValue( json, DtoPageRequest.class );
         assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.ASC ) );
         assertThat( request.getFilterBy() ).isNotNull().satisfies( fl -> {
             assertThat( fl ).isInstanceOf( DtoAndFilter.class );
@@ -62,7 +63,7 @@ class DtoPageRequestTest {
     }
 
     @Test
-    void shouldDeserializeWithOrRootList() throws Exception {
+    void shouldDeserializeWithOrRootList() {
         final String json = """
                 {
                     "orderBy": {
@@ -78,7 +79,9 @@ class DtoPageRequestTest {
                     "withTotalCount": false
                 }
                 """;
-        final DtoPageRequest request = new ObjectMapper().readValue( json, DtoPageRequest.class );
+        final var mapper = JsonMapper.builder()
+                .build();
+        final DtoPageRequest request = mapper.readValue( json, DtoPageRequest.class );
         assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.ASC ) );
         assertThat( request.getFilterBy() ).isNotNull().satisfies( fl -> {
             assertThat( fl ).isInstanceOf( DtoOrFilter.class );
@@ -98,7 +101,7 @@ class DtoPageRequestTest {
     }
 
     @Test
-    void shouldSerializeDtoPageRequestsToJson() throws JsonProcessingException {
+    void shouldSerializeDtoPageRequestsToJson() {
         final var request = DtoPageRequest.builder()
                 .pageSize( 10 )
                 .orderBy( Map.of( "id", Order.ASC ) )
@@ -116,7 +119,17 @@ class DtoPageRequestTest {
                         .build() )
                 .build();
 
-        log.info( new ObjectMapper().writeValueAsString( request ) );
+        final var jsonMapper = JsonMapper.builder()
+                .build();
+        final var json = jsonMapper.writeValueAsString( request );
+        log.info( json );
+        final var nodes = jsonMapper.readTree( json );
+        assertThat( nodes.get( "pageSize" ).intValue() ).isEqualTo( 10 );
+        assertThat( nodes.get( "orderBy" ).get( "id" ).stringValue() ).isEqualTo( "ASC" );
+        final var filterBy = nodes.get( "filterBy" );
+        assertThat( filterBy.get( "AND" ) ).isNotNull();
+        final var andArray = filterBy.get( "AND" );
+        assertThat( andArray ).hasSize( 2 );
     }
 
     @Test

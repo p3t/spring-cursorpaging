@@ -1,6 +1,6 @@
 package io.vigier.cursorpaging.example.webapp.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.vigier.cursorpaging.example.webapp.api.model.mapper.DtoDataRecordMapper;
 import io.vigier.cursorpaging.example.webapp.model.DataRecord;
 import io.vigier.cursorpaging.example.webapp.model.DataRecord_;
@@ -21,9 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static io.vigier.cursorpaging.example.webapp.api.controller.DataRecordController.PATH;
@@ -35,91 +36,94 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest( DataRecordController.class )
-//@ExtendWith( MockitoExtension.class )
+@WebMvcTest(DataRecordController.class)
+// @ExtendWith( MockitoExtension.class )
 @Slf4j
+@TestPropertySource( properties = { "logging.level.io,vigier=DEBUG" } )
 class DataRecordControllerTest {
 
-    private static final String PATH_COUNT = PATH + DataRecordController.COUNT;
-    private static final String CURSOR = "OW2T2rDudgONjtP04KHOUguDTrUGTCA7edByRquqlqus1TaSdcr1JwMLSwiDcW88hp7zSMqJrn9Q-W94P1GFGMuAQNeWfMZ5vfK6Mf712w";
-    @Autowired
-    private MockMvc mockMvc;
+        private static final String PATH_COUNT = PATH + DataRecordController.COUNT;
+        private static final String CURSOR = "OW2T2rDudgONjtP04KHOUguDTrUGTCA7edByRquqlqus1TaSdcr1JwMLSwiDcW88hp7zSMqJrn9Q-W94P1GFGMuAQNeWfMZ5vfK6Mf712w";
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockBean
-    private DataRecordRepository dataRecordRepository;
+        @MockitoBean
+        private DataRecordRepository dataRecordRepository;
 
-    @MockBean
-    private DtoDataRecordMapper dtoDataRecordMapper;
+        @MockitoBean
+        private DtoDataRecordMapper dtoDataRecordMapper;
 
-    @MockBean
-    private RequestSerializer<DataRecord> serializer;
+        @MockitoBean
+        private RequestSerializer<DataRecord> serializer;
 
-    @Test
-    void shouldValidateMaxPageSize() throws Exception {
-        mockMvc.perform( get( PATH ).param( "pageSize", "1000" ) )
-                .andExpect( status().isBadRequest() )
-                .andExpect( jsonPath( "$.detail" ).value( "Validation failure" ) );
-    }
+        @Test
+        void shouldValidateMaxPageSize() throws Exception {
+                mockMvc.perform(get(PATH).param("pageSize", "1000"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.detail").value("Validation failure"));
+        }
 
-    @Test
-    void shouldValidateCursor() throws Exception {
-        mockMvc.perform( get( PATH ) //
-                        .param( "pageSize", "10" ) //
-                        .param( "cursor", "%&/$RT5" ) )
-                .andExpect( status().isBadRequest() )
-                .andExpect( jsonPath( "$.detail" ).value( Matchers.containsString( "Failed to convert 'cursor'" ) ) );
-    }
+        @Test
+        void shouldValidateCursor() throws Exception {
+                mockMvc.perform(get(PATH) //
+                                .param("pageSize", "10") //
+                                .param("cursor", "%&/$RT5"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.detail")
+                                                .value(Matchers.containsString("Failed to convert 'cursor'")));
+        }
 
-    @Test
-    void shouldReturnTotalCountWhenNoCursorProvided() throws Exception {
-        when( dataRecordRepository.count() ).thenReturn( 4711L );
-        mockMvc.perform( get( PATH_COUNT ) )
-                .andExpect( status().isOk() )
-                .andExpect( jsonPath( "$.totalElements" ).value( 4711 ) );
-    }
+        @Test
+        void shouldReturnTotalCountWhenNoCursorProvided() throws Exception {
+                when(dataRecordRepository.count()).thenReturn(4711L);
+                mockMvc.perform(get(PATH_COUNT))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(4711));
+        }
 
-    @Test
-    void shouldReturnCountUsingCursor() throws Exception {
-        final var pageRequest = PageRequest.<DataRecord>create( b -> b.asc( Attribute.of( "id", UUID.class ) ) );
-        final var encoded = Base64.getUrlEncoder().encode( "TEST".getBytes( UTF_8 ) );
-        when( serializer.toPageRequest( any( Base64String.class ) ) ).thenReturn( pageRequest );
-        when( dataRecordRepository.count( pageRequest ) ).thenReturn( 4711L );
+        @Test
+        void shouldReturnCountUsingCursor() throws Exception {
+                final var pageRequest = PageRequest.<DataRecord>create(b -> b.asc(Attribute.of("id", UUID.class)));
+                final var encoded = Base64.getUrlEncoder().encode("TEST".getBytes(UTF_8));
+                when(serializer.toPageRequest(any(Base64String.class))).thenReturn(pageRequest);
+                when(dataRecordRepository.count(pageRequest)).thenReturn(4711L);
 
-        mockMvc.perform( get( PATH_COUNT ) //
-                        .param( "cursor", new String( encoded, UTF_8 ) ) )
-                .andExpect( status().isOk() )
-                .andExpect( jsonPath( "$.totalElements" ).value( 4711 ) );
-    }
+                mockMvc.perform(get(PATH_COUNT) //
+                                .param("cursor", new String(encoded, UTF_8)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(4711));
+        }
 
-    @Test
-    void shouldCreateNewCursorOnPost() throws Exception {
-        final var request = DtoPageRequest.builder()
-                .filterBy( DtoAndFilter.builder()
-                        .filter( DtoEqFilter.builder()
-                                .attribute( DataRecord_.NAME )
-                                .values( List.of( "Tango", "Bravo" ) )
-                                .build() )
-                        .build() )
-                .orderBy( Map.of( DataRecord_.NAME, Order.ASC ) )
-                .pageSize( 10 )
-                .build();
-        final String json = new ObjectMapper().writeValueAsString( request );
-        log.debug( "Json:, {}", json );
+        @Test
+        void shouldCreateNewCursorOnPost() throws Exception {
+                final var request = DtoPageRequest.builder()
+                                .filterBy(DtoAndFilter.builder()
+                                                .filter(DtoEqFilter.builder()
+                                                                .attribute(DataRecord_.NAME)
+                                                                .values(List.of("Tango", "Bravo"))
+                                                                .build())
+                                                .build())
+                                .orderBy(Map.of(DataRecord_.NAME, Order.ASC))
+                                .pageSize(10)
+                                .build();
+                final String json = JsonMapper.builder()
+                .build().writeValueAsString(request);
+                log.debug("Json:, {}", json);
 
-        when( serializer.toBase64( any() ) ).thenReturn( new Base64String( CURSOR ) );
+                when(serializer.toBase64(any())).thenReturn(new Base64String(CURSOR));
 
-        mockMvc.perform( post( PATH + "/page" ) //
-                        .contentType( MediaType.APPLICATION_JSON ) //
-                        .content( json ) ) //
-                .andExpect( status().isCreated() ) //
-                .andExpect( jsonPath( "$.orderBy.name" ).value( "ASC" ) )
-                .andExpect( jsonPath( "$.orderBy.id" ).value( "ASC" ) )
-                .andExpect( jsonPath( "$.filterBy.AND" ).isArray() )
-                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name" ).isArray() )
-                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name[0]" ).value( "Tango" ) )
-                .andExpect( jsonPath( "$.filterBy.AND[0].EQ.name[1]" ).value( "Bravo" ) )
-                .andExpect( jsonPath( "$.pageSize" ).value( 10 ) ) //
-                .andExpect( jsonPath( "$._links.first.href" ).exists() )
-                .andExpect( jsonPath( "$._links.first.href" ).value( Matchers.containsString( CURSOR ) ) );
-    }
+                mockMvc.perform(post(PATH + "/page") //
+                                .contentType(MediaType.APPLICATION_JSON) //
+                                .content(json)) //
+                                .andExpect(status().isCreated()) //
+                                .andExpect(jsonPath("$.orderBy.name").value("ASC"))
+                                .andExpect(jsonPath("$.orderBy.id").value("ASC"))
+                                .andExpect(jsonPath("$.filterBy.AND").isArray())
+                                .andExpect(jsonPath("$.filterBy.AND[0].EQ.name").isArray())
+                                .andExpect(jsonPath("$.filterBy.AND[0].EQ.name[0]").value("Tango"))
+                                .andExpect(jsonPath("$.filterBy.AND[0].EQ.name[1]").value("Bravo"))
+                                .andExpect(jsonPath("$.pageSize").value(10)) //
+                                .andExpect(jsonPath("$._links.first.href").exists())
+                                .andExpect(jsonPath("$._links.first.href").value(Matchers.containsString(CURSOR)));
+        }
 }
