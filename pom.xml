@@ -40,13 +40,13 @@
     <java.version>25</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <protobuf.version>4.33.2</protobuf.version>
-    <hibernate.version>7.2.0.Final</hibernate.version>
+    <protobuf.version>4.33.4</protobuf.version>
+    <hibernate.version>7.2.1.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.0.1</springboot.version>
     <lombok.version>1.18.42</lombok.version>
     <mockito.version>5.21.0</mockito.version>
-    <byte-buddy.version>1.18.3</byte-buddy.version>
+    <byte-buddy.version>1.18.4</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.21.4</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
@@ -150,7 +150,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.8</version>
+        <version>42.7.9</version>
         <scope>test</scope>
       </dependency>
       <dependency>

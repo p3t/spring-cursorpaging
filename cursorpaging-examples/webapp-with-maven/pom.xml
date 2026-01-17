@@ -22,7 +22,7 @@
     <lombok.version>1.18.42</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
-    <hibernate.version>7.2.0.Final</hibernate.version>
+    <hibernate.version>7.2.1.Final</hibernate.version>
   </properties>
 
   <profiles>
@@ -102,7 +102,7 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
