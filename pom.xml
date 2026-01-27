@@ -43,7 +43,7 @@
     <protobuf.version>4.33.4</protobuf.version>
     <hibernate.version>7.2.1.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>4.0.1</springboot.version>
+    <springboot.version>4.0.2</springboot.version>
     <lombok.version>1.18.42</lombok.version>
     <mockito.version>5.21.0</mockito.version>
     <byte-buddy.version>1.18.4</byte-buddy.version>
@@ -86,7 +86,7 @@
       <dependency>
         <groupId>org.springframework.hateoas</groupId>
         <artifactId>spring-hateoas</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
