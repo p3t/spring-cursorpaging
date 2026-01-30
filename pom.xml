@@ -40,8 +40,8 @@
     <java.version>25</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <protobuf.version>4.33.4</protobuf.version>
-    <hibernate.version>7.2.1.Final</hibernate.version>
+    <protobuf.version>4.33.5</protobuf.version>
+    <hibernate.version>7.2.2.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.0.2</springboot.version>
     <lombok.version>1.18.42</lombok.version>
