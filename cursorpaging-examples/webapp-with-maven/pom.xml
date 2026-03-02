@@ -22,7 +22,7 @@
     <lombok.version>1.18.42</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
-    <hibernate.version>7.2.4.Final</hibernate.version>
+    <hibernate.version>7.2.5.Final</hibernate.version>
   </properties>
 
   <profiles>
