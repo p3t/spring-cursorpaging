@@ -41,12 +41,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.34.0</protobuf.version>
-    <hibernate.version>7.2.5.Final</hibernate.version>
+    <hibernate.version>7.2.6.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.0.3</springboot.version>
     <lombok.version>1.18.42</lombok.version>
     <mockito.version>5.22.0</mockito.version>
-    <byte-buddy.version>1.18.5</byte-buddy.version>
+    <byte-buddy.version>1.18.7</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.21.4</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
