@@ -203,7 +203,7 @@
           <artifactId>protobuf-maven-plugin</artifactId>
           <version>5.0.1</version>
           <configuration>
-            <protocVersion>${protobuf.version}</protocVersion>
+            <protoc>${protobuf.version}</protoc>
           </configuration>
           <executions>
             <execution>
