@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- Console appender with line numbers -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <!-- Pattern includes: timestamp, thread, level, logger name, line number, and message -->
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Set default log level -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+  <!-- Set DEBUG level for PageLinksTest -->
+  <!--  <logger name="io.vigier.cursorpaging.jpa.api.PageLinksTest" level="DEBUG"/>-->
+
+  <!-- Set DEBUG level for all cursor paging classes if needed -->
+  <logger name="io.vigier.cursorpaging" level="DEBUG"/>
+</configuration>
+

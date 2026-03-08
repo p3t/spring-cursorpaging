@@ -83,7 +83,7 @@ public class Filter implements QueryElement {
 
     @Override
     public List<Attribute> attributes() {
-        return List.of( attribute );
+        return attribute != null ? List.of( attribute ) : List.of();
     }
 
     @Override

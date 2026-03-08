@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.api;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.Page;
 import io.vigier.cursorpaging.jpa.PageRequest;
@@ -88,6 +89,21 @@ public class PageLinksTest {
         assertThat( nextLink.getHref() ).contains( "pageSize=15" );
         assertThat( selfLink.getHref() ).doesNotContain( "names[]", "{", "}" );
         assertThat( nextLink.getHref() ).doesNotContain( "names[]", "{", "}" );
+    }
+
+    @Test
+    void shouldGenerateLinksWithAlwaysFilter() {
+        final Page<TestEntity> page = Page.create( p -> p.content( List.of() )
+                .entityType( TestEntity.class )
+                .self( PageRequest.create( r -> r.asc( Attribute.of( "id", String.class ) )
+                        .filter( Filters.filterAll() )
+                        .pageSize( 0 )
+                        .totalCount( 0L ) ) ) );
+        final var links = PageLinks.of( Controller.class, requestSerializerFactory );
+        final Link selfLink = links.self( page )
+                .on( ( cursor, controller ) -> controller.getEntities( cursor, null, List.of( "A", "B" ) ) );
+        log.debug( "Self-link with ALWAYS filter included: {}", selfLink.getHref() );
+        assertThat( selfLink.getHref() ).contains( "?cursor" );
     }
 
     private static Page<TestEntity> createPage() {
