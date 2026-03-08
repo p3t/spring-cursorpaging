@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.3</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -22,7 +22,7 @@
     <lombok.version>1.18.42</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
-    <hibernate.version>7.2.1.Final</hibernate.version>
+    <hibernate.version>7.2.6.Final</hibernate.version>
   </properties>
 
   <profiles>
@@ -102,7 +102,7 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -173,7 +173,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.1</version>
+        <version>3.15.0</version>
         <configuration>
           <annotationProcessorPaths>
             <path>
