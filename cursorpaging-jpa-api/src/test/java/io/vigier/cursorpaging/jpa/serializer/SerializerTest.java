@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.serializer;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.Order;
@@ -8,6 +9,7 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.Position;
 import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.SingleAttribute;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.time.Instant;
@@ -314,7 +316,7 @@ class SerializerTest {
     @Test
     void shouldLearnAttributesBySerializing() {
         final var request = createPageRequest();
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, b -> {} );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, _ -> {} );
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
         assertThat( deserializedRequest ).isEqualTo( request );
@@ -336,7 +338,7 @@ class SerializerTest {
                 .position( Position.create( p -> p.attribute( Attribute.of( TestEntity_.time ) )
                         .order( Order.ASC )
                         .value( Instant.parse( positionTime ) ) ) ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, b -> {} );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, _ -> {} );
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
@@ -367,7 +369,7 @@ class SerializerTest {
     void shouldThrowExceptionWhenFilterRuleFactoryNotPresentButRuleIsDefinedInTheFilterList() {
         final var request = createPageRequest().copy( b -> b.filter(
                 newTestRule( "TestRule", Map.of( "param1", List.of( "value1" ), "param2", List.of( "value2" ) ) ) ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, c -> {
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, _ -> {
             // No filter rule factory defined
         } );
 
@@ -375,5 +377,25 @@ class SerializerTest {
         Assertions.assertThatThrownBy( () -> serializer.toBase64( request ) )
                 .isInstanceOf( SerializerException.class )
                 .hasMessageContaining( "No factory registered for filter rule with name" );
+    }
+
+    @Test
+    void shouldSerializeAndDeserializeRequestsContainingAlwaysFilters() {
+        final var request = createPageRequest().copy( b -> b.filter( Filters.and( //
+                attribute( TestEntity_.name ).equalTo( "Name-1" ), //
+                Filters.filterAll(), //
+                attribute( TestEntity_.id ).greaterThan( 1L ) //
+        ) ) );
+
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, _ -> {} );
+        final var serializedRequest = serializer.toBase64( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+
+        final var deserializedFilter = deserializedRequest.firstFilterWith(
+                f -> f instanceof final Filter ff && ff.operation() == FilterType.ALWAYS );
+        assertThat( deserializedFilter ).isPresent().get().satisfies( f -> {
+            assertThat( f ).isInstanceOf( Filter.class );
+            assertThat( ((Filter) f).values() ).hasSize( 1 ).first().isEqualTo( Boolean.FALSE );
+        } );
     }
 }

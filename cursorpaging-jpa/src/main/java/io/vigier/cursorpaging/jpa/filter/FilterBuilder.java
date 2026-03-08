@@ -114,6 +114,7 @@ public class FilterBuilder {
 
     public FilterBuilder always() {
         this.filterType = FilterType.ALWAYS;
+        this.attribute = Attribute.of( "", Boolean.class );
         return this;
     }
 
