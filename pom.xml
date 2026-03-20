@@ -43,8 +43,8 @@
     <protobuf.version>4.34.0</protobuf.version>
     <hibernate.version>7.2.6.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>4.0.3</springboot.version>
-    <lombok.version>1.18.42</lombok.version>
+    <springboot.version>4.0.4</springboot.version>
+    <lombok.version>1.18.44</lombok.version>
     <mockito.version>5.22.0</mockito.version>
     <byte-buddy.version>1.18.7</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
@@ -197,7 +197,7 @@
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>5.0.1</version>
+          <version>5.0.2</version>
           <configuration>
             <protoc>${protobuf.version}</protoc>
           </configuration>
