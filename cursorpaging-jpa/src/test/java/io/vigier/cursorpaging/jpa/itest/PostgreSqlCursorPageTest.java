@@ -10,6 +10,7 @@ import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.Rules;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
+import io.vigier.cursorpaging.jpa.filter.RsqlFilter;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
@@ -25,6 +26,8 @@ import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
@@ -71,6 +74,8 @@ class PostgreSqlCursorPageTest {
     private TestDataPersister testDataPersister;
     @Autowired
     private TagRepository tagRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
 
 
     @Test
@@ -632,6 +637,40 @@ class PostgreSqlCursorPageTest {
         final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
 
         assertThat( page ).hasSize( (int) countPublicAccess );
+    }
+
+    @Test
+    void shouldFilterWithOrConditionUsingRsql() {
+        final var data = defaultData( 100 );
+        final long countPublicAccess = data.records()
+                .stream()
+                .filter( r -> r.getSecurityClass().getLevel() == 0 )
+                .count();
+        final var rsqlFilter = RsqlFilter.of( "securityClass.level==0,integrityClass.level==0" );
+        final var request = PageRequest.<DataRecord>create(
+                b -> b.pageSize( 200 ).asc( DataRecord_.id ).filter( rsqlFilter ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( (int) countPublicAccess );
+    }
+
+    @Test
+    void shouldFilterByGreaterThanModifiedAtUsingRsql() {
+        final var data = defaultData( 100 );
+        final var cutoff = Instant.parse( "1999-03-01T00:00:00Z" );
+        final long expectedCount = data.records()
+                .stream()
+                .filter( r -> r.getAuditInfo().getModifiedAt().compareTo( cutoff ) > 0 )
+                .count();
+        final var rsqlFilter = RsqlFilter.of( "auditInfo.modifiedAt=gt=" + cutoff,
+                entityManager.getMetamodel(), DataRecord.class );
+        final var request = PageRequest.<DataRecord>create(
+                b -> b.pageSize( 200 ).asc( DataRecord_.id ).filter( rsqlFilter ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        assertThat( page ).hasSize( (int) expectedCount );
     }
 
     @Test
