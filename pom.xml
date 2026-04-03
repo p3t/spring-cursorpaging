@@ -46,7 +46,7 @@
     <springboot.version>4.0.5</springboot.version>
     <lombok.version>1.18.44</lombok.version>
     <mockito.version>5.23.0</mockito.version>
-    <byte-buddy.version>1.18.7</byte-buddy.version>
+    <byte-buddy.version>1.18.8</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.21.4</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
