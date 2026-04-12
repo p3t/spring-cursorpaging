@@ -15,6 +15,7 @@ import io.vigier.cursorpaging.example.webapp.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.Order;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
+import io.vigier.cursorpaging.jpa.rsql.filter.RsqlFilterFactory;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
 import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import io.vigier.cursorpaging.jpa.validation.MaxSize;
@@ -39,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import static io.vigier.cursorpaging.example.webapp.api.model.DataRecordAttribute.applySort;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -51,11 +53,13 @@ public class DataRecordController {
 
     public static final String PATH = "/api/v1/datarecord";
     public static final String COUNT = "/count";
+    public static final String QUERY = "/rsql";
 
     // Skipping the service layer ;-)
     private final DataRecordRepository dataRecordRepository;
     private final DtoDataRecordMapper dtoDataRecordMapper;
     private final RequestSerializer<DataRecord> serializer;
+    private final RsqlFilterFactory<DataRecord> rsqlFilterFactory;
 
     @Operation( summary = "Get data records, page by page" )
     @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )
@@ -153,10 +157,49 @@ public class DataRecordController {
                 .add( linkTo( methodOn( DataRecordController.class ).getCount( cursor ) ).withSelfRel() );
     }
 
+    @Operation( summary = "Query data records using RSQL filter syntax" )
+    @GetMapping( path = QUERY, produces = MediaType.APPLICATION_JSON_VALUE )
+    @ResponseStatus( HttpStatus.OK )
+    public CollectionModel<DtoDataRecord> queryDataRecords( //
+            @Parameter( description = "RSQL query expression, e.g. name==Alpha;auditInfo.createdAt=gt=2024-01-01T00:00:00Z",
+                    example = "name==Alpha" ) //
+            @RequestParam( "q" ) final String rsqlQuery,
+            @Parameter( description = "Page size" ) @RequestParam @MaxSize( 20 ) final Optional<Integer> pageSize,
+            @Parameter( description = "Sort order, e.g. NAME:ASC,ID:DESC", style = ParameterStyle.SIMPLE ) //
+            @RequestParam( value = "sort", required = false ) final Optional<List<String>> sort,
+            @Parameter( description = "Serialized cursor for requesting subsequent pages",
+                    content = @Content( mediaType = MediaType.TEXT_PLAIN_VALUE ) ) //
+            @RequestParam( value = "cursor", required = false ) final Optional<Base64String> cursor ) {
+
+        log.debug( "RSQL query = {}, sort = {}, pageSize = {}", rsqlQuery, sort, pageSize );
+
+        final var filter = rsqlFilterFactory.toFilter( rsqlQuery );
+
+        final PageRequest<DataRecord> request = cursor.map( serializer::toPageRequest )
+                .orElseGet( () -> PageRequest.<DataRecord>builder()
+                        .filter( filter )
+                        .apply( b -> applySort( sort.orElse( List.of() ), b ) )
+                        .build() )
+                .withPageSize( pageSize.orElse( 10 ) );
+
+        final var page = dataRecordRepository.loadPage( request );
+
+        return CollectionModel.of( page.content( dtoDataRecordMapper::toDto ) )
+                .add( getRsqlLink( rsqlQuery, pageSize, sort, page.self(), IanaLinkRelations.SELF ) )
+                .addIf( page.next().isPresent(),
+                        () -> getRsqlLink( rsqlQuery, pageSize, sort, page.next().orElseThrow(),
+                                IanaLinkRelations.NEXT ) );
+    }
 
     private Link getLink( final Optional<Integer> pageSize, final PageRequest<DataRecord> request,
             final LinkRelation rel ) {
         return linkTo( methodOn( DataRecordController.class ).getDataRecordPage( pageSize,
+                Optional.of( serializer.toBase64( request ) ) ) ).withRel( rel ).expand();
+    }
+
+    private Link getRsqlLink( final String rsqlQuery, final Optional<Integer> pageSize,
+            final Optional<List<String>> sort, final PageRequest<DataRecord> request, final LinkRelation rel ) {
+        return linkTo( methodOn( DataRecordController.class ).queryDataRecords( rsqlQuery, pageSize, sort,
                 Optional.of( serializer.toBase64( request ) ) ) ).withRel( rel ).expand();
     }
 }

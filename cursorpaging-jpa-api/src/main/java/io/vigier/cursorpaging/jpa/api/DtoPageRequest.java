@@ -228,8 +228,7 @@ public class DtoPageRequest {
 
         @Override
         protected DtoFilterList create( final List<DtoFilterElement> filters ) {
-            return DtoAndFilter.builder().filters( filters )
-                    .build();
+            return DtoAndFilter.builder().filters( filters ).build();
         }
     }
 
@@ -241,8 +240,7 @@ public class DtoPageRequest {
 
         @Override
         protected DtoFilterList create( final List<DtoFilterElement> filters ) {
-            return DtoOrFilter.builder().filters( filters )
-                    .build();
+            return DtoOrFilter.builder().filters( filters ).build();
         }
     }
 
@@ -286,13 +284,7 @@ public class DtoPageRequest {
 
     public <T> PageRequest<T> toPageRequest( final Function<String, Attribute> attributeProvider ) {
         return PageRequest.create( b -> {
-            orderBy.forEach( ( name, order ) -> {
-                final Attribute attribute = attributeProvider.apply( name );
-                switch ( order ) {
-                    case ASC -> b.asc( attribute );
-                    case DESC -> b.desc( attribute );
-                }
-            } );
+            orderBy.forEach( ( name, order ) -> b.sort( attributeProvider.apply( name ), order ) );
             b.pageSize( pageSize ).enableTotalCount( withTotalCount );
             b.filters( (FilterList) filterOf( filterBy, attributeProvider ) );
         } );
@@ -311,8 +303,6 @@ public class DtoPageRequest {
     }
 
     public void addOrderByIfAbsent( final String name, final Order order ) {
-        if ( !orderBy.containsKey( name ) ) {
-            orderBy.put( name, order );
-        }
+        orderBy.computeIfAbsent( name, k -> order );
     }
 }

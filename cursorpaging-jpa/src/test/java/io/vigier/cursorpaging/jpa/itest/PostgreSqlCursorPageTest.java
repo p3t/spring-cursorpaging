@@ -10,7 +10,6 @@ import io.vigier.cursorpaging.jpa.QueryBuilder;
 import io.vigier.cursorpaging.jpa.Rules;
 import io.vigier.cursorpaging.jpa.bootstrap.CursorPageRepositoryFactoryBean;
 import io.vigier.cursorpaging.jpa.filter.FilterBuilder;
-import io.vigier.cursorpaging.jpa.filter.RsqlFilter;
 import io.vigier.cursorpaging.jpa.itest.config.JpaConfig;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry;
 import io.vigier.cursorpaging.jpa.itest.model.AccessEntry_;
@@ -640,40 +639,6 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
-    void shouldFilterWithOrConditionUsingRsql() {
-        final var data = defaultData( 100 );
-        final long countPublicAccess = data.records()
-                .stream()
-                .filter( r -> r.getSecurityClass().getLevel() == 0 )
-                .count();
-        final var rsqlFilter = RsqlFilter.of( "securityClass.level==0,integrityClass.level==0" );
-        final var request = PageRequest.<DataRecord>create(
-                b -> b.pageSize( 200 ).asc( DataRecord_.id ).filter( rsqlFilter ) );
-
-        final var page = dataRecordRepository.loadPage( request );
-
-        assertThat( page ).hasSize( (int) countPublicAccess );
-    }
-
-    @Test
-    void shouldFilterByGreaterThanModifiedAtUsingRsql() {
-        final var data = defaultData( 100 );
-        final var cutoff = Instant.parse( "1999-03-01T00:00:00Z" );
-        final long expectedCount = data.records()
-                .stream()
-                .filter( r -> r.getAuditInfo().getModifiedAt().compareTo( cutoff ) > 0 )
-                .count();
-        final var rsqlFilter = RsqlFilter.of( "auditInfo.modifiedAt=gt=" + cutoff,
-                entityManager.getMetamodel(), DataRecord.class );
-        final var request = PageRequest.<DataRecord>create(
-                b -> b.pageSize( 200 ).asc( DataRecord_.id ).filter( rsqlFilter ) );
-
-        final var page = dataRecordRepository.loadPage( request );
-
-        assertThat( page ).hasSize( (int) expectedCount );
-    }
-
-    @Test
     void shouldFilterByEnumAttribute() {
         final List<DataRecord> all = defaultData( 99 ).records();
         final int countDraft = (int) all.stream().filter( r -> r.getStatus() == Status.DRAFT ).count();
@@ -993,7 +958,7 @@ class PostgreSqlCursorPageTest {
         final var page = dataRecordRepository.loadPage( request );
         assertThat( page ).hasSize( recordsWithSecClass0.size() )
                 .allSatisfy( r -> assertThat( r.getName() ).startsWith( "A" ) )
-                .allSatisfy( r -> assertThat( r.getSecurityClass().getLevel() ).isEqualTo( 0 ) );
+                .allSatisfy( r -> assertThat( r.getSecurityClass().getLevel() ).isZero() );
     }
 
     @Test

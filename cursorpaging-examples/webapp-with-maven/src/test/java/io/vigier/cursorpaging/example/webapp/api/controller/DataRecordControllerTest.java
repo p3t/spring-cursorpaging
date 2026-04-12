@@ -11,6 +11,7 @@ import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoAndFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoEqFilter;
+import io.vigier.cursorpaging.jpa.rsql.filter.RsqlFilterFactory;
 import io.vigier.cursorpaging.jpa.serializer.Base64String;
 import io.vigier.cursorpaging.jpa.serializer.RequestSerializer;
 import java.util.Base64;
@@ -55,6 +56,9 @@ class DataRecordControllerTest {
 
         @MockitoBean
         private RequestSerializer<DataRecord> serializer;
+
+        @MockitoBean
+        private RsqlFilterFactory<DataRecord> rsqlFilterFactory;
 
         @Test
         void shouldValidateMaxPageSize() throws Exception {

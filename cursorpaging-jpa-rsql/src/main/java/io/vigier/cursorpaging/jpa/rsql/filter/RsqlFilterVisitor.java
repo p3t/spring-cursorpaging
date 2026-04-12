@@ -1,4 +1,4 @@
-package io.vigier.cursorpaging.jpa.filter;
+package io.vigier.cursorpaging.jpa.rsql.filter;
 
 import cz.jirutka.rsql.parser.ast.AndNode;
 import cz.jirutka.rsql.parser.ast.ComparisonNode;
@@ -11,6 +11,7 @@ import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.SingleAttribute;
+import io.vigier.cursorpaging.jpa.filter.FilterType;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;

@@ -38,6 +38,8 @@
 
   <properties>
     <java.version>25</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.34.1</protobuf.version>
@@ -360,6 +362,7 @@
       <modules>
         <module>cursorpaging-jpa</module>
         <module>cursorpaging-jpa-api</module>
+        <module>cursorpaging-jpa-rsql</module>
         <module>cursorpaging-examples/webapp-with-maven</module>
       </modules>
     </profile>
@@ -374,6 +377,7 @@
       <modules>
         <module>cursorpaging-jpa</module>
         <module>cursorpaging-jpa-api</module>
+        <module>cursorpaging-jpa-rsql</module>
       </modules>
       <distributionManagement>
         <repository>

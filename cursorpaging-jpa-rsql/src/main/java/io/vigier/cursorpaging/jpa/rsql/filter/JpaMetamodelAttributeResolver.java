@@ -1,4 +1,4 @@
-package io.vigier.cursorpaging.jpa.filter;
+package io.vigier.cursorpaging.jpa.rsql.filter;
 
 import io.vigier.cursorpaging.jpa.Attribute;
 import io.vigier.cursorpaging.jpa.SingleAttribute;
@@ -14,7 +14,7 @@ import jakarta.persistence.metamodel.Metamodel;
  * Example:
  * <pre>{@code
  *   var resolver = JpaMetamodelAttributeResolver.of( entityManager.getMetamodel(), DataRecord.class );
- *   var filter   = RsqlFilter.of( "auditInfo.modifiedAt=gt=2024-01-01T00:00:00Z", resolver );
+ *   var filter   = RsqlFilterFactory.of( "auditInfo.modifiedAt=gt=2024-01-01T00:00:00Z", resolver );
  * }</pre>
  */
 public class JpaMetamodelAttributeResolver implements AttributeResolver {
@@ -22,20 +22,9 @@ public class JpaMetamodelAttributeResolver implements AttributeResolver {
     private final ManagedType<?> rootType;
     private final Metamodel metamodel;
 
-    private JpaMetamodelAttributeResolver( final Metamodel metamodel, final ManagedType<?> rootType ) {
+    JpaMetamodelAttributeResolver( final Metamodel metamodel, final ManagedType<?> rootType ) {
         this.metamodel = metamodel;
         this.rootType = rootType;
-    }
-
-    /**
-     * Creates a resolver for the given entity class.
-     *
-     * @param metamodel the JPA metamodel (typically from {@code entityManager.getMetamodel()})
-     * @param entityClass the root entity class to resolve selectors against
-     * @return a new resolver instance
-     */
-    public static JpaMetamodelAttributeResolver of( final Metamodel metamodel, final Class<?> entityClass ) {
-        return new JpaMetamodelAttributeResolver( metamodel, metamodel.managedType( entityClass ) );
     }
 
     @Override

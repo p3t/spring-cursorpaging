@@ -1,12 +1,12 @@
-package io.vigier.cursorpaging.jpa.filter;
+package io.vigier.cursorpaging.jpa.rsql.filter;
 
 import io.vigier.cursorpaging.jpa.Attribute;
 
 /**
  * Resolves an RSQL selector (e.g. {@code "name"} or {@code "auditInfo.modifiedAt"}) to a typed {@link Attribute}.
  * <p>
- * Implement this interface to provide proper type information for non-string attributes so that value conversion
- * (via {@link Attribute#verify}) works correctly.
+ * Implement this interface to provide proper type information for non-string attributes so that value conversion (via
+ * {@link Attribute#verify}) works correctly.
  */
 @FunctionalInterface
 public interface AttributeResolver {

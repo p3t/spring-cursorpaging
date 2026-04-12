@@ -148,6 +148,15 @@ public class PageRequest<E> {
             return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.DESC ) ) );
         }
 
+        public PageRequestBuilder<E> sort( final SingularAttribute<? super E, ? extends Comparable<?>> attribute,
+                final Order order ) {
+            return sort( Attribute.of( attribute ), order );
+        }
+
+        public PageRequestBuilder<E> sort( final Attribute attribute, final Order order ) {
+            return addPosition( Position.create( b -> b.attribute( attribute ).order( order ) ) );
+        }
+
         /**
          * Add a filter to the request. Filter which do not contain a filter value or empty char-sequences as values are
          * silently ignored for convenience reasons when creating page requests out of query parameters.
@@ -180,6 +189,11 @@ public class PageRequest<E> {
                 this.filters$value = filters;
                 this.filters$set = true;
             }
+            return this;
+        }
+
+        public PageRequestBuilder<E> apply( final Consumer<PageRequestBuilder<E>> consumer ) {
+            consumer.accept( this );
             return this;
         }
 
