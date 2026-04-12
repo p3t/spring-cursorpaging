@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.4</version>
+    <version>4.0.5</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -22,8 +22,8 @@
     <lombok.version>1.18.44</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
-    <hibernate.version>7.2.6.Final</hibernate.version>
     <byte-buddy.version>1.17.8</byte-buddy.version>
+    <hibernate.version>7.3.0.Final</hibernate.version>
   </properties>
 
   <profiles>
