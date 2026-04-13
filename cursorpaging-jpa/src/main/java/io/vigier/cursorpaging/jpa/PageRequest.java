@@ -80,10 +80,12 @@ public class PageRequest<E> {
          *
          * @param attribute the attribute used to create a position (ascending ordered)
          * @return the builder
+         * @deprecated : Use {@linkplain #sort(SingularAttribute, Order)}
          */
+        @Deprecated( forRemoval = true, since = "1.1.0" )
         public PageRequestBuilder<E> firstPage( final Order order,
                 final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( attribute ) ).order( order ) ) );
+            return sort( attribute, order );
         }
 
         /**
@@ -93,7 +95,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> asc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return firstPage( Order.ASC, attribute );
+            return sort( attribute, Order.ASC );
         }
 
         /**
@@ -103,7 +105,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> desc( final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return firstPage( Order.DESC, attribute );
+            return sort( attribute, Order.DESC );
         }
 
         /**
@@ -113,7 +115,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> asc( final Attribute attribute ) {
-            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.ASC ) ) );
+            return sort( attribute, Order.ASC );
         }
 
         /**
@@ -123,7 +125,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> desc( final Attribute attribute ) {
-            return addPosition( Position.create( b -> b.attribute( attribute ).order( Order.DESC ) ) );
+            return sort( attribute, Order.DESC );
         }
 
         /**
@@ -134,7 +136,7 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> asc( final String name, final Class<? extends Comparable<?>> type ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.ASC ) ) );
+            return sort( Attribute.of( name, type ), Order.ASC );
         }
 
         /**
@@ -145,7 +147,16 @@ public class PageRequest<E> {
          * @return the builder
          */
         public PageRequestBuilder<E> desc( final String name, final Class<? extends Comparable<?>> type ) {
-            return addPosition( Position.create( b -> b.attribute( Attribute.of( name, type ) ).order( Order.DESC ) ) );
+            return sort( Attribute.of( name, type ), Order.DESC );
+        }
+
+        public PageRequestBuilder<E> sort( final SingularAttribute<? super E, ? extends Comparable<?>> attribute,
+                final Order order ) {
+            return sort( Attribute.of( attribute ), order );
+        }
+
+        public PageRequestBuilder<E> sort( final Attribute attribute, final Order order ) {
+            return addPosition( Position.create( b -> b.attribute( attribute ).order( order ) ) );
         }
 
         /**
@@ -180,6 +191,11 @@ public class PageRequest<E> {
                 this.filters$value = filters;
                 this.filters$set = true;
             }
+            return this;
+        }
+
+        public PageRequestBuilder<E> apply( final Consumer<PageRequestBuilder<E>> consumer ) {
+            consumer.accept( this );
             return this;
         }
 

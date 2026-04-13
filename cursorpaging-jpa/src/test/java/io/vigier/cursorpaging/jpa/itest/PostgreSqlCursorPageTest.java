@@ -25,6 +25,8 @@ import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
@@ -71,6 +73,8 @@ class PostgreSqlCursorPageTest {
     private TestDataPersister testDataPersister;
     @Autowired
     private TagRepository tagRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
 
 
     @Test
@@ -954,7 +958,7 @@ class PostgreSqlCursorPageTest {
         final var page = dataRecordRepository.loadPage( request );
         assertThat( page ).hasSize( recordsWithSecClass0.size() )
                 .allSatisfy( r -> assertThat( r.getName() ).startsWith( "A" ) )
-                .allSatisfy( r -> assertThat( r.getSecurityClass().getLevel() ).isEqualTo( 0 ) );
+                .allSatisfy( r -> assertThat( r.getSecurityClass().getLevel() ).isZero() );
     }
 
     @Test

@@ -542,6 +542,88 @@ public void queryData() {
 }
 ```
 
+## RSQL / FIQL filtering
+
+The `cursorpaging-jpa-rsql` module allows clients to pass filter expressions as [RSQL/FIQL](https://github.com/jirutka/rsql-parser) query strings — a compact, URL-friendly filter syntax widely used in REST APIs.
+
+### Dependency
+
+```xml
+<dependency>
+  <groupId>io.vigier.cursorpaging</groupId>
+  <artifactId>cursorpaging-jpa-rsql</artifactId>
+  <version>${cursorpaging.version}</version>
+</dependency>
+```
+
+### Setup
+
+Create an `RsqlFilterFactory` bean for each entity. It needs an `EntityManager` and the JPA `ManagedType` of the root entity so that attribute types (including embedded/related paths) are resolved automatically via the JPA metamodel:
+
+```java
+@Configuration
+public class RsqlConfig {
+
+    @Bean
+    public RsqlFilterFactory<DataRecord> dataRecordRsqlFilterFactory( final EntityManager entityManager ) {
+        return new RsqlFilterFactory<>( entityManager,
+                entityManager.getMetamodel().managedType( DataRecord.class ) );
+    }
+}
+```
+
+### Using RSQL filters in a controller
+
+Accept the RSQL expression as a query parameter and convert it to a `QueryElement` (filter) with the factory:
+
+```java
+@RestController
+@RequestMapping( "/api/v1/datarecord" )
+@RequiredArgsConstructor
+public class DataRecordController {
+
+    private final DataRecordRepository dataRecordRepository;
+    private final RequestSerializer<DataRecord> serializer;
+    private final RsqlFilterFactory<DataRecord> rsqlFilterFactory;
+
+    @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )
+    public CollectionModel<DtoDataRecord> getPage(
+            @RequestParam final Optional<Integer> pageSize,
+            @RequestParam( "cursor" ) final Optional<Base64String> cursor,
+            @RequestParam( "filter" ) final Optional<String> rsqlFilter ) {
+
+        var request = cursor.map( serializer::toPageRequest )
+                .orElseGet( () -> PageRequest.create(
+                        b -> b.asc( DataRecord_.name ).asc( DataRecord_.id ) ) )
+                .withPageSize( pageSize.orElse( 10 ) );
+
+        // apply RSQL filter if present
+        if ( rsqlFilter.isPresent() ) {
+            request = request.withFilter( rsqlFilterFactory.toFilter( rsqlFilter.get() ) );
+        }
+
+        final var page = dataRecordRepository.loadPage( request );
+        // ... build response
+    }
+}
+```
+
+### RSQL syntax quick reference
+
+| Operator | Meaning                    | Example                                          |
+|----------|----------------------------|--------------------------------------------------|
+| `==`     | equal                      | `name==John`                                     |
+| `=in=`   | in (multi-value)           | `name=in=(Alice,Bob,Charlie)`                    |
+| `=gt=`   | greater than               | `age=gt=30`                                      |
+| `=ge=`   | greater than or equal to   | `age=ge=18`                                      |
+| `=lt=`   | less than                  | `age=lt=50`                                      |
+| `=le=`   | less than or equal to      | `age=le=65`                                      |
+| `;`      | AND                        | `name==John;age=gt=25`                           |
+| `,`      | OR                         | `name==Alice,name==Bob`                          |
+| `()`     | grouping                   | `(name==Alice,name==Bob);age=gt=20`              |
+
+Dotted paths are supported and resolved through the JPA metamodel, e.g. `auditInfo.createdAt=gt=2024-01-01T00:00:00Z`.
+
 # Background: Concept description
 ## Basic idea
 
