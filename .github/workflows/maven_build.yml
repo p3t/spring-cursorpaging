@@ -34,12 +34,25 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Cancel redundant workflow runs for the same branch/PR.
+# Never cancel release builds – only cancel CI (non-release) runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !(inputs.release_build || false) }}
+
+# Explicitly scope token permissions (least-privilege)
+permissions:
+  contents: read
+  pull-requests: read
+  packages: read
+
 env:
   BUILD_VERSION: ${{ inputs.build_version != '' && inputs.build_version || '0-SNAPSHOT' }}
 
 jobs:
   Build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       build_artifacts_id: ${{ steps.BuildArtifactUpload.outputs.artifact-id }}
     steps:
@@ -57,7 +70,7 @@ jobs:
           cache-dependency-path: '**/pom.xml'
           server-id: 'github'
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE  # env-var NAME, not the secret value
 
       - name: Cache SonarQube packages
         uses: actions/cache@v5
@@ -66,16 +79,9 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Cache Maven packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
       - name: Set version
         if: ${{ inputs.release_build }}
-        run: ./mvnw versions:set -DnewVersion=${{ env.BUILD_VERSION }} -DgenerateBackupPoms=false
+        run: ./mvnw versions:set -DnewVersion="$BUILD_VERSION" -DgenerateBackupPoms=false
 
       - name: Build project, run unit and integration tests
         id: Build
@@ -86,23 +92,23 @@ jobs:
           ./mvnw -T1C --batch-mode clean install
 
       - name: Define branch name where the scan results are added to in Sonarcloud
-        if: ${{ github.actor != 'dependabot[bot]' }}
+        if: ${{ github.actor != 'dependabot[bot]' && !inputs.release_build }}
         id: branch_to_scan
         run: |
-          echo github.head_ref - pull request:   ${{ github.head_ref }} 
-          echo github.ref_name - push:   ${{ github.ref_name }} 
+          echo github.head_ref - pull request:   ${{ github.head_ref }}
+          echo github.ref_name - push:   ${{ github.ref_name }}
           echo event: ${{ github.event_name }}
           echo branch name to scan: ${{ github.head_ref || github.ref_name }}
           echo name=${{ github.head_ref || github.ref_name }} >> $GITHUB_OUTPUT
 
       - name: Sonar scan
-        if: ${{ github.actor != 'dependabot[bot]' }}
+        if: ${{ github.actor != 'dependabot[bot]' && !inputs.release_build }}
         id: sonar_scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         run: >
-          mvn --batch-mode --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          ./mvnw --batch-mode -ntp --no-snapshot-updates org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.branch.name=${{ steps.branch_to_scan.outputs.name }} -Dsonar.token=$SONAR_TOKEN
           -Dsonar.projectKey=p3t_spring-cursorpaging
 
@@ -115,16 +121,21 @@ jobs:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
 
       - name: (Info) Display structure of files
+        if: ${{ runner.debug == '1' }}
         run: tree
 
       - name: Upload build artifacts
+        if: ${{ inputs.release_build }}
         id: BuildArtifactUpload
         uses: actions/upload-artifact@v7
         with:
-          name: build-artifacts-${{ inputs.build_version }}
+          name: build-artifacts-${{ env.BUILD_VERSION }}
           path: |
-            ./**/target/*${{ inputs.build_version }}*.jar
-            ./**/target/*${{ inputs.build_version }}*.zip
-            ./**/target/*${{ inputs.build_version }}*.asc
+            ./**/target/*${{ env.BUILD_VERSION }}*.jar
+            ./**/target/*${{ env.BUILD_VERSION }}*.pom
+            ./**/target/*${{ env.BUILD_VERSION }}*.zip
+            ./**/target/*${{ env.BUILD_VERSION }}*.asc
             ./**/target/reports/
+            ./LICENSE
+            ./README.md
           retention-days: 10

@@ -75,7 +75,7 @@ jobs:
           cache-dependency-path: '**/pom.xml'
           server-id: 'github'
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE  # env-var NAME, not the secret value
 
       - name: Download build artifacts
         uses: actions/download-artifact@v8
