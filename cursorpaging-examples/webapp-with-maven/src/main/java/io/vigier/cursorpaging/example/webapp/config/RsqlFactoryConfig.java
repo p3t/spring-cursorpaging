@@ -11,7 +11,7 @@ public class RsqlFactoryConfig {
 
     @Bean
     public RsqlFilterFactory<DataRecord> dataRecordRsqlFilterFactory( final EntityManager entityManager ) {
-        return new RsqlFilterFactory<>( entityManager, entityManager.getMetamodel().entity( DataRecord.class ) );
+        return RsqlFilterFactory.of( entityManager, DataRecord.class );
     }
 }
 

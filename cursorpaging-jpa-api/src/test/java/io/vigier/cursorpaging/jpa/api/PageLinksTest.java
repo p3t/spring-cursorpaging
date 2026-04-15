@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-public class PageLinksTest {
+class PageLinksTest {
 
     @Data
     @AllArgsConstructor
@@ -45,9 +45,10 @@ public class PageLinksTest {
     }
 
     private final RequestSerializerFactory requestSerializerFactory = RequestSerializerFactory.create(
-            b -> b.serialalizer( RequestSerializer.create( TestEntity.class ).apply( r -> r //
-                    .use( Attribute.of( "id", String.class ) ) //
-                    .use( Attribute.of( "name", String.class ) ) ) ) );
+            b -> b.serializer( RequestSerializer.create( TestEntity.class )
+                    .apply( r -> r //
+                            .use( Attribute.of( "id", String.class ) ) //
+                            .use( Attribute.of( "name", String.class ) ) ) ) );
 
     @Test
     void shouldGenerateLinksWithoutTemplate() {
@@ -108,10 +109,13 @@ public class PageLinksTest {
 
     private static Page<TestEntity> createPage() {
         return Page.create( p -> p.content( List.of( new TestEntity( "1", "One" ) ) )
-                .self( PageRequest.create(
-                        r -> r.asc( Attribute.of( "id", String.class ) ).pageSize( 1 ).totalCount( 2L ) ) )
+                .self( PageRequest.create( r -> r.asc( Attribute.of( "id", String.class ) )
+                        .pageSize( 1 )
+                        .totalCount( 2L ) ) )
                 .next( PageRequest.create( r -> r.position( Position.create(
-                                pos -> pos.attribute( Attribute.of( "id", String.class ) ).value( 1 ).order( Order.ASC ) ) )
+                                pos -> pos.attribute( Attribute.of( "id", String.class ) )
+                                        .value( 1 )
+                                        .order( Order.ASC ) ) )
                         .pageSize( 1 )
                         .totalCount( 2L ) ) ) //
                 .entityType( TestEntity.class ) );

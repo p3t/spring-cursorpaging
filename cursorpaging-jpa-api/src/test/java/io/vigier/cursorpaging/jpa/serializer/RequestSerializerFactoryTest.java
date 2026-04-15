@@ -14,9 +14,9 @@ class RequestSerializerFactoryTest {
     void testCreate() {
         // Arrange
         // Act
-        final RequestSerializerFactory result = RequestSerializerFactory.create( b -> {
-            b.serialalizer( RequestSerializer.create( TestEntity.class ).apply( r -> {} ) );
-        } );
+        final RequestSerializerFactory result = RequestSerializerFactory.create( b -> b.serializer(
+                RequestSerializer.create( TestEntity.class )
+                        .apply( _ -> {} ) ) );
         // Assert
         assertNotNull( result );
     }

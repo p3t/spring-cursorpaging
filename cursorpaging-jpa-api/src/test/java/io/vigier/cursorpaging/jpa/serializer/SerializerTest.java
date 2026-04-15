@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.serializer;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.AttributeResolver;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.Filters;
@@ -78,14 +79,22 @@ class SerializerTest {
     static void setup() {
         when( TestEntity_.name.getJavaType() ).thenReturn( String.class );
         when( TestEntity_.name.getName() ).thenReturn( "name" );
-        lenient().when( TestEntity_.value.getJavaType() ).thenReturn( ValueClass.class );
-        lenient().when( TestEntity_.value.getName() ).thenReturn( "value" );
-        lenient().when( TestEntity_.id.getJavaType() ).thenReturn( Long.class );
-        lenient().when( TestEntity_.id.getName() ).thenReturn( "id" );
-        lenient().when( ValueClass_.theValue.getJavaType() ).thenReturn( String.class );
-        lenient().when( ValueClass_.theValue.getName() ).thenReturn( "theValue" );
-        lenient().when( TestEntity_.time.getJavaType() ).thenReturn( Instant.class );
-        lenient().when( TestEntity_.time.getName() ).thenReturn( "time" );
+        lenient().when( TestEntity_.value.getJavaType() )
+                .thenReturn( ValueClass.class );
+        lenient().when( TestEntity_.value.getName() )
+                .thenReturn( "value" );
+        lenient().when( TestEntity_.id.getJavaType() )
+                .thenReturn( Long.class );
+        lenient().when( TestEntity_.id.getName() )
+                .thenReturn( "id" );
+        lenient().when( ValueClass_.theValue.getJavaType() )
+                .thenReturn( String.class );
+        lenient().when( ValueClass_.theValue.getName() )
+                .thenReturn( "theValue" );
+        lenient().when( TestEntity_.time.getJavaType() )
+                .thenReturn( Instant.class );
+        lenient().when( TestEntity_.time.getName() )
+                .thenReturn( "time" );
     }
 
     @Test
@@ -109,10 +118,11 @@ class SerializerTest {
 
         assertThat( deserializeRequest ).isEqualTo( pageRequest );
         assertThat( deserializeRequest.isFirstPage() ).isFalse();
-        assertThat( deserializeRequest.positions() ).first().satisfies( p -> {
-            assertThat( p.value() ).isEqualTo( 4711L );
-            assertThat( p.nextValue() ).isEqualTo( 4712L );
-        } );
+        assertThat( deserializeRequest.positions() ).first()
+                .satisfies( p -> {
+                    assertThat( p.value() ).isEqualTo( 4711L );
+                    assertThat( p.nextValue() ).isEqualTo( 4712L );
+                } );
     }
 
     @Test
@@ -127,10 +137,11 @@ class SerializerTest {
 
         assertThat( deserializeRequest ).isEqualTo( pageRequest );
         assertThat( deserializeRequest.isFirstPage() ).isFalse();
-        assertThat( deserializeRequest.positions() ).first().satisfies( p -> {
-            assertThat( p.value() ).isNull();
-            assertThat( p.nextValue() ).isEqualTo( 4712L );
-        } );
+        assertThat( deserializeRequest.positions() ).first()
+                .satisfies( p -> {
+                    assertThat( p.value() ).isNull();
+                    assertThat( p.nextValue() ).isEqualTo( 4712L );
+                } );
     }
 
     @Test
@@ -139,7 +150,9 @@ class SerializerTest {
         // but not converted back (no converter configured)
         final var value = new ValueClass( "123" );
         final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.position( Position.create(
-                p -> p.order( Order.ASC ).attribute( Attribute.of( TestEntity_.value ) ).value( value ) ) ) );
+                p -> p.order( Order.ASC )
+                        .attribute( Attribute.of( TestEntity_.value ) )
+                        .value( value ) ) ) );
 
         Assertions.assertThatThrownBy( () -> serializeAndDeserialize( pageRequest ) )
                 .isInstanceOf( SerializerException.class );
@@ -155,8 +168,10 @@ class SerializerTest {
         final var deserializeRequest = serializeAndDeserialize( request );
 
         assertThat( deserializeRequest.positions() ).hasSize( 1 );
-        final var pos = deserializeRequest.positions().getFirst();
-        assertThat( pos.attribute().attributes() ).hasSize( 2 );
+        final var pos = deserializeRequest.positions()
+                .getFirst();
+        assertThat( pos.attribute()
+                .attributes() ).hasSize( 2 );
     }
 
     @Test
@@ -166,9 +181,11 @@ class SerializerTest {
 
     @Test
     void shouldDeserializeFromCursorString() {
-        final PageRequest<TestEntity> request = PageRequest.create( r -> r.asc( TestEntity_.id ).pageSize( 42 ) );
+        final PageRequest<TestEntity> request = PageRequest.create( r -> r.asc( TestEntity_.id )
+                .pageSize( 42 ) );
         final var requestSerializer = getRequestSerializer();
-        final String cursor = requestSerializer.toBase64( request ).toString();
+        final String cursor = requestSerializer.toBase64( request )
+                .toString();
         assertThat( requestSerializer.stringToPageRequest( cursor ) ).isPresent()
                 .get()
                 .isEqualTo( request )
@@ -194,8 +211,8 @@ class SerializerTest {
 
     @Test
     void shouldSerializePageRequestsWithOrFilter() {
-        final PageRequest<TestEntity> pageRequest = PageRequest.create(
-                b -> b.desc( TestEntity_.name ).filter( Filters.or( //
+        final PageRequest<TestEntity> pageRequest = PageRequest.create( b -> b.desc( TestEntity_.name )
+                .filter( Filters.or( //
                         attribute( TestEntity_.name ).equalTo( "Name-1" ), //
                         attribute( TestEntity_.id ).greaterThan( 1L ) //
                 ) ) );
@@ -219,10 +236,12 @@ class SerializerTest {
                 SingleAttribute.of( "one", TestEntity.class ), //
                 SingleAttribute.of( "two", Instant.class ) );
         final var attribute2 = Attribute.of( "three", Integer.class );
-        final var pageRequest = PageRequest.<TestEntity>create(
-                b -> b.pageSize( 42 ).asc( attribute1 ).desc( attribute2 ) );
+        final var pageRequest = PageRequest.<TestEntity>create( b -> b.pageSize( 42 )
+                .asc( attribute1 )
+                .desc( attribute2 ) );
 
-        final var serializer = RequestSerializer.create( TestEntity.class, b -> b.use( attribute1 ).use( attribute2 ) );
+        final var serializer = RequestSerializer.create( TestEntity.class, b -> b.use( attribute1 )
+                .use( attribute2 ) );
         final var serializedRequest = serializer.toBytes( pageRequest );
         final var deserializeRequest = serializer.toPageRequest( serializedRequest );
 
@@ -231,9 +250,11 @@ class SerializerTest {
 
     @Test
     void shouldSerializeReversedPageRequests() {
-        final var request = PageRequest.create( r -> r.position( Position.create(
-                p -> p.reversed( true ).order( Order.ASC ).attribute( Attribute.of( "some_name", String.class ) ) ) ) );
-        final RequestSerializer<Object> serializer = RequestSerializer.create( Object.class ).withDefaults();
+        final var request = PageRequest.create( r -> r.position( Position.create( p -> p.reversed( true )
+                .order( Order.ASC )
+                .attribute( Attribute.of( "some_name", String.class ) ) ) ) );
+        final RequestSerializer<Object> serializer = RequestSerializer.create( Object.class )
+                .withDefaults();
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
         assertThat( deserializedRequest.isReversed() ).isTrue();
@@ -243,22 +264,29 @@ class SerializerTest {
 
     @Test
     void shouldSerializeTotalCountIfPresent() {
-        final var request = createPageRequest().copy( b -> b.enableTotalCount( true ).totalCount( 42L ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class ).withDefaults();
+        final var request = createPageRequest().copy( b -> b.enableTotalCount( true )
+                .totalCount( 42L ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class )
+                .withDefaults();
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
-        assertThat( deserializedRequest ).isEqualTo( request ).satisfies( r -> {
-            assertThat( r.totalCount() ).isPresent().get().isEqualTo( 42L );
-            assertThat( r.enableTotalCount() ).isTrue();
-        } );
+        assertThat( deserializedRequest ).isEqualTo( request )
+                .satisfies( r -> {
+                    assertThat( r.totalCount() ).isPresent()
+                            .get()
+                            .isEqualTo( 42L );
+                    assertThat( r.enableTotalCount() ).isTrue();
+                } );
     }
 
     @Test
     void shouldDeserializeAndFilter() {
         final PageRequest<TestEntity> request = PageRequest.create( r -> r.filter(
-                Filters.and( attribute( TestEntity_.id ).equalTo( 123L ),
-                        attribute( TestEntity_.name ).like( "%bumlux%" ) ) ).asc( TestEntity_.id ) );
-        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class ).withDefaults();
+                        Filters.and( attribute( TestEntity_.id ).equalTo( 123L ),
+                                attribute( TestEntity_.name ).like( "%bumlux%" ) ) )
+                .asc( TestEntity_.id ) );
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class )
+                .withDefaults();
         final var serializedRequest = serializer.toBytes( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
@@ -268,9 +296,10 @@ class SerializerTest {
     @Test
     void shouldSerializeParametersOfFilterRules() {
         final Map<String, List<String>> parameters = Map.of( "Test1", List.of( "Value1" ) );
-        final var request = createPageRequest().copy( b -> b.filter( newTestRule( "TestRule", parameters ) ) );
+        final var name = "rule-name";
+        final var request = createPageRequest().copy( b -> b.filter( newTestRule( name, parameters ) ) );
         final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class,
-                c -> c.filterRuleFactory( "TestRule", p -> newTestRule( "TestRule", p ) ) );
+                c -> c.filterRuleFactory( name, p -> newTestRule( name, p ) ) );
         final var serializedRequest = serializer.toBase64( request );
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
@@ -278,7 +307,7 @@ class SerializerTest {
                 .first()
                 .asInstanceOf( InstanceOfAssertFactories.type( FilterRule.class ) )
                 .satisfies( r -> {
-                    assertThat( r.name() ).isEqualTo( "TestRule" );
+                    assertThat( r.name() ).isEqualTo( name );
                     assertThat( r.parameters() ).containsEntry( "Test1", List.of( "Value1" ) );
                 } );
     }
@@ -327,7 +356,9 @@ class SerializerTest {
                 SingleAttribute.of( "one", TestEntity.class ), //
                 SingleAttribute.of( "two", Instant.class ) );
         final var attribute2 = Attribute.of( "three", Integer.class );
-        return PageRequest.create( b -> b.pageSize( 42 ).asc( attribute1 ).desc( attribute2 ) );
+        return PageRequest.create( b -> b.pageSize( 42 )
+                .asc( attribute1 )
+                .desc( attribute2 ) );
     }
 
     @Test
@@ -343,7 +374,9 @@ class SerializerTest {
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
         assertThat( deserializedRequest ).isEqualTo( request );
-        assertThat( deserializedRequest.positions().getFirst().value().toString() ).isEqualTo( positionTime );
+        assertThat( deserializedRequest.positions()
+                .getFirst()
+                .value() ).hasToString( positionTime );
     }
 
     @Test
@@ -357,12 +390,14 @@ class SerializerTest {
         final var deserializedRequest = serializer.toPageRequest( serializedRequest );
 
         assertThat( deserializedRequest ).isEqualTo( request );
-        assertThat( deserializedRequest.filters() ).hasSize( 1 ).first().satisfies( r -> {
-            assertThat( r ).isInstanceOf( FilterRule.class );
-            assertThat( ((FilterRule) r).parameters() ) //
-                    .containsEntry( "param1", List.of( "value1" ) ) //
-                    .containsEntry( "param2", List.of( "value2" ) );
-        } );
+        assertThat( deserializedRequest.filters() ).hasSize( 1 )
+                .first()
+                .satisfies( r -> {
+                    assertThat( r ).isInstanceOf( FilterRule.class );
+                    assertThat( ((FilterRule) r).parameters() ) //
+                            .containsEntry( "param1", List.of( "value1" ) ) //
+                            .containsEntry( "param2", List.of( "value2" ) );
+                } );
     }
 
     @Test
@@ -393,9 +428,106 @@ class SerializerTest {
 
         final var deserializedFilter = deserializedRequest.firstFilterWith(
                 f -> f instanceof final Filter ff && ff.operation() == FilterType.ALWAYS );
-        assertThat( deserializedFilter ).isPresent().get().satisfies( f -> {
-            assertThat( f ).isInstanceOf( Filter.class );
-            assertThat( ((Filter) f).values() ).hasSize( 1 ).first().isEqualTo( Boolean.FALSE );
-        } );
+        assertThat( deserializedFilter ).isPresent()
+                .get()
+                .satisfies( f -> {
+                    assertThat( f ).isInstanceOf( Filter.class );
+                    assertThat( ((Filter) f).values() ).hasSize( 1 )
+                            .first()
+                            .isEqualTo( Boolean.FALSE );
+                } );
+    }
+
+    @Test
+    void shouldDeserializeUsingAttributeResolverWhenCacheIsEmpty() {
+        // Shared secret simulates multi-instance deployment with shared encryption key
+        final var sharedEncrypter = Encrypter.getInstance( "1234567890ABCDEFGHIJKlmnopqrst--" );
+
+        // Simulate instance A: serialize with one serializer
+        final var serializerA = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter ) );
+        final var request = PageRequest.<TestEntity>create( r -> r.asc( TestEntity_.name )
+                .pageSize( 10 ) );
+        final var serialized = serializerA.toBase64( request );
+
+        // Simulate instance B: different serializer with empty cache but with an AttributeResolver
+        final AttributeResolver resolver = name -> {
+            if ( "name".equals( name ) ) {
+                return Attribute.of( "name", String.class );
+            }
+            throw new IllegalArgumentException( "Unknown attribute: " + name );
+        };
+        final var serializerB = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter )
+                .attributeResolver( resolver ) );
+        final var deserialized = serializerB.toPageRequest( serialized );
+
+        assertThat( deserialized ).isEqualTo( request );
+        assertThat( deserialized.positions() ).isNotEmpty();
+        assertThat( deserialized.positions()
+                .getFirst()
+                .attribute()
+                .name() ).isEqualTo( "name" );
+    }
+
+    @Test
+    void shouldPreferCachedAttributeOverResolver() {
+        // Attribute registered via .use() should take precedence over the resolver
+        final var nameAttribute = Attribute.of( TestEntity_.name );
+        final AttributeResolver resolver = _ -> {
+            throw new AssertionError( "Resolver should not be called when attribute is cached" );
+        };
+
+        final var serializer = RequestSerializer.create( TestEntity.class, b -> b.use( nameAttribute )
+                .attributeResolver( resolver ) );
+
+        final var request = PageRequest.<TestEntity>create( r -> r.asc( TestEntity_.name )
+                .pageSize( 10 ) );
+        final var serialized = serializer.toBase64( request );
+        final var deserialized = serializer.toPageRequest( serialized );
+
+        assertThat( deserialized ).isEqualTo( request );
+    }
+
+    @Test
+    void shouldThrowSerializerExceptionWhenNoResolverAndNoCachedAttribute() {
+        // Shared secret simulates multi-instance deployment with shared encryption key
+        final var sharedEncrypter = Encrypter.getInstance( "1234567890ABCDEFGHIJKlmnopqrst--" );
+
+        // Serialize on one serializer (so cache is populated there)
+        final var serializerA = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter ) );
+        final var request = PageRequest.<TestEntity>create( r -> r.asc( TestEntity_.name )
+                .pageSize( 10 ) );
+        final var serialized = serializerA.toBase64( request );
+
+        // Deserialize on a different serializer with empty cache and no resolver
+        final var serializerB = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter ) );
+
+        Assertions.assertThatThrownBy( () -> serializerB.toPageRequest( serialized ) )
+                .isInstanceOf( SerializerException.class )
+                .hasMessageContaining( "No attribute found for name: name" );
+    }
+
+    @Test
+    void shouldDeserializeFiltersUsingAttributeResolverWhenCacheIsEmpty() {
+        // Shared secret simulates multi-instance deployment with shared encryption key
+        final var sharedEncrypter = Encrypter.getInstance( "1234567890ABCDEFGHIJKlmnopqrst--" );
+
+        // Serialize with one serializer that learns the attributes
+        final var serializerA = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter ) );
+        final var request = PageRequest.<TestEntity>create( r -> r.asc( TestEntity_.name )
+                .filter( Filters.attribute( TestEntity_.id )
+                        .equalTo( 42L ) ) );
+        final var serialized = serializerA.toBase64( request );
+
+        // Deserialize on a different serializer with a resolver
+        final AttributeResolver resolver = name -> switch ( name ) {
+            case "name" -> Attribute.of( "name", String.class );
+            case "id" -> Attribute.of( "id", Long.class );
+            default -> throw new IllegalArgumentException( "Unknown: " + name );
+        };
+        final var serializerB = RequestSerializer.create( TestEntity.class, b -> b.encrypter( sharedEncrypter )
+                .attributeResolver( resolver ) );
+        final var deserialized = serializerB.toPageRequest( serialized );
+
+        assertThat( deserialized ).isEqualTo( request );
     }
 }

@@ -6,17 +6,14 @@ import cz.jirutka.rsql.parser.ast.ComparisonOperator;
 import cz.jirutka.rsql.parser.ast.OrNode;
 import cz.jirutka.rsql.parser.ast.RSQLOperators;
 import cz.jirutka.rsql.parser.ast.RSQLVisitor;
-import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.AttributeResolver;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.Filters;
 import io.vigier.cursorpaging.jpa.QueryElement;
-import io.vigier.cursorpaging.jpa.SingleAttribute;
 import io.vigier.cursorpaging.jpa.filter.FilterType;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
 
 /**
@@ -26,11 +23,6 @@ import org.springframework.core.convert.support.DefaultConversionService;
  * temporal converters).
  */
 class RsqlFilterVisitor implements RSQLVisitor<QueryElement, Void> {
-
-    /**
-     * Default resolver: splits dotted selectors into path segments, all typed as {@link String}.
-     */
-    static final AttributeResolver DEFAULT_RESOLVER = RsqlFilterVisitor::toAttribute;
 
     private static final DefaultConversionService CONVERSION_SERVICE = createConversionService();
 
@@ -50,13 +42,19 @@ class RsqlFilterVisitor implements RSQLVisitor<QueryElement, Void> {
 
     @Override
     public QueryElement visit( final AndNode node, final Void unused ) {
-        final var elements = node.getChildren().stream().map( n -> n.accept( this ) ).toList();
+        final var elements = node.getChildren()
+                .stream()
+                .map( n -> n.accept( this ) )
+                .toList();
         return Filters.and( elements );
     }
 
     @Override
     public QueryElement visit( final OrNode node, final Void unused ) {
-        final var elements = node.getChildren().stream().map( n -> n.accept( this ) ).toList();
+        final var elements = node.getChildren()
+                .stream()
+                .map( n -> n.accept( this ) )
+                .toList();
         return Filters.or( elements );
     }
 
@@ -64,11 +62,14 @@ class RsqlFilterVisitor implements RSQLVisitor<QueryElement, Void> {
     public QueryElement visit( final ComparisonNode node, final Void unused ) {
         final var filterType = OPERATOR_MAP.get( node.getOperator() );
         if ( filterType == null ) {
-            throw new UnsupportedOperationException( "Operator not supported: " + node.getOperator().getSymbol() );
+            throw new UnsupportedOperationException( "Operator not supported: " + node.getOperator()
+                    .getSymbol() );
         }
         final var attribute = resolver.resolve( node.getSelector() );
         final var values = convertValues( node.getArguments(), attribute.type() );
-        return Filter.create( b -> b.attribute( attribute ).type( filterType ).values( values ) );
+        return Filter.create( b -> b.attribute( attribute )
+                .type( filterType )
+                .values( values ) );
     }
 
     private static List<? extends Comparable<?>> convertValues( final List<String> arguments,
@@ -81,23 +82,9 @@ class RsqlFilterVisitor implements RSQLVisitor<QueryElement, Void> {
                 .toList();
     }
 
-    /**
-     * Converts a (possibly dotted) selector like "securityClass.level" into an {@link Attribute} path.
-     */
-    private static Attribute toAttribute( final String selector ) {
-        final var segments = selector.split( "\\." );
-        if ( segments.length == 1 ) {
-            return Attribute.of( selector, String.class );
-        }
-        final var path = Arrays.stream( segments )
-                .map( name -> SingleAttribute.of( name, String.class ) )
-                .toArray( SingleAttribute[]::new );
-        return Attribute.of( path );
-    }
-
     private static DefaultConversionService createConversionService() {
         final var service = new DefaultConversionService();
-        service.addConverter( String.class, Instant.class, (Converter<String, Instant>) Instant::parse );
+        service.addConverter( String.class, Instant.class, Instant::parse );
         return service;
     }
 }
