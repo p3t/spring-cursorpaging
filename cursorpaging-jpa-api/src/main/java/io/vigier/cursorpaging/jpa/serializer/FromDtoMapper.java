@@ -1,6 +1,7 @@
 package io.vigier.cursorpaging.jpa.serializer;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.AttributeResolver;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.Order;
@@ -46,6 +47,7 @@ class FromDtoMapper<E> {
     private final Map<String, Attribute> attributesByName = new HashMap<>();
     private final ConversionService conversionService;
     private final Map<String, RuleFactory> ruleFactories;
+    private final AttributeResolver attributeResolver;
 
     public static <T> FromDtoMapper<T> create( final Consumer<FromDtoMapperBuilder<T>> c ) {
         final var builder = FromDtoMapper.<T>builder();
@@ -68,15 +70,20 @@ class FromDtoMapper<E> {
         if ( factory != null ) {
             final Map<String, List<String>> parameters = new HashMap<>();
             rule.getParametersList()
-                    .forEach( p -> parameters.put( p.getName(),
-                            p.getValuesList().stream().map( Value::getValue ).toList() ) );
+                    .forEach( p -> parameters.put( p.getName(), p.getValuesList()
+                            .stream()
+                            .map( Value::getValue )
+                            .toList() ) );
             return factory.apply( parameters );
         }
         return null;
     }
 
     private Collection<Position> positions() {
-        return request.getPositionsList().stream().map( this::positionOf ).toList();
+        return request.getPositionsList()
+                .stream()
+                .map( this::positionOf )
+                .toList();
     }
 
     private FilterList filters() {
@@ -86,9 +93,18 @@ class FromDtoMapper<E> {
     private FilterList fromFilterListDto( final Cursor.FilterList dto ) {
         final List<QueryElement> filters = new LinkedList<>();
 
-        filters.addAll( dto.getFiltersList().stream().map( this::fromFilterDto ).toList() );
-        filters.addAll( dto.getFilterListsList().stream().map( this::fromFilterListDto ).toList() );
-        filters.addAll( dto.getRulesList().stream().map( this::filterRuleOf ).toList() );
+        filters.addAll( dto.getFiltersList()
+                .stream()
+                .map( this::fromFilterDto )
+                .toList() );
+        filters.addAll( dto.getFilterListsList()
+                .stream()
+                .map( this::fromFilterListDto )
+                .toList() );
+        filters.addAll( dto.getRulesList()
+                .stream()
+                .map( this::filterRuleOf )
+                .toList() );
 
         return switch ( dto.getType() ) {
             case AND, UNRECOGNIZED -> AndFilter.of( filters );
@@ -99,7 +115,10 @@ class FromDtoMapper<E> {
     private Filter fromFilterDto( final Cursor.Filter dto ) {
         final var attribute = attributeOf( dto.getAttribute() );
         final var values = valueListOf( attribute, dto.getValuesList() );
-        return Filter.builder().attribute( attribute ).values( values ).type( getFilterType( dto ) )
+        return Filter.builder()
+                .attribute( attribute )
+                .values( values )
+                .type( getFilterType( dto ) )
                 .build();
     }
 
@@ -109,16 +128,20 @@ class FromDtoMapper<E> {
 
     private List<? extends Comparable<?>> valueListOf( final Attribute attribute,
             final List<Cursor.Value> valuesList ) {
-        return valuesList.stream().map( v -> {
-            final Comparable<?> converted = valueOf( attribute, v );
-            log.trace( "Converted: {} into {} (value={})", v.getClass().getSimpleName(),
-                    (converted != null ? converted.getClass().getSimpleName() : null), converted );
-            return converted;
-        } ).toList();
+        return valuesList.stream()
+                .map( v -> {
+                    final Comparable<?> converted = valueOf( attribute, v );
+                    log.trace( "Converted: {} into {} (value={})", v.getClass()
+                            .getSimpleName(), (converted != null ? converted.getClass()
+                                                                   .getSimpleName() : null), converted );
+                    return converted;
+                } )
+                .toList();
     }
 
     private <T extends Comparable<? super T>> T valueOf( final Attribute attribute, final Cursor.Value value ) {
-        if ( value.getValue().isEmpty() ) {
+        if ( value.getValue()
+                .isEmpty() ) {
             return null;
         }
         try {
@@ -126,7 +149,9 @@ class FromDtoMapper<E> {
         } catch ( final ConverterNotFoundException e ) {
             throw new SerializerException(
                     "Cannot convert value: '%s' (type: %s) to type: '%s' for attribute: %s".formatted( value.getValue(),
-                            value.getValue().getClass().getName(), attribute.type(), attribute.name() ) );
+                            value.getValue()
+                                    .getClass()
+                                    .getName(), attribute.type(), attribute.name() ), e );
         }
     }
 
@@ -145,11 +170,11 @@ class FromDtoMapper<E> {
     }
 
     private Attribute attributeOf( final Cursor.Attribute attribute ) {
-        final var cursorAttribute = attributesByName.get( attribute.getName() );
-        if ( cursorAttribute == null ) {
-            throw new IllegalArgumentException( "No attribute found for name: " + attribute.getName() );
+        final var resolved = attributesByName.computeIfAbsent( attribute.getName(), attributeResolver::resolve );
+        if ( resolved == null ) {
+            throw new SerializerException( "No attribute found for name: " + attribute.getName() );
         }
-        return cursorAttribute;
+        return resolved;
     }
 
 }

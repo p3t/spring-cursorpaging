@@ -1,6 +1,7 @@
-package io.vigier.cursorpaging.jpa.rsql.filter;
+package io.vigier.cursorpaging.jpa.impl;
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.AttributeResolver;
 import io.vigier.cursorpaging.jpa.SingleAttribute;
 import jakarta.persistence.metamodel.ManagedType;
 import jakarta.persistence.metamodel.Metamodel;
@@ -14,7 +15,7 @@ import jakarta.persistence.metamodel.Metamodel;
  * Example:
  * <pre>{@code
  *   var resolver = JpaMetamodelAttributeResolver.of( entityManager.getMetamodel(), DataRecord.class );
- *   var filter   = RsqlFilterFactory.of( "auditInfo.modifiedAt=gt=2024-01-01T00:00:00Z", resolver );
+ *   Attribute attr = resolver.resolve( "auditInfo.createdAt" );
  * }</pre>
  */
 public class JpaMetamodelAttributeResolver implements AttributeResolver {
@@ -22,14 +23,36 @@ public class JpaMetamodelAttributeResolver implements AttributeResolver {
     private final ManagedType<?> rootType;
     private final Metamodel metamodel;
 
-    JpaMetamodelAttributeResolver( final Metamodel metamodel, final ManagedType<?> rootType ) {
+    public JpaMetamodelAttributeResolver( final Metamodel metamodel, final ManagedType<?> rootType ) {
         this.metamodel = metamodel;
         this.rootType = rootType;
     }
 
+    /**
+     * Creates a new resolver for the given entity class.
+     *
+     * @param metamodel   the JPA metamodel
+     * @param entityClass the root entity class
+     * @return a new resolver instance
+     */
+    public static JpaMetamodelAttributeResolver of( final Metamodel metamodel, final Class<?> entityClass ) {
+        return new JpaMetamodelAttributeResolver( metamodel, metamodel.managedType( entityClass ) );
+    }
+
+    /**
+     * Creates a new resolver for the given managed type.
+     *
+     * @param metamodel the JPA metamodel
+     * @param rootType  the root managed type
+     * @return a new resolver instance
+     */
+    public static JpaMetamodelAttributeResolver of( final Metamodel metamodel, final ManagedType<?> rootType ) {
+        return new JpaMetamodelAttributeResolver( metamodel, rootType );
+    }
+
     @Override
-    public Attribute resolve( final String selector ) {
-        final var segments = selector.split( "\\." );
+    public Attribute resolve( final String name ) {
+        final var segments = name.split( "\\." );
         final var path = new SingleAttribute[segments.length];
         var currentType = rootType;
 

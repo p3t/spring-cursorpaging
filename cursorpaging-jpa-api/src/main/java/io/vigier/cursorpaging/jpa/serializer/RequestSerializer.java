@@ -2,6 +2,7 @@ package io.vigier.cursorpaging.jpa.serializer;
 
 
 import io.vigier.cursorpaging.jpa.Attribute;
+import io.vigier.cursorpaging.jpa.AttributeResolver;
 import io.vigier.cursorpaging.jpa.FilterRule;
 import io.vigier.cursorpaging.jpa.PageRequest;
 import io.vigier.cursorpaging.jpa.QueryElement;
@@ -16,10 +17,10 @@ import java.util.function.Function;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.lang.Nullable;
 
 @Builder
 public class RequestSerializer<E> {
@@ -39,9 +40,15 @@ public class RequestSerializer<E> {
     @Builder.Default
     private final Map<String, RuleFactory> filterRuleFactories = new HashMap<>();
 
+    @Builder.Default
+    private final AttributeResolver attributeResolver = name -> {
+        throw new SerializerException( "No attribute found for name: " + name + " (no AttributeResolver configured)" );
+    };
+
     static ConversionService getConversionService() {
         final DefaultConversionService cs = new DefaultConversionService();
-        Jsr310Converters.getConvertersToRegister().forEach( cs::addConverter );
+        Jsr310Converters.getConvertersToRegister()
+                .forEach( cs::addConverter );
         // The Object to object converter would try to find a constructor or method in the target
         // type for constrcuting the object from a string. This is not desired, as the
         // Serializer used "toString" for serializing, and if this string is not by intend
@@ -75,7 +82,7 @@ public class RequestSerializer<E> {
     public interface RequestSerializerCreator<E> extends
             Function<Consumer<RequestSerializerBuilder<E>>, RequestSerializer<E>> {
         default RequestSerializer<E> withDefaults() {
-            return apply( b -> {} );
+            return apply( _ -> {} );
         }
     }
 
@@ -85,7 +92,7 @@ public class RequestSerializer<E> {
 
     public static <E> RequestSerializer<E> create( final Class<E> entityClass,
             final Consumer<RequestSerializerBuilder<E>> c ) {
-        final RequestSerializerBuilder<E> builder = builder();
+        final var builder = RequestSerializer.<E>builder();
         builder.entityType( entityClass );
         c.accept( builder );
         return builder.build();
@@ -94,12 +101,14 @@ public class RequestSerializer<E> {
     public byte[] toBytes( final PageRequest<E> page ) {
         updateAttributes( page );
         verifyFilterRuleFactories( page );
-        final Cursor.PageRequest dtoRequest = ToDtoMapper.<E>create( c -> c.pageRequest( page ) ).map();
+        final Cursor.PageRequest dtoRequest = ToDtoMapper.<E>create( c -> c.pageRequest( page ) )
+                .map();
         return encrypter.encrypt( dtoRequest.toByteArray() );
     }
 
     private void verifyFilterRuleFactories( final PageRequest<E> page ) {
-        page.filters().forEach( this::verifyFilterRuleFactories );
+        page.filters()
+                .forEach( this::verifyFilterRuleFactories );
     }
 
     private void verifyFilterRuleFactories( final QueryElement f ) {
@@ -116,12 +125,17 @@ public class RequestSerializer<E> {
     }
 
     private void updateAttributes( final PageRequest<?> page ) {
-        page.positions().forEach( p -> attributes.putIfAbsent( p.attribute().name(), p.attribute() ) );
-        page.filters().attributes().forEach( a -> attributes.putIfAbsent( a.name(), a ) );
+        page.positions()
+                .forEach( p -> attributes.putIfAbsent( p.attribute()
+                        .name(), p.attribute() ) );
+        page.filters()
+                .attributes()
+                .forEach( a -> attributes.putIfAbsent( a.name(), a ) );
     }
 
     public Base64String toBase64( final PageRequest<E> page ) {
-        return Base64String.encode( toBytes( page ) ).replace( "=", "" );
+        return Base64String.encode( toBytes( page ) )
+                .replace( "=", "" );
     }
 
     @SneakyThrows
@@ -130,7 +144,8 @@ public class RequestSerializer<E> {
         final FromDtoMapper<E> fromDtoMapper = FromDtoMapper.create( b -> b.request( request )
                 .conversionService( conversionService )
                 .ruleFactories( filterRuleFactories )
-                .attributesByName( attributes ) );
+                .attributesByName( attributes )
+                .attributeResolver( attributeResolver ) );
         return fromDtoMapper.map();
     }
 
@@ -145,7 +160,7 @@ public class RequestSerializer<E> {
      * @return a present optional if the input value was present.
      */
     public Optional<PageRequest<E>> stringToPageRequest( @Nullable final String cursorStr ) {
-        return Optional.ofNullable( cursorStr != null ? (!cursorStr.isBlank() ? cursorStr : null) : null )
+        return Optional.ofNullable( (cursorStr != null && !cursorStr.isBlank()) ? cursorStr : null )
                 .map( Base64String::new )
                 .map( this::toPageRequest );
     }
