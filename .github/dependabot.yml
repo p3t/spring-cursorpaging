@@ -5,8 +5,13 @@
 
 version: 2
 updates:
-  - package-ecosystem: "maven" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "maven"
+    # Scan root and library modules, but exclude example projects
+    directories:
+      - "/"
+      - "/cursorpaging-jpa"
+      - "/cursorpaging-jpa-api"
+      - "/cursorpaging-jpa-rsql"
     schedule:
       interval: "weekly"
     groups:
@@ -24,5 +29,5 @@ updates:
       gha-patch-and-minor:
         applies-to: version-updates
         update-types:
-        - "minor"
-        - "patch"
+          - "minor"
+          - "patch"
