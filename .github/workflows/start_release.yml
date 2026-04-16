@@ -8,15 +8,12 @@ on:
         required: true
         default: '0-SNAPSHOT'
   release:
-    types: [created]
-
-# Least-privilege baseline; individual jobs escalate as needed
-permissions:
-  contents: read
+    types: [ created ]
 
 jobs:
-
   ReleaseVersion:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       build_version: ${{ steps.release_version.outputs.build_version }}
@@ -54,7 +51,7 @@ jobs:
           echo "TAG_NAME:      $TAG_NAME_OUT"
 
   Build:
-    needs: [ReleaseVersion]
+    needs: [ ReleaseVersion ]
     uses: ./.github/workflows/maven_build.yml
     with:
       build_version: ${{ needs.ReleaseVersion.outputs.build_version }}
@@ -68,7 +65,7 @@ jobs:
   UploadAssetsToRelease:
     name: 'Upload assets to release'
     if: ${{ github.event_name == 'release' }}
-    needs: [ReleaseVersion, Build]
+    needs: [ ReleaseVersion, Build ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -98,7 +95,7 @@ jobs:
             ./README.md
 
   Publish:
-    needs: [ReleaseVersion, Build]
+    needs: [ ReleaseVersion, Build ]
     uses: ./.github/workflows/maven_publish.yml
     with:
       build_version: ${{ needs.ReleaseVersion.outputs.build_version }}
