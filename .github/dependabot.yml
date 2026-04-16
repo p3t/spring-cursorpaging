@@ -6,12 +6,8 @@
 version: 2
 updates:
   - package-ecosystem: "maven"
-    # Scan root and library modules, but exclude example projects
-    directories:
-      - "/"
-      - "/cursorpaging-jpa"
-      - "/cursorpaging-jpa-api"
-      - "/cursorpaging-jpa-rsql"
+    # Scan only the root pom; example projects are excluded (not part of the release)
+    directory: "/"
     schedule:
       interval: "weekly"
     groups:
