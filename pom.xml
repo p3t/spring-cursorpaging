@@ -398,6 +398,7 @@
       <modules>
         <module>cursorpaging-jpa</module>
         <module>cursorpaging-jpa-api</module>
+        <module>cursorpaging-jpa-rsql</module>
       </modules>
       <build>
         <plugins>

@@ -1,40 +1,56 @@
-#
-
 name: '[ Start ] Release artifacts, Build & Deploy'
 
 on:
   workflow_dispatch:
     inputs:
       BUILD_VERSION:
-        description: 'The version to build and deploy'
+        description: 'The version to build and deploy (without "v" prefix)'
         required: true
         default: '0-SNAPSHOT'
   release:
-    types: [created]
-env:
-  RELEASE_TAG: ${{ github.event.release.tag_name }}
+    types: [ created ]
+
+permissions: {}
 
 jobs:
-
   ReleaseVersion:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       build_version: ${{ steps.release_version.outputs.build_version }}
+      tag_name: ${{ steps.release_version.outputs.tag_name }}
     steps:
-      - name: "Release Version and Properties"
+      - name: "Determine release version"
         id: release_version
+        env:
+          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
+          INPUT_BUILD_VERSION: ${{ inputs.BUILD_VERSION }}
         run: |
-          VERSION=${RELEASE_TAG#v}
-          echo "BUILD_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
-          echo "build_version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
-          echo "Release version is $VERSION"
-          echo "RELEASE_ASSETS_URL=${{ github.event.release.assets_url }}" >> "$GITHUB_ENV"
-          echo "release_assets_url=${{ github.event.release.assets_url }}" >> "$GITHUB_OUTPUT"
+          # Prefer the release-event tag; fall back to the manual input
+          if [[ -n "$RELEASE_TAG_NAME" ]]; then
+            RAW_TAG="$RELEASE_TAG_NAME"
+            VERSION="${RAW_TAG#v}"
+            TAG_NAME="${RAW_TAG}"
+          elif [[ -n "$INPUT_BUILD_VERSION" ]]; then
+            VERSION="$INPUT_BUILD_VERSION"
+            TAG_NAME="v${VERSION}"
+          else
+            echo "::error::No version supplied. Provide BUILD_VERSION or create a release."
+            exit 1
+          fi
+
+          echo "build_version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${TAG_NAME}"     >> "$GITHUB_OUTPUT"
+          echo "### Release version: \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Print output variables
+        env:
+          BUILD_VERSION_OUT: ${{ steps.release_version.outputs.build_version }}
+          TAG_NAME_OUT: ${{ steps.release_version.outputs.tag_name }}
         run: |
-          echo BUILD_VERSION: ${{ steps.release_version.outputs.build_version }}
-          echo RELEASE_ASSETS_URL: ${{ steps.release_version.outputs.release_assets_url }}
+          echo "BUILD_VERSION: $BUILD_VERSION_OUT"
+          echo "TAG_NAME:      $TAG_NAME_OUT"
 
   Build:
     needs: [ ReleaseVersion ]
@@ -50,34 +66,36 @@ jobs:
 
   UploadAssetsToRelease:
     name: 'Upload assets to release'
+    if: ${{ github.event_name == 'release' }}
     needs: [ ReleaseVersion, Build ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       BUILD_VERSION: ${{ needs.ReleaseVersion.outputs.build_version }}
-
     steps:
-      - name: (Info) build_artifact_id
-        run: echo "build_artifact_id=${{ needs.Build.outputs.build_artifact_id }}"
 
-      - uses: actions/download-artifact@v8
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
         with:
+          name: build-artifacts-${{ env.BUILD_VERSION }}
           merge-multiple: true
-        env:
-          ARTIFACT_ID: ${{ needs.Build.outputs.build_artifact_id }}
 
-      - name: Upload artifact to release
+      - name: Display downloaded files
+        run: find . -type f | head -80
+
+      - name: Upload artifacts to GitHub release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.ReleaseVersion.outputs.tag_name }}
           files: |
             ./**/target/*.jar
             ./**/target/*.jar.asc
             ./**/target/*.pom
             ./**/target/*.pom.asc
             ./LICENSE
-            ./README.md  
-  
+            ./README.md
+
   Publish:
     needs: [ ReleaseVersion, Build ]
     uses: ./.github/workflows/maven_publish.yml
