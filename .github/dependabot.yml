@@ -15,10 +15,6 @@ updates:
         update-types: [ "patch" ]
         applies-to: version-updates
     labels: [ "dependencies" ]
-    ignore:
-      - dependency-name: "*"
-        paths:
-          - "cursorpaging-examples/**"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
