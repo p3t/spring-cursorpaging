@@ -24,14 +24,17 @@ jobs:
     steps:
       - name: "Determine release version"
         id: release_version
+        env:
+          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
+          INPUT_BUILD_VERSION: ${{ inputs.BUILD_VERSION }}
         run: |
           # Prefer the release-event tag; fall back to the manual input
-          if [[ -n "${{ github.event.release.tag_name }}" ]]; then
-            RAW_TAG="${{ github.event.release.tag_name }}"
+          if [[ -n "$RELEASE_TAG_NAME" ]]; then
+            RAW_TAG="$RELEASE_TAG_NAME"
             VERSION="${RAW_TAG#v}"
             TAG_NAME="${RAW_TAG}"
-          elif [[ -n "${{ inputs.BUILD_VERSION }}" ]]; then
-            VERSION="${{ inputs.BUILD_VERSION }}"
+          elif [[ -n "$INPUT_BUILD_VERSION" ]]; then
+            VERSION="$INPUT_BUILD_VERSION"
             TAG_NAME="v${VERSION}"
           else
             echo "::error::No version supplied. Provide BUILD_VERSION or create a release."
@@ -43,9 +46,12 @@ jobs:
           echo "### Release version: \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Print output variables
+        env:
+          BUILD_VERSION_OUT: ${{ steps.release_version.outputs.build_version }}
+          TAG_NAME_OUT: ${{ steps.release_version.outputs.tag_name }}
         run: |
-          echo "BUILD_VERSION: ${{ steps.release_version.outputs.build_version }}"
-          echo "TAG_NAME:      ${{ steps.release_version.outputs.tag_name }}"
+          echo "BUILD_VERSION: $BUILD_VERSION_OUT"
+          echo "TAG_NAME:      $TAG_NAME_OUT"
 
   Build:
     needs: [ReleaseVersion]

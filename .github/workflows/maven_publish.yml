@@ -62,6 +62,8 @@ jobs:
   PublishGitHub:
     name: 'Publish to GitHub packages'
     runs-on: ubuntu-latest
+    env:
+      BUILD_VERSION: ${{ inputs.build_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -84,7 +86,7 @@ jobs:
           name: build-artifacts-${{ inputs.build_version }}
 
       - name: Set version
-        run: ./mvnw versions:set -DnewVersion=${{ inputs.build_version }} -DgenerateBackupPoms=false
+        run: ./mvnw versions:set -DnewVersion="$BUILD_VERSION" -DgenerateBackupPoms=false
 
       - name: Publish to GitHub
         run: ./mvnw -B -V deploy -Dgpg.signer=bc -DskipTests=true -Dpublish -Dgithub
