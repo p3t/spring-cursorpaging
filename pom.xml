@@ -43,7 +43,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.34.1</protobuf.version>
-    <hibernate.version>7.3.3.Final</hibernate.version>
+    <hibernate.version>7.3.4.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.0.6</springboot.version>
     <lombok.version>1.18.46</lombok.version>
@@ -199,7 +199,7 @@
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>5.1.3</version>
+          <version>5.1.4</version>
           <configuration>
             <protoc>${protobuf.version}</protoc>
           </configuration>
