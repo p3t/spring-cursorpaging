@@ -42,13 +42,13 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <protobuf.version>4.35.0</protobuf.version>
-    <hibernate.version>7.4.0.Final</hibernate.version>
+    <protobuf.version>4.35.1</protobuf.version>
+    <hibernate.version>7.4.1.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.0.6</springboot.version>
     <lombok.version>1.18.46</lombok.version>
     <mockito.version>5.23.0</mockito.version>
-    <byte-buddy.version>1.18.8</byte-buddy.version>
+    <byte-buddy.version>1.18.10</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.21.4</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
@@ -332,7 +332,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
+        <version>0.8.15</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
