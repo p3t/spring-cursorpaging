@@ -45,7 +45,7 @@
     <protobuf.version>4.35.1</protobuf.version>
     <hibernate.version>7.4.1.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
-    <springboot.version>4.0.6</springboot.version>
+    <springboot.version>4.1.0</springboot.version>
     <lombok.version>1.18.46</lombok.version>
     <mockito.version>5.23.0</mockito.version>
     <byte-buddy.version>1.18.10</byte-buddy.version>
