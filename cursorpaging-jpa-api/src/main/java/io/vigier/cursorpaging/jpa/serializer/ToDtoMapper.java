@@ -21,23 +21,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor( staticName = "of" )
 class ToDtoMapper<E> {
 
-    private static final Map<FilterType, Cursor.FilterType> TYPE_MAP;
-    private static final Map<Class<? extends FilterList>, FilterListType> LISTTYPE_MAP;
-
-    static {
-        TYPE_MAP = Map.of( //
-                FilterType.EQUAL_TO, Cursor.FilterType.EQ, //
-                FilterType.GREATER_THAN, Cursor.FilterType.GT, //
-                FilterType.LESS_THAN, Cursor.FilterType.LT, //
-                FilterType.LIKE, Cursor.FilterType.LIKE, //
-                FilterType.LESS_THAN_OR_EQUAL_TO, Cursor.FilterType.LE, //
-                FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE, //
-                FilterType.ALWAYS, Cursor.FilterType.ALWAYS //
-        );
-        LISTTYPE_MAP = Map.of( //
-                AndFilter.class, FilterListType.AND, //
-                OrFilter.class, FilterListType.OR );
-    }
+    private static final Map<FilterType, Cursor.FilterType> TYPE_MAP = Map.of( //
+            FilterType.EQUAL_TO, Cursor.FilterType.EQ, //
+            FilterType.GREATER_THAN, Cursor.FilterType.GT, //
+            FilterType.LESS_THAN, Cursor.FilterType.LT, //
+            FilterType.LIKE, Cursor.FilterType.LIKE, //
+            FilterType.LESS_THAN_OR_EQUAL_TO, Cursor.FilterType.LE, //
+            FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE, //
+            FilterType.ALWAYS, Cursor.FilterType.ALWAYS //
+    );
+    private static final Map<Class<? extends FilterList>, FilterListType> LISTTYPE_MAP = Map.of( //
+            AndFilter.class, FilterListType.AND, //
+            OrFilter.class, FilterListType.OR );
 
     private final PageRequest<E> pageRequest;
 
@@ -52,7 +47,8 @@ class ToDtoMapper<E> {
                 .addAllPositions( positions() )
                 .setPageSize( pageRequest.pageSize() )
                 .setFilters( filters() );
-        pageRequest.totalCount().ifPresent( builder::setTotalCount );
+        pageRequest.totalCount()
+                .ifPresent( builder::setTotalCount );
         return builder.build();
     }
 
@@ -62,7 +58,10 @@ class ToDtoMapper<E> {
                 .stream()
                 .map( e -> Parameter.newBuilder()
                         .setName( e.getKey() )
-                        .addAllValues( e.getValue().stream().map( this::valueOf ).toList() )
+                        .addAllValues( e.getValue()
+                                .stream()
+                                .map( this::valueOf )
+                                .toList() )
                         .build() )
                 .toList();
     }
@@ -73,18 +72,24 @@ class ToDtoMapper<E> {
     }
 
     private Cursor.FilterList toDto( final FilterList list ) {
-        final Cursor.FilterList.Builder b = Cursor.FilterList.newBuilder().setType( typeOf( list ) );
+        final Cursor.FilterList.Builder b = Cursor.FilterList.newBuilder()
+                .setType( typeOf( list ) );
         list.forEach( f -> {
             if ( f instanceof final Filter ff ) {
                 b.addFilters( Cursor.Filter.newBuilder()
                         .setAttribute( attributeOf( ff.attribute() ) )
-                        .addAllValues( ff.values().stream().map( this::valueOf ).toList() )
+                        .addAllValues( ff.values()
+                                .stream()
+                                .map( this::valueOf )
+                                .toList() )
                         .setType( typeOf( ff ) )
                         .build() );
             } else if ( f instanceof final FilterList fl ) {
                 b.addFilterLists( toDto( fl ) );
             } else if ( f instanceof final FilterRule fr ) {
-                b.addRules( Cursor.Rule.newBuilder().setName( fr.name() ).addAllParameters( toDtoParameters( fr ) )
+                b.addRules( Cursor.Rule.newBuilder()
+                        .setName( fr.name() )
+                        .addAllParameters( toDtoParameters( fr ) )
                         .build() );
             }
         } );
@@ -117,16 +122,19 @@ class ToDtoMapper<E> {
 
 
     private static Cursor.Attribute attributeOf( final Attribute attribute ) {
-        return Cursor.Attribute.newBuilder().setName( attribute.name() )
+        return Cursor.Attribute.newBuilder()
+                .setName( attribute.name() )
                 .build();
     }
 
     private Cursor.Value valueOf( final Comparable<?> value ) {
         if ( value == null ) {
-            return Cursor.Value.newBuilder().setValue( "" )
+            return Cursor.Value.newBuilder()
+                    .setValue( "" )
                     .build();
         }
-        return Cursor.Value.newBuilder().setValue( value.toString() )
+        return Cursor.Value.newBuilder()
+                .setValue( value.toString() )
                 .build();
     }
 }

@@ -24,6 +24,7 @@
     <testcontainers.version>1.19.8</testcontainers.version>
     <byte-buddy.version>1.18.10</byte-buddy.version>
     <hibernate.version>7.4.1.Final</hibernate.version>
+    <protobuf-java.version>4.35.1</protobuf-java.version>
     <argLine/>
   </properties>
 
