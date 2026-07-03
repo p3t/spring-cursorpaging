@@ -43,12 +43,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.35.1</protobuf.version>
-    <hibernate.version>7.4.2.Final</hibernate.version>
+    <hibernate.version>7.4.3.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.1.0</springboot.version>
     <lombok.version>1.18.46</lombok.version>
     <mockito.version>5.23.0</mockito.version>
-    <byte-buddy.version>1.18.10</byte-buddy.version>
+    <byte-buddy.version>1.18.11</byte-buddy.version>
     <delombok.output>${project.build.directory}/delombok</delombok.output>
     <testcontainer.version>1.21.4</testcontainer.version>
     <sonar.organization>p3t</sonar.organization>
@@ -148,7 +148,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.11</version>
+        <version>42.7.12</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -160,7 +160,7 @@
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
-        <version>6.1.0</version>
+        <version>6.1.1</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -199,7 +199,7 @@
         <plugin>
           <groupId>io.github.ascopes</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
-          <version>5.1.6</version>
+          <version>5.1.7</version>
           <configuration>
             <protoc>${protobuf.version}</protoc>
           </configuration>
