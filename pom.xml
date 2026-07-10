@@ -43,7 +43,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <protobuf.version>4.35.1</protobuf.version>
-    <hibernate.version>7.4.3.Final</hibernate.version>
+    <hibernate.version>7.4.4.Final</hibernate.version>
     <hibernate-annotations.version>7.0.3.Final</hibernate-annotations.version>
     <springboot.version>4.1.0</springboot.version>
     <lombok.version>1.18.46</lombok.version>
@@ -148,7 +148,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.12</version>
+        <version>42.7.13</version>
         <scope>test</scope>
       </dependency>
       <dependency>
