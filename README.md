@@ -16,7 +16,8 @@ avoiding the performance pitfalls of traditional offset/page-number paging.
 - **Total count** on demand with caching support
 - **Reversed cursors** to traverse backwards
 - **Serialization & encryption** of page requests for stateless client-server communication
-- **RSQL / FIQL** filter syntax for REST APIs
+- **RSQL / FIQL** filter syntax for REST APIs (thanks to @jirutka's
+  great [rsql-parser](https://github.com/jirutka/rsql-parser)
 - **JPA Metamodel-based attribute resolution** for reliable deserialization
 
 ## Concept
@@ -44,7 +45,6 @@ See [Concept Details](cursorpaging-docs/user/concept.md) for the full background
 ### 1. Add Dependencies
 
 ```xml
-
 <dependencies>
   <dependency>
     <groupId>io.vigier.cursorpaging</groupId>
@@ -64,7 +64,6 @@ Published versions: <https://mvnrepository.com/artifact/io.vigier.cursorpaging>
 ### 2. Register the Repository Factory Bean
 
 ```java
-
 @Configuration
 @EnableJpaRepositories( basePackageClasses = MyApplication.class,
         repositoryFactoryBeanClass = CursorPageRepositoryFactoryBean.class )
@@ -75,7 +74,6 @@ public class JpaConfig {
 ### 3. Create a Repository
 
 ```java
-
 @Repository
 public interface DataRecordRepository extends JpaRepository<DataRecord, UUID>, CursorPageRepository<DataRecord> {
 }
