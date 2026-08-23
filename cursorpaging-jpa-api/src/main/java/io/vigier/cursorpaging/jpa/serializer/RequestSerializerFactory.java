@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 
 import static java.util.Objects.requireNonNull;
@@ -26,6 +28,7 @@ import static java.util.Objects.requireNonNull;
  */
 @Builder
 @RequiredArgsConstructor
+@Slf4j
 public class RequestSerializerFactory {
 
     @Builder.Default
@@ -37,7 +40,7 @@ public class RequestSerializerFactory {
     @Builder.Default
     private final Map<Class<?>, RequestSerializer<?>> entitySerializers = new ConcurrentHashMap<>();
 
-    private final EntityManager entityManager;
+    private final @Nullable EntityManager entityManager; // mostly in testing case null
 
     public static class RequestSerializerFactoryBuilder {
         public <T> RequestSerializerFactoryBuilder serializer( final RequestSerializer<T> s ) {
@@ -78,6 +81,7 @@ public class RequestSerializerFactory {
      * @param <T>         the entity-type
      * @return this factory
      */
+    @SuppressWarnings( "unused" )
     public <T> RequestSerializerFactory configure( final Class<T> entityClass,
             final Consumer<RequestSerializerBuilder<T>> rsb ) {
         entitySerializers.computeIfAbsent( entityClass, _ -> RequestSerializer.create( entityClass )
@@ -91,6 +95,9 @@ public class RequestSerializerFactory {
     }
 
     private AttributeResolver attributeResolver( final Class<?> entityClass ) {
+        if ( entityManager == null ) {
+            return ThrowingAttributeResolver.INSTANCE;
+        }
         return JpaMetamodelAttributeResolver.of( entityManager.getMetamodel(), entityClass );
     }
 }
