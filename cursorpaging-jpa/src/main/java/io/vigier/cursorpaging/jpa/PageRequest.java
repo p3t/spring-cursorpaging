@@ -156,7 +156,8 @@ public class PageRequest<E> {
         }
 
         public PageRequestBuilder<E> sort( final Attribute attribute, final Order order ) {
-            return addPosition( Position.create( b -> b.attribute( attribute ).order( order ) ) );
+            return addPosition( Position.create( b -> b.attribute( attribute )
+                    .order( order ) ) );
         }
 
         /**
@@ -262,7 +263,8 @@ public class PageRequest<E> {
      * @return A copy of the page-request where the total-count is removed and the enable flag is set accordingly
      */
     public PageRequest<E> withEnableTotalCount( final boolean enable ) {
-        return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
+        return copy( b -> b.enableTotalCount( enable )
+                .totalCount( null ) );
     }
 
     /**
@@ -296,7 +298,9 @@ public class PageRequest<E> {
      * @return A new {@code PageRequest} with the positions set to the values of the provided entity
      */
     public PageRequest<E> positionOf( @Nonnull final E entity, @Nonnull final E nextEntity ) {
-        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity, nextEntity ) ).toList() )
+        return create( b -> b.positions( positions.stream()
+                        .map( p -> p.positionOf( entity, nextEntity ) )
+                        .toList() )
                 .pageSize( this.pageSize )
                 .totalCount( this.totalCount )
                 .filters( this.filters )
@@ -304,7 +308,9 @@ public class PageRequest<E> {
     }
 
     public PageRequest<E> toReversed() {
-        return copy( b -> b.positions( positions.stream().map( Position::toReversed ).toList() ) );
+        return copy( b -> b.positions( positions.stream()
+                .map( Position::toReversed )
+                .toList() ) );
     }
 
     /**
@@ -323,7 +329,8 @@ public class PageRequest<E> {
     }
 
     public boolean isReversed() {
-        return positions.getFirst().reversed();
+        return positions.getFirst()
+                .reversed();
     }
 
     /**
@@ -354,12 +361,31 @@ public class PageRequest<E> {
 
     /**
      * Returns the <b>first</b> filter found given the attribute. Probably useful for tests to verify that the request
-     * is as expected.
+     * is as expected. The search iterates through all filter-lists and will return the first {@code Filter} found (not
+     * and/or lists).
      *
      * @param attribute Attribute which should be used by the filter
-     * @return a present query-element (filter) containing the attribute or an empty optional if no filter is found
+     * @return a present {@linkplain Filter} containing the attribute or an empty optional if no filter is found
      */
-    public Optional<QueryElement> firstFilterWith( final Attribute attribute ) {
-        return firstFilterWith( ele -> ele.attributes().stream().anyMatch( a -> a.equals( attribute ) ) );
+    public Optional<Filter> firstFilterWith( final Attribute attribute ) {
+        return firstFilterWith( ele -> ele instanceof final Filter f && f.attributes()
+                .stream()
+                .anyMatch( a -> a.equals( attribute ) ) ).map( Filter.class::cast );
     }
+
+    /**
+     * Returns the <b>first</b> filter-list (and/or filter-lists) found containing directly a {@linkplain Filter} with
+     * the given attribute. Probably useful for tests.
+     *
+     * @param attribute Attribute which should be used by the filter (which is in the filter-list)
+     * @return a present filter-list containing a filter with the attribute or an empty optional if no filter-list is
+     * found
+     */
+    public Optional<FilterList> firstFilterListWith( final Attribute attribute ) {
+        return firstFilterWith( ele -> ele instanceof final FilterList fl && fl.filters()
+                .stream()
+                .anyMatch( a -> a instanceof final Filter f && f.attribute()
+                        .equals( attribute ) ) ).map( FilterList.class::cast );
+    }
+
 }
