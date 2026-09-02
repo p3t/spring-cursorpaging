@@ -9,7 +9,13 @@ import jakarta.persistence.metamodel.ManagedType;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Factory for creating a filter from an RSQL/FIQL expression. Note: Not all operations are supported.
+ * Factory for creating a filter from an RSQL/FIQL expression.
+ * <p>
+ * The complete default operator set of the underlying rsql-parser is supported: {@code ==}, {@code !=},
+ * {@code =gt=} / {@code >}, {@code =ge=} / {@code >=}, {@code =lt=} / {@code <}, {@code =le=} / {@code <=},
+ * {@code =in=} and {@code =out=}, combined with {@code ;} (and), {@code ,} (or) and parentheses for grouping.
+ * Additionally, {@code *} wildcards in the arguments of {@code ==} and {@code !=} on string attributes are
+ * translated into {@code LIKE} / {@code NOT LIKE} conditions.
  *
  * @see <a href="https://github.com/jirutka/rsql-parser">rsql-parser</a>
  */

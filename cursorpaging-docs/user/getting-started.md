@@ -9,6 +9,7 @@ Spring-CursorPaging is split into several Maven modules. Add the ones you need:
 The repository fragment providing cursor-based paging via JPA.
 
 ```xml
+
 <dependency>
   <groupId>io.vigier.cursorpaging</groupId>
   <artifactId>cursorpaging-jpa</artifactId>
@@ -21,6 +22,7 @@ The repository fragment providing cursor-based paging via JPA.
 Serialization / deserialization of page requests, encryption, and helper classes for REST controllers.
 
 ```xml
+
 <dependency>
   <groupId>io.vigier.cursorpaging</groupId>
   <artifactId>cursorpaging-jpa-api</artifactId>
@@ -33,6 +35,7 @@ Serialization / deserialization of page requests, encryption, and helper classes
 Allows clients to pass [RSQL / FIQL](https://github.com/jirutka/rsql-parser) filter expressions as query strings.
 
 ```xml
+
 <dependency>
   <groupId>io.vigier.cursorpaging</groupId>
   <artifactId>cursorpaging-jpa-rsql</artifactId>
@@ -57,6 +60,7 @@ way (e.g. `DataRecord_.id`).
 ### Maven
 
 ```xml
+
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-compiler-plugin</artifactId>
@@ -101,15 +105,15 @@ A custom `JpaRepositoryFactoryBean` is required so that Spring Data picks up the
 Register it via `@EnableJpaRepositories`:
 
 ```java
+
 @Configuration
-@EnableJpaRepositories(
-        basePackageClasses = SomeRepositoryClassHere.class,
+@EnableJpaRepositories( basePackageClasses = SomeRepositoryClassHere.class,
         repositoryFactoryBeanClass = CursorPageRepositoryFactoryBean.class )
 public class JpaConfig {
 }
 ```
 
-> **Tip:** Placing the annotation on a dedicated `@Configuration` class avoids side-effects in `@SpringBootTest`s that
+> **Tip:** Placing the annotation on a dedicated `@Configuration` class avoids side effects in `@SpringBootTest`s that
 > don't need an `EntityManagerFactory`.
 
 ---
@@ -119,9 +123,9 @@ public class JpaConfig {
 Extend both `JpaRepository` and `CursorPageRepository`:
 
 ```java
+
 @Repository
-public interface DataRecordRepository
-        extends JpaRepository<DataRecord, UUID>, CursorPageRepository<DataRecord> {
+public interface DataRecordRepository extends JpaRepository<DataRecord, UUID>, CursorPageRepository<DataRecord> {
 }
 ```
 

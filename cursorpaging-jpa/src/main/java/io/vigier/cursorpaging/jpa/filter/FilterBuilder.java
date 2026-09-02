@@ -43,7 +43,7 @@ public class FilterBuilder {
     }
 
     /**
-     * Same as {@linkplain #in(List)} )}
+     * Same as {@linkplain #in(List)} }
      *
      * @param values List of allowed values to be equal to
      * @return the builder
@@ -59,6 +59,42 @@ public class FilterBuilder {
     public FilterBuilder in( final List<? extends Comparable<?>> values ) {
         values( values );
         this.filterType = FilterType.EQUAL_TO;
+        return this;
+    }
+
+    public FilterBuilder notEqualTo( final Comparable<?> value ) {
+        this.values( value );
+        this.filterType = FilterType.NOT_EQUAL_TO;
+        return this;
+    }
+
+    /**
+     * Same as {@linkplain #notIn(List)}
+     *
+     * @param values List of values the attribute must not be equal to
+     * @return the builder
+     */
+    public FilterBuilder notEqualTo( final List<? extends Comparable<?>> values ) {
+        return notIn( values );
+    }
+
+    public FilterBuilder notIn( final Comparable<?>... values ) {
+        return notIn( Arrays.asList( values ) );
+    }
+
+    public FilterBuilder notIn( final List<? extends Comparable<?>> values ) {
+        values( values );
+        this.filterType = FilterType.NOT_EQUAL_TO;
+        return this;
+    }
+
+    public FilterBuilder notLike( final Comparable<?>... values ) {
+        return notLike( Arrays.asList( values ) );
+    }
+
+    public FilterBuilder notLike( final List<? extends Comparable<?>> values ) {
+        this.values( values );
+        this.filterType = FilterType.NOT_LIKE;
         return this;
     }
 

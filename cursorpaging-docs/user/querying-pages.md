@@ -2,13 +2,12 @@
 
 ## Creating a Page Request
 
-A `PageRequest` defines the cursor position, sort order, page size, and optional filters.
-At least one sort attribute must be specified — it determines the order in which records are traversed.
+A `PageRequest` defines the cursor position, sort order, page size, and optional filters. At least one sort attribute
+must be specified — it determines the order in which records are traversed.
 
 ```java
 void example() {
-    PageRequest<DataRecord> request = PageRequest.create( b -> b
-            .pageSize( 10 )
+    PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
             .asc( DataRecord_.id ) );
 }
 ```
@@ -38,8 +37,7 @@ Use `Attribute.path(…)` for nested properties:
 
 ```java
 void example() {
-    PageRequest.create( b -> b
-            .desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+    PageRequest.create( b -> b.desc( Attribute.path( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
             .asc( DataRecord_.id ) );
 }
 ```
@@ -48,8 +46,7 @@ void example() {
 
 ```java
 void example() {
-    PageRequest.create( b -> b
-            .asc( "name", String.class )
+    PageRequest.create( b -> b.asc( "name", String.class )
             .asc( "id", UUID.class ) );
 }
 ```
@@ -59,10 +56,10 @@ void example() {
 ## Loading Pages
 
 ```java
-Page<DataRecord> firstPage = dataRecordRepository.loadPage( request );
-firstPage.
-
-forEach( System.out::println );
+void example() {
+    Page<DataRecord> firstPage = dataRecordRepository.loadPage( request );
+    firstPage.forEach( System.out::println );
+}
 ```
 
 ### Navigating Forward
@@ -70,11 +67,11 @@ forEach( System.out::println );
 Each `Page` carries an optional **next** request. It is absent when there are no more records.
 
 ```java
-Optional<PageRequest<DataRecord>> next = firstPage.next();
-if(next.
-
-isPresent() ){
-Page<DataRecord> secondPage = dataRecordRepository.loadPage( next.get() );
+void example() {
+    Optional<PageRequest<DataRecord>> next = firstPage.next();
+    if ( next.isPresent() ) {
+        Page<DataRecord> secondPage = dataRecordRepository.loadPage( next.get() );
+    }
 }
 ```
 
@@ -82,12 +79,14 @@ Page<DataRecord> secondPage = dataRecordRepository.loadPage( next.get() );
 
 ```java
 // Change page size for the next request
-Page<DataRecord> nextPage = dataRecordRepository.loadPage( firstPage.next()
-                .orElseThrow()
-                .withPageSize( 20 ) );
+void example() {
+    Page<DataRecord> nextPage = dataRecordRepository.loadPage( firstPage.next()
+            .orElseThrow()
+            .withPageSize( 20 ) );
 
-// Or use the convenience overload
-Optional<PageRequest<DataRecord>> next = firstPage.next( 20 );
+    // Or use the convenience overloaded next-method
+    Optional<PageRequest<DataRecord>> next = firstPage.next( 20 );
+}
 ```
 
 ---

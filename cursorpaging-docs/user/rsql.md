@@ -70,26 +70,44 @@ public class DataRecordController {
 
 ## RSQL Syntax Quick Reference
 
-| Operator | Meaning                  | Example                             |
-|----------|--------------------------|-------------------------------------|
-| `==`     | equal                    | `name==John`                        |
-| `=in=`   | in (multi-value)         | `name=in=(Alice,Bob,Charlie)`       |
-| `=gt=`   | greater than             | `age=gt=30`                         |
-| `=ge=`   | greater than or equal to | `age=ge=18`                         |
-| `=lt=`   | less than                | `age=lt=50`                         |
-| `=le=`   | less than or equal to    | `age=le=65`                         |
-| `;`      | AND                      | `name==John;age=gt=25`              |
-| `,`      | OR                       | `name==Alice,name==Bob`             |
-| `()`     | grouping                 | `(name==Alice,name==Bob);age=gt=20` |
+The complete default operator set of `rsql-parser` is supported:
 
-### Not Yet Supported Operators
+| Operator      | Meaning                  | Example                             |
+|---------------|--------------------------|-------------------------------------|
+| `==`          | equal                    | `name==John`                        |
+| `!=`          | not equal                | `name!=John`                        |
+| `=in=`        | in (multi-value)         | `name=in=(Alice,Bob,Charlie)`       |
+| `=out=`       | not in (multi-value)     | `name=out=(Alice,Bob)`              |
+| `=gt=` / `>`  | greater than             | `age=gt=30`, `age>30`               |
+| `=ge=` / `>=` | greater than or equal to | `age=ge=18`, `age>=18`              |
+| `=lt=` / `<`  | less than                | `age=lt=50`, `age<50`               |
+| `=le=` / `<=` | less than or equal to    | `age=le=65`, `age<=65`              |
+| `;`           | AND                      | `name==John;age=gt=25`              |
+| `,`           | OR                       | `name==Alice,name==Bob`             |
+| `()`          | grouping                 | `(name==Alice,name==Bob);age=gt=20` |
 
-The following standard RSQL operators are not yet supported by `cursorpaging-jpa-rsql`:
+### Wildcards
 
-- `!=` (not equal)
-- `=out=` (not in)
+In the arguments of `==` and `!=` on **string** attributes, `*` acts as a wildcard and is translated into an SQL
+`LIKE` / `NOT LIKE` condition:
 
-Using these operators currently results in an `UnsupportedOperationException`.
+| Expression      | Resulting condition          |
+|-----------------|------------------------------|
+| `name==Jo*`     | `name LIKE 'Jo%'`            |
+| `name==*ohn*`   | `name LIKE '%ohn%'`          |
+| `name!=Jo*`     | `name NOT LIKE 'Jo%'`        |
+| `name==Jo\*hn`  | `name = 'Jo*hn'` (escaped)   |
+
+Notes:
+
+- Wildcards are only interpreted for `==` and `!=`, not for `=in=` / `=out=`, and only for `String` attributes.
+- `%` and `_` are passed through to the SQL `LIKE` unchanged and therefore keep their SQL wildcard meaning.
+
+### Semantics of the negating operators
+
+`!=` and `=out=` map to the `NOT_EQUAL_TO` filter type, which mirrors the `EQUAL_TO` / `=in=` handling: with a single
+value it becomes `<> value`, with several values a `not in (…)` condition. As in SQL, rows where the attribute is
+`NULL` do **not** match a negated condition.
 
 ### Dotted Paths
 
