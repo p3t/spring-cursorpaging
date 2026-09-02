@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Enables the validation if the string can be deserialize as a base64 string.
+ * Enables the validation if the string can be deserialized as a base64 string.
  */
 @Documented
 @Constraint( validatedBy = { Base64OptionalStringImpl.class } )

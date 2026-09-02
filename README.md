@@ -104,17 +104,17 @@ void example() {
 
 ## Documentation
 
-| Topic                 | Link                                                           |
-|-----------------------|----------------------------------------------------------------|
-| Getting Started       | [cursorpaging-docs/user/getting-started.md](cursorpaging-docs/user/getting-started.md)               |
-| Querying Pages        | [cursorpaging-docs/user/querying-pages.md](cursorpaging-docs/user/querying-pages.md)                |
-| Filtering             | [cursorpaging-docs/user/filtering.md](cursorpaging-docs/user/filtering.md)                     |
-| Custom Filter Rules   | [cursorpaging-docs/user/filter-rules.md](cursorpaging-docs/user/filter-rules.md)                  |
-| Total Count           | [cursorpaging-docs/user/total-count.md](cursorpaging-docs/user/total-count.md)                   |
-| Reversing Pages       | [cursorpaging-docs/user/reversing.md](cursorpaging-docs/user/reversing.md)                     |
-| Serialization & API   | [cursorpaging-docs/user/serialization.md](cursorpaging-docs/user/serialization.md)                 |
-| RSQL / FIQL Filtering | [cursorpaging-docs/user/rsql.md](cursorpaging-docs/user/rsql.md)                          |
-| Concept / Background  | [cursorpaging-docs/user/concept.md](cursorpaging-docs/user/concept.md)                       |
+| Topic                 | Link                                                                                   |
+|-----------------------|----------------------------------------------------------------------------------------|
+| Getting Started       | [cursorpaging-docs/user/getting-started.md](cursorpaging-docs/user/getting-started.md) |
+| Querying Pages        | [cursorpaging-docs/user/querying-pages.md](cursorpaging-docs/user/querying-pages.md)   |
+| Filtering             | [cursorpaging-docs/user/filtering.md](cursorpaging-docs/user/filtering.md)             |
+| Custom Filter Rules   | [cursorpaging-docs/user/filter-rules.md](cursorpaging-docs/user/filter-rules.md)       |
+| Total Count           | [cursorpaging-docs/user/total-count.md](cursorpaging-docs/user/total-count.md)         |
+| Reversing Pages       | [cursorpaging-docs/user/reversing.md](cursorpaging-docs/user/reversing.md)             |
+| Serialization & API   | [cursorpaging-docs/user/serialization.md](cursorpaging-docs/user/serialization.md)     |
+| RSQL / FIQL Filtering | [cursorpaging-docs/user/rsql.md](cursorpaging-docs/user/rsql.md)                       |
+| Concept / Background  | [cursorpaging-docs/user/concept.md](cursorpaging-docs/user/concept.md)                 |
 
 ## Example Application
 

@@ -54,6 +54,66 @@ public final class Filters {
         }
 
         /**
+         * not-equal expression
+         *
+         * @param value the value to compare to
+         * @return the filter for the operation
+         */
+        public Filter notEqualTo( final Comparable<?> value ) {
+            return Filter.create( f -> f.attribute( attribute ).notEqualTo( attribute.verify( value ) ) );
+        }
+
+        /**
+         * not-equal/not-in expression
+         *
+         * @param values the values to compare to
+         * @return the filter for the operation
+         */
+        public Filter notEqualTo( final List<? extends Comparable<?>> values ) {
+            return Filter.create( f -> f.attribute( attribute ).notEqualTo( attribute.verify( values ) ) );
+        }
+
+        /**
+         * not-in expression
+         *
+         * @param values the values to compare to
+         * @return the filter for the operation
+         */
+        public Filter notIn( final List<? extends Comparable<?>> values ) {
+            return Filter.create( f -> f.attribute( attribute ).notIn( attribute.verify( values ) ) );
+        }
+
+        /**
+         * not-in expression
+         *
+         * @param values the values to compare to
+         * @return the filter for the operation
+         */
+        public Filter notIn( final Comparable<?>... values ) {
+            return Filter.create( f -> f.attribute( attribute ).notIn( attribute.verify( values ) ) );
+        }
+
+        /**
+         * not-like expression
+         *
+         * @param values the patterns which must not match
+         * @return the filter for the operation
+         */
+        public Filter notLike( final String... values ) {
+            return Filter.create( f -> f.attribute( attribute ).notLike( attribute.verify( values ) ) );
+        }
+
+        /**
+         * not-like expression
+         *
+         * @param values the patterns which must not match
+         * @return the filter for the operation
+         */
+        public Filter notLike( final List<? extends Comparable<?>> values ) {
+            return Filter.create( f -> f.attribute( attribute ).notLike( attribute.verify( values ) ) );
+        }
+
+        /**
          * like-in expression
          *
          * @param values the value to compare to

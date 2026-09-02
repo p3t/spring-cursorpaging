@@ -314,7 +314,7 @@ public class PageRequest<E> {
     }
 
     /**
-     * Checks if any position in the request has a value. If there is no value in any position, it is asumed that this
+     * Checks if any position in the request has a value. If there is no value in any position, it is assumed that this
      * is a request for the first page
      *
      * @return {@code true} if the request is for the first page, {@code false} otherwise

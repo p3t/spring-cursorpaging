@@ -8,13 +8,13 @@
 
 ## Context and Problem Statement
 
-The `RequestSerializer` maintains an in-memory cache (`Map<String, Attribute>`) that maps
-an attribute's dot-separated name (e.g. `"auditInfo.createdAt"`) to a fully typed `Attribute`
+The `RequestSerializer` maintains an in-memory cache (`Map<String, Attribute>`) that maps an attribute's dot-separated
+name (e.g. `"auditInfo.createdAt"`) to a fully typed `Attribute`
 object (containing a `List<SingleAttribute>`, each with a `name` and a Java `Class<?> type`).
 
 During **serialization** (`toBytes` / `toBase64`), the cache is populated from the
-`PageRequest` being serialized ("learning"). During **deserialization** the cache is consulted
-to reconstruct the `Attribute` from the name string stored in the protobuf:
+`PageRequest` being serialized ("learning"). During **deserialization** the cache is consulted to reconstruct the
+`Attribute` from the name string stored in the protobuf:
 
 ```java
 // FromDtoMapper.java (current)
@@ -30,6 +30,8 @@ private Attribute attributeOf( final Cursor.Attribute attribute ) {
 The protobuf schema only stores the **name**, not the type information:
 
 ```protobuf
+syntax = "proto3";
+
 message Attribute {
   string name = 1;   // e.g. "auditInfo.createdAt"
 }
@@ -38,14 +40,14 @@ message Attribute {
 ### Why this is a problem
 
 In deployments where **serialization and deserialization happen in different service instances**
-(e.g. behind a load-balancer, or after a rolling restart) the cache on the deserializing
-instance may be empty or incomplete. This causes deserialization to fail with:
+(e.g. behind a load-balancer, or after a rolling restart) the cache on the deserializing instance may be empty or
+incomplete. This causes deserialization to fail with:
 
 > `IllegalArgumentException: No attribute found for name: auditInfo.createdAt`
 
 The current workaround — pre-registering all attributes via
-`RequestSerializerBuilder.use(Attribute)` — is error-prone and requires manual maintenance
-whenever the entity model changes.
+`RequestSerializerBuilder.use(Attribute)` — is error-prone and requires manual maintenance whenever the entity model
+changes.
 
 ### Overview — Current Serialize / Deserialize Flow
 
@@ -77,12 +79,14 @@ sequenceDiagram
 
 ### Option 1 — Enrich the Protobuf Schema with Type Information
 
-Serialize the full `SingleAttribute` path (name + fully qualified class name) into the
-protobuf message so that the deserializer is self-contained.
+Serialize the full `SingleAttribute` path (name + fully qualified class name) into the protobuf message so that the
+deserializer is self-contained.
 
 **Protobuf change:**
 
 ```protobuf
+syntax = "proto3";
+
 message SingleAttribute {
   string name = 1;
   string type = 2;  // e.g. "java.time.Instant"
@@ -107,16 +111,16 @@ message Attribute {
 
 * **Breaking protobuf schema change** — requires migration/versioning strategy for existing tokens (as they are usually
   only short-living this would be acceptable).
-* **Security risk via `Class.forName()`** — even though cursors are encrypted
-  (ChaCha20-Poly1305), defence-in-depth requires an explicit allowlist of permitted types
-  to prevent class-loading attacks. Maintaining such an allowlist adds ongoing effort.
+* **Security risk via `Class.forName()`** — even though cursors are encrypted (ChaCha20-Poly1305), defense-in-depth
+  requires an explicit allowlist of permitted types to prevent class-loading attacks. Maintaining such an allowlist adds
+  ongoing effort.
 * **Increases cursor token size**.
 
 ### Option 2 — JPA Metamodel-Based Resolution (Fallback on Cache Miss)
 
-Introduce an `AttributeResolver` abstraction into the serializer. On cache miss, delegate to
-a resolver that walks the JPA `Metamodel` to reconstruct the `Attribute` from the
-dot-separated name — the same approach already proven in the existing
+Introduce an `AttributeResolver` abstraction into the serializer. On cache miss, delegate to a resolver that walks the
+JPA `Metamodel` to reconstruct the `Attribute` from the dot-separated name — the same approach already proven in the
+existing
 `JpaMetamodelAttributeResolver` in the `cursorpaging-jpa-rsql` module.
 
 #### Pros
@@ -125,22 +129,21 @@ dot-separated name — the same approach already proven in the existing
 * **Metamodel is the single source of truth** — guarantees correct types including
   `@Embedded`, `@MappedSuperclass`, and `@AttributeOverride` mappings.
 * **Inherently secure** — `ManagedType.getAttribute(name)` throws
-  `IllegalArgumentException` for any name that doesn't exist on the entity.
-  Combined with the existing ChaCha20-Poly1305 encryption, the attack surface is negligible.
+  `IllegalArgumentException` for any name that doesn't exist on the entity. Combined with the existing ChaCha20-Poly1305
+  encryption, the attack surface is negligible.
 * **Same pattern** as in `JpaMetamodelAttributeResolver`.
 * Cache remains as a **performance optimization** (first-hit bypass of Metamodel walk).
 
 #### Cons
 
-* Requires a JPA `EntityManager` / `Metamodel` at deserialization time (available in any
-  Spring JPA context, but not in plain unit tests without mocking or in a future MongoDB implementation).
-* The `AttributeResolver` interface must be accessible from `cursorpaging-jpa-api`; it
-  currently lives in `cursorpaging-jpa-rsql`.
+* Requires a JPA `EntityManager` / `Metamodel` at deserialization time (available in any Spring JPA context, but not in
+  plain unit tests without mocking or in a future MongoDB implementation).
+* The `AttributeResolver` interface must be accessible from `cursorpaging-jpa-api`; it currently lives in
+  `cursorpaging-jpa-rsql`.
 
 ### Option 3 — Reflection-Based Resolution (Fallback on Cache Miss)
 
-Walk the entity's Java class hierarchy using `Class.getDeclaredField()` to determine the
-type of each path segment.
+Walk the entity's Java class hierarchy using `Class.getDeclaredField()` to determine the type of each path segment.
 
 #### Pros
 
@@ -172,18 +175,16 @@ Combine Options 2 and 3: try cache → Metamodel → Reflection.
 
 **Option 2 — JPA Metamodel-Based Resolution** is selected.
 
-The JPA Metamodel is the authoritative source for entity attribute structure and types.
-It resolves the cache-miss problem reliably in all production deployments (where an
-`EntityManager` is always available) while providing inherent security through its
-built-in validation.
+The JPA Metamodel is the authoritative source for entity attribute structure and types. It resolves the cache-miss
+problem reliably in all production deployments (where an
+`EntityManager` is always available) while providing inherent security through its built-in validation.
 
 ## Implementation Design
 
 ### 1. Move `AttributeResolver` Interface to `cursorpaging-jpa`
 
-The `@FunctionalInterface` is relocated from `cursorpaging-jpa-rsql` so it is
-available to both the API serializer and the RSQL module without introducing a
-circular dependency.
+The `@FunctionalInterface` is relocated from `cursorpaging-jpa-rsql` so it is available to both the API serializer and
+the RSQL module without introducing a circular dependency.
 
 ```
 cursorpaging-jpa (new home)
@@ -277,8 +278,7 @@ sequenceDiagram
 ### 6. Wire in Application Configuration
 
 The `RequestSerializerFactory` should require the `EntityManager` dependency and create an `AttributeResolver` bean that
-uses the
-Metamodel with the given entity-type when a serializer is created.
+uses the Metamodel with the given entity-type when a serializer is created.
 
 ### Security Considerations
 
@@ -294,28 +294,28 @@ An attacker would need to:
 1. Obtain the ChaCha20 encryption key, **and**
 2. Craft a valid protobuf payload with an attribute name that exists on the entity.
 
-Even in that scenario, the Metamodel restricts resolution to legitimate entity attributes,
-preventing any form of code execution or class-loading attack.
+Even in that scenario, the Metamodel restricts resolution to legitimate entity attributes, preventing any form of code
+execution or class-loading attack.
 
 ## Consequences
 
 ### Positive
 
-* Cursor deserialization becomes **reliable across service instances** without requiring
-  pre-registration of all attributes via `.use()`.
-* The existing `.use()` / cache mechanism remains as a **performance optimization** —
-  cached attributes bypass the Metamodel walk entirely.
-* **No breaking changes** — the protobuf schema, token format, and public API remain unchanged.
-  The `attributeResolver` is optional; existing configurations without it continue to work as before.
+* Cursor deserialization becomes **reliable across service instances** without requiring pre-registration of all
+  attributes via `.use()`.
+* The existing `.use()` / cache mechanism remains as a **performance optimization** — cached attributes bypass the
+  Metamodel walk entirely.
+* **No breaking changes** — the protobuf schema, token format, and public API remain unchanged. The `attributeResolver`
+  is optional; existing configurations without it continue to work as before.
 * The `AttributeResolver` abstraction allows for alternative implementations (e.g. reflection-based)
   in contexts where JPA is not available, providing a clean extension point.
 
 ### Negative
 
-* Deserialization in contexts **without an `EntityManager`** (e.g. pure unit tests) still
-  requires either pre-registered attributes (`.use()`) or a mocked/alternative `AttributeResolver`.
-* Slight **performance overhead** on the first cache miss per attribute (Metamodel walk).
-  Subsequent requests for the same attribute hit the cache.
+* Deserialization in contexts **without an `EntityManager`** (e.g. pure unit tests) still requires either pre-registered
+  attributes (`.use()`) or a mocked/alternative `AttributeResolver`.
+* Slight **performance overhead** on the first cache miss per attribute (Metamodel walk). Subsequent requests for the
+  same attribute hit the cache.
 
 ### Neutral
 

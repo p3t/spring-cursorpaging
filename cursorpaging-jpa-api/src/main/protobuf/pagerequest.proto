@@ -23,6 +23,8 @@ enum FilterType {
   GE = 4; // Greater or equal
   LE = 5; // Less or equal
   ALWAYS = 6; // Filter evaluates always to true/false
+  NE = 7; // Not equal / not in
+  NOT_LIKE = 8; // Negated LIKE
 }
 
 message Position {

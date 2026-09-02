@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.convert.ConversionService;
 
@@ -32,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -57,19 +57,18 @@ class SerializerTest {
 
     private static class TestEntity_ {
         @SuppressWarnings( "unchecked" )
-        public static volatile SingularAttribute<TestEntity, Long> id = Mockito.mock( SingularAttribute.class );
+        public static volatile SingularAttribute<TestEntity, Long> id = mock( SingularAttribute.class );
         @SuppressWarnings( "unchecked" )
-        public static volatile SingularAttribute<TestEntity, String> name = Mockito.mock( SingularAttribute.class );
+        public static volatile SingularAttribute<TestEntity, String> name = mock( SingularAttribute.class );
         @SuppressWarnings( "unchecked" )
-        public static volatile SingularAttribute<TestEntity, ValueClass> value = Mockito.mock(
-                SingularAttribute.class );
+        public static volatile SingularAttribute<TestEntity, ValueClass> value = mock( SingularAttribute.class );
         @SuppressWarnings( "unchecked" )
-        public static volatile SingularAttribute<TestEntity, Instant> time = Mockito.mock( SingularAttribute.class );
+        public static volatile SingularAttribute<TestEntity, Instant> time = mock( SingularAttribute.class );
     }
 
     private static class ValueClass_ {
         @SuppressWarnings( "unchecked" )
-        public static volatile SingularAttribute<ValueClass, String> theValue = Mockito.mock( SingularAttribute.class );
+        public static volatile SingularAttribute<ValueClass, String> theValue = mock( SingularAttribute.class );
     }
 
     @Mock
@@ -436,6 +435,25 @@ class SerializerTest {
                             .first()
                             .isEqualTo( Boolean.FALSE );
                 } );
+    }
+
+    @Test
+    void shouldSerializeAndDeserializeRequestsContainingNegatedFilters() {
+        final var request = createPageRequest().copy( b -> b.filter( Filters.and( //
+                attribute( TestEntity_.name ).notEqualTo( "Name-1" ), //
+                attribute( TestEntity_.name ).notIn( "Name-2", "Name-3" ), //
+                attribute( TestEntity_.name ).notLike( "Name-%" ) //
+        ) ) );
+
+        final RequestSerializer<TestEntity> serializer = RequestSerializer.create( TestEntity.class, _ -> {} );
+        final var serializedRequest = serializer.toBase64( request );
+        final var deserializedRequest = serializer.toPageRequest( serializedRequest );
+
+        assertThat( deserializedRequest ).isEqualTo( request );
+        assertThat( deserializedRequest.firstFilterWith(
+                f -> f instanceof final Filter ff && ff.operation() == FilterType.NOT_EQUAL_TO ) ).isPresent();
+        assertThat( deserializedRequest.firstFilterWith(
+                f -> f instanceof final Filter ff && ff.operation() == FilterType.NOT_LIKE ) ).isPresent();
     }
 
     @Test

@@ -61,7 +61,7 @@ public interface QueryBuilder {
     Predicate equalTo( Attribute attribute, Object value );
 
     /**
-     * Get a is like predicate
+     * Get an "is-like" predicate
      *
      * @param attribute the attribute
      * @param value     the value to be used as char-sequence
