@@ -1,14 +1,14 @@
 # API layer support
 
-This project contains classes to support implementation of an API layer.
-I.e. for transferring the cursor (state) to the client and back, as well as defining a initial page request.
+This project contains classes to support implementation of an API layer. I.e. for transferring the cursor (state) to the
+client and back, as well as defining an initial page request.
 
 * [EntitySerializer](src/main/java/io/vigier/cursorpaging/api/EntitySerializer.java): Supports translation of an
   PageRequest into a binary/base64 representation and back, including encryption.
     * An entity serializer must be created per entity type, in order to simplify this there is an
       EntitySerializerFactory available.
-* [DtoPageRequest](src/main/java/io/vigier/cursorpaging/api/DtoPageRequest.java): Represents a initial page request from
-  the client, can be translated into a PageRequest.
+* [DtoPageRequest](src/main/java/io/vigier/cursorpaging/api/DtoPageRequest.java): Represents an initial page request
+  from the client, can be translated into a PageRequest.
 * [StringToBase64Converter](src/main/java/io/vigier/cursorpaging/api/StringToBase64Converter.java): Converter for Spring
   to use the serializer result directly as controller method parameter.
 
@@ -50,7 +50,7 @@ public class DataRecordController {
     private final DataRecordRepository dataRecordRepository;
     private final DtoDataRecordMapper dtoDataRecordMapper;
     private final EntitySerializer<DataRecord> serializer;
-    
+
     @GetMapping( produces = MediaType.APPLICATION_JSON_VALUE )
     @ResponseStatus( HttpStatus.OK )
     public CollectionModel<DtoDataRecord> getDataRecordPage( //
@@ -59,7 +59,8 @@ public class DataRecordController {
         cursor.ifPresent( c -> log.debug( "Cursor = {}", c ) );
 
         final PageRequest<DataRecord> request = cursor.map( serializer::toPageRequest )
-                .orElseGet( () -> PageRequest.create( b -> b.asc( DataRecord_.name ).asc( DataRecord_.id ) ) )
+                .orElseGet( () -> PageRequest.create( b -> b.asc( DataRecord_.name )
+                        .asc( DataRecord_.id ) ) )
                 .withPageSize( 10 );
 
         final var page = dataRecordRepository.loadPage( request );

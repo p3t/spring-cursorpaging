@@ -13,21 +13,22 @@ Therefor it is possible, that it will fail in case new features are used which a
 
 ## Required infrastructure
 
-For running the application, you need a PostgreSQL ( s. the [docker-compose.yaml](docker-compose.yaml) ) and a Java 17 runtime.
+For running the application, you need a PostgreSQL (s. the [docker-compose.yaml](docker-compose.yaml) ) and a Java 17
+runtime.
 
 ## Components
 
 - Controller
-  - An API model (DTOs) mapped from/to the domain model
+    - An API model (DTOs) mapped from/to the domain model
 - Persistence Layer (Repository)
-  - Note that the service layer is omitted for simplicity (no business logic present), still there is a service
-    generating some test data
+    - Note that the service layer is omitted for simplicity (no business logic present), still there is a service
+      generating some test data
 - Configurations:
-  - EntitySerializerConfig: Demonstrates how to configure a secret and domain-model serializer(s)
-  - JpaConfig: Activates the paging repository aspect
-  - WebConfig: Some utility for the web layer
+    - EntitySerializerConfig: Demonstrates how to configure a secret and domain-model serializer (s)
+    - JpaConfig: Activates the paging repository aspect
+    - WebConfig: Some utility for the web layer
 
-## Mapping order and filters for a initial page request in the controller
+## Mapping order and filters for an initial page request in the controller
 
 Ideally I would prefer to have a single value-object like a `DataRecordPageRequest` that contains all the necessary
 properties:
@@ -40,23 +41,22 @@ import java.util.LinkedHashMap;
 @NoArgsConstructor
 public class DataRecordPageRequest {
 
-  private Map<DataRecordAttribute, Order> orderBy = new LinkedHashMap<>();
+    private Map<DataRecordAttribute, Order> orderBy = new LinkedHashMap<>();
 
-  private MultiValueMap<DataRecordAttribute, String> filterBy = new LinkedMultiValueMap<>();
+    private MultiValueMap<DataRecordAttribute, String> filterBy = new LinkedMultiValueMap<>();
 
-  @Min( 1 )
-  @Max( 100 )
-  private int pageSize = 100;
+    @Min( 1 )
+    @Max( 100 )
+    private int pageSize = 100;
 
-  public static DataRecordPageRequest valueOf( final String value ) {
-    return new DataRecordPageRequest();
-  }
+    public static DataRecordPageRequest valueOf( final String value ) {
+        return new DataRecordPageRequest();
+    }
 }
 ```
 
-Unfortunately I found no way to map this into the URL request parameters of a GET request.
-One alternative approach (s. controller) is to use a POST request and just return the cursor which then can be used to
-request the first page.
+Unfortunately I found no way to map this into the URL request parameters of a GET request. One alternative approach (s.
+controller) is to use a POST request and just return the cursor which then can be used to request the first page.
 
 Still I tried some other variants for having the information in the URL encoded, which turned out to be specifically
 problematic. Here some tries:
@@ -119,10 +119,10 @@ problematic. Here some tries:
 
 Other considered alternatives:
 
-- Use simple parameters, and name them as the model
-  properties: `@RequestParam( required = false ) final Order orderByName, @RequestParam( required = false ) final Order orderByCreatedAt`
+- Use simple parameters, and name them as the model properties:
+  `@RequestParam( required = false ) final Order orderByName, @RequestParam( required = false ) final Order orderByCreatedAt`
 - Encode all in the attribute enum: "ORDER_BY_NAME_ASC", "ORDER_BY_CREATED_AT_DESC, etc."
-- Just use a string and decode the contained json in the controller method.
+- Just use a string and decode the contained Json in the controller method.
 
 As there is a significant difference between creating a cursor for the first page and requesting the data for all
 subsequent page requests, personally I liked the POST approach most.

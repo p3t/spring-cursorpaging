@@ -43,7 +43,7 @@ public class FilterBuilder {
     }
 
     /**
-     * Same as {@linkplain #in(List)} )}
+     * Same as {@linkplain #in(List)} }
      *
      * @param values List of allowed values to be equal to
      * @return the builder
