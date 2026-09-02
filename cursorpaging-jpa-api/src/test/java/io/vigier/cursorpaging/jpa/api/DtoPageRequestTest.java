@@ -19,6 +19,9 @@ import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoNotLikeFilter;
 import io.vigier.cursorpaging.jpa.api.DtoPageRequest.DtoOrFilter;
 import io.vigier.cursorpaging.jpa.filter.FilterType;
 import io.vigier.cursorpaging.jpa.filter.OrFilter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Slf4j
 class DtoPageRequestTest {
@@ -253,6 +257,115 @@ class DtoPageRequestTest {
                     assertThat( ((OrFilter) of).filters()
                             .get( 2 ) ).satisfies( f -> operationIs( f, FilterType.LESS_THAN ) );
                 } );
+    }
+
+    @Test
+    void shouldCreateRequestsWithTheBuilderConsumer() {
+        final var request = DtoPageRequest.create( b -> b.pageSize( 42 )
+                .orderBy( Map.of( "id", Order.DESC ) )
+                .withTotalCount( true ) );
+
+        assertThat( request.getPageSize() ).isEqualTo( 42 );
+        assertThat( request.isWithTotalCount() ).isTrue();
+        assertThat( request.getOrderBy() ).containsExactly( Map.entry( "id", Order.DESC ) );
+        assertThat( request.getFilterBy() ).isInstanceOf( DtoAndFilter.class );
+    }
+
+    @Test
+    void shouldAddOrderByOnlyWhenNotAlreadyPresent() {
+        final var request = DtoPageRequest.create( b -> b.orderBy( new HashMap<>( Map.of( "id", Order.ASC ) ) ) );
+
+        request.addOrderByIfAbsent( "id", Order.DESC );
+        request.addOrderByIfAbsent( "name", Order.DESC );
+
+        assertThat( request.getOrderBy() ).containsExactlyInAnyOrderEntriesOf(
+                Map.of( "id", Order.ASC, "name", Order.DESC ) );
+    }
+
+    @Test
+    void shouldGeneratePageRequestsForTheNegatingFilters() {
+        final var request = DtoPageRequest.builder()
+                .orderBy( Map.of( "id", Order.ASC ) )
+                .filterBy( DtoAndFilter.builder()
+                        .filter( DtoNeFilter.builder()
+                                .attribute( "id" )
+                                .value( "667" )
+                                .build() )
+                        .filter( DtoLeFilter.builder()
+                                .attribute( "id" )
+                                .value( "777" )
+                                .build() )
+                        .filter( DtoNotLikeFilter.builder()
+                                .attribute( "name" )
+                                .value( "*0815" )
+                                .build() )
+                        .build() )
+                .build();
+
+        final var pageRequest = request.toPageRequest( DtoPageRequestTest::getAttribute );
+
+        assertThat( pageRequest.filters()
+                .filters() ).satisfiesExactly( //
+                f -> operationIs( f, FilterType.NOT_EQUAL_TO ), //
+                f -> operationIs( f, FilterType.LESS_THAN_OR_EQUAL_TO ), //
+                f -> operationIs( f, FilterType.NOT_LIKE ) );
+    }
+
+    @Test
+    void shouldRejectAMissingFilterList() {
+        final var request = DtoPageRequest.builder()
+                .orderBy( Map.of() )
+                .filterBy( null )
+                .build();
+
+        assertThatThrownBy( () -> request.toPageRequest( DtoPageRequestTest::getAttribute ) ) //
+                .isInstanceOf( IllegalStateException.class )
+                .hasMessage( "Unknown filter element: null" );
+    }
+
+    @Test
+    void shouldRejectUnknownFilterElements() {
+        final DtoFilterElement unknown = new DtoFilterElement() {
+        };
+        final var request = DtoPageRequest.builder()
+                .orderBy( Map.of() )
+                .filterBy( DtoAndFilter.builder()
+                        .filter( unknown )
+                        .build() )
+                .build();
+
+        assertThatThrownBy( () -> request.toPageRequest( DtoPageRequestTest::getAttribute ) ) //
+                .isInstanceOf( IllegalStateException.class )
+                .hasMessageContaining( "Unknown filter element: " + unknown.getClass()
+                        .getName() );
+    }
+
+    @Test
+    void shouldProvideTheContentOfAFilterList() {
+        final DtoFilterElement filter = DtoEqFilter.builder()
+                .attribute( "id" )
+                .value( "666" )
+                .build();
+        final var filterList = new DtoAndFilter();
+        filterList.setContent( Map.of( "AND", List.of( filter ) ) );
+
+        assertThat( filterList.getFilters() ).containsExactly( filter );
+        assertThat( filterList.size() ).isEqualTo( 1 );
+        assertThat( filterList.iterator() ).toIterable()
+                .containsExactly( filter );
+
+        final var visited = new ArrayList<DtoFilterElement>();
+        filterList.forEach( visited::add );
+        assertThat( visited ).containsExactly( filter );
+    }
+
+    @Test
+    void shouldIgnoreNonListValuesWhenSettingAnAttribute() {
+        final var filter = new DtoEqFilter();
+        filter.setAttribute( "id", "666" );
+
+        assertThat( filter.getAttribute() ).isEqualTo( "id" );
+        assertThat( filter.getValues() ).isEmpty();
     }
 
     private static Attribute getAttribute( final String s ) {

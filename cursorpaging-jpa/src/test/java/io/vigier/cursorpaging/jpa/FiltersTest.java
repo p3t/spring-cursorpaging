@@ -230,6 +230,104 @@ class FiltersTest {
                 .isEmpty() ).isTrue();
     }
 
+    @Test
+    void shouldGenerateNotEqualToFilter() {
+        final var filter = Filters.attribute( DataRecord_.name )
+                .notEqualTo( "Test" );
+        assertThat( filter.operation() ).isEqualTo( FilterType.NOT_EQUAL_TO );
+        assertThat( filter.attributes() ).contains( Attribute.of( name ) );
+        assertThat( filter.values( String.class ) ).containsExactly( "Test" );
+    }
+
+    @Test
+    void shouldGenerateNotEqualToFilterFromValueList() {
+        final List<String> values = List.of( "Test1", "Test2" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .notEqualTo( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.NOT_EQUAL_TO );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateNotInFilterFromValueList() {
+        final List<String> values = List.of( "Test1", "Test2" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .notIn( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.NOT_EQUAL_TO );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateNotInFilterFromMultipleValues() {
+        final var filter = Filters.attribute( DataRecord_.name )
+                .notIn( "Test1", "Test2" );
+        assertThat( filter.operation() ).isEqualTo( FilterType.NOT_EQUAL_TO );
+        assertThat( filter.values( String.class ) ).containsExactly( "Test1", "Test2" );
+    }
+
+    @Test
+    void shouldGenerateGreaterThanFilterFromValueList() {
+        final List<String> values = List.of( "A", "B" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .greaterThan( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.GREATER_THAN );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateGreaterThanOrEqualToFilterFromValueList() {
+        final List<String> values = List.of( "A", "B" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .greaterThanOrEqualTo( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.GREATER_THAN_OR_EQUAL_TO );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateLessThanFilterFromValueList() {
+        final List<String> values = List.of( "A", "B" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .lessThan( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.LESS_THAN );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateLessThanOrEqualToFilterFromValueList() {
+        final List<String> values = List.of( "A", "B" );
+        final var filter = Filters.attribute( DataRecord_.name )
+                .lessThanOrEqualTo( values );
+        assertThat( filter.operation() ).isEqualTo( FilterType.LESS_THAN_OR_EQUAL_TO );
+        assertThat( filter.values( String.class ) ).containsExactlyElementsOf( values );
+    }
+
+    @Test
+    void shouldGenerateFilterForNestedAttributeNames() {
+        final var filter = Filters.attribute( "author", String.class, "name", String.class )
+                .equalTo( "Goethe" );
+        assertThat( filter.attributes() ).containsExactly( Attribute.of( "author", String.class, "name", String.class ) );
+        assertThat( filter.attribute()
+                .name() ).isEqualTo( "author.name" );
+        assertThat( filter.values( String.class ) ).containsExactly( "Goethe" );
+    }
+
+    @Test
+    void shouldCombineFiltersGivenAsList() {
+        final List<QueryElement> filters = List.of( //
+                Filters.attribute( Attribute.of( "name", String.class ) )
+                        .equalTo( "John" ), //
+                Filters.attribute( Attribute.of( "age", Long.class ) )
+                        .equalTo( 18L ) );
+
+        assertThat( Filters.and( filters ) ).isEqualTo(
+                Filters.and( filters.toArray( QueryElement[]::new ) ) );
+        assertThat( Filters.or( filters ) ).isEqualTo( Filters.or( filters.toArray( QueryElement[]::new ) ) );
+        assertThat( Filters.and( filters )
+                .filters() ).containsExactlyElementsOf( filters );
+        assertThat( Filters.or( filters )
+                .filters() ).containsExactlyElementsOf( filters );
+    }
+
     private Comparable<?> nullComparable() {
         return null;
     }
