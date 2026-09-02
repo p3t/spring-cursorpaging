@@ -22,6 +22,7 @@ import io.vigier.cursorpaging.jpa.filter.OrFilter;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +46,7 @@ class DtoPageRequestTest {
                             { "LT": { "id": [ "778" ] } },
                             { "LE": { "id": [ "777" ] } },
                             { "LIKE": { "name": [ "471*" ] } },
-                            { "NOT_LIKE": { "name": [ "*815" ] } }
+                            { "NLIKE": { "name": [ "*815" ] } }
                         ]
                     },
                     "pageSize": 10,
@@ -127,22 +128,39 @@ class DtoPageRequestTest {
                 .pageSize( 10 )
                 .orderBy( Map.of( "id", Order.ASC ) )
                 .filterBy( DtoAndFilter.builder()
+                        .filter( DtoEqFilter.builder()
+                                .attribute( "super" )
+                                .value( "true" )
+                                .build() )
+                        .filter( DtoNeFilter.builder()
+                                .attribute( "id" )
+                                .value( "667" )
+                                .value( "668" )
+                                .build() )
                         .filter( DtoGtFilter.builder()
                                 .attribute( "id" )
                                 .value( "666" )
                                 .build() )
+                        .filter( DtoGeFilter.builder()
+                                .attribute( "id" )
+                                .value( "665" )
+                                .build() )
                         .filter( DtoOrFilter.builder()
-                                .filter( DtoEqFilter.builder()
-                                        .attribute( "super" )
-                                        .value( "true" )
+                                .filter( DtoLtFilter.builder()
+                                        .attribute( "id" )
+                                        .value( "778" )
+                                        .build() )
+                                .filter( DtoLeFilter.builder()
+                                        .attribute( "id" )
+                                        .value( "777" )
                                         .build() )
                                 .filter( DtoLikeFilter.builder()
                                         .attribute( "name" )
-                                        .value( "4711" )
+                                        .value( "4711*" )
                                         .build() )
-                                .filter( DtoLtFilter.builder()
-                                        .attribute( "priority" )
-                                        .value( "0815" )
+                                .filter( DtoNotLikeFilter.builder()
+                                        .attribute( "name" )
+                                        .value( "*0815" )
                                         .build() )
                                 .build() )
                         .build() )
@@ -161,7 +179,32 @@ class DtoPageRequestTest {
         final var filterBy = nodes.get( "filterBy" );
         assertThat( filterBy.get( "AND" ) ).isNotNull();
         final var andArray = filterBy.get( "AND" );
-        assertThat( andArray ).hasSize( 2 );
+        assertThat( andArray ).hasSize( 5 );
+        filterNodeIs( andArray.get( 0 ), "EQ", "super", "true" );
+        filterNodeIs( andArray.get( 1 ), "NE", "id", "667", "668" );
+        filterNodeIs( andArray.get( 2 ), "GT", "id", "666" );
+        filterNodeIs( andArray.get( 3 ), "GE", "id", "665" );
+
+        final var orArray = andArray.get( 4 )
+                .get( "OR" );
+        assertThat( orArray ).isNotNull()
+                .hasSize( 4 );
+        filterNodeIs( orArray.get( 0 ), "LT", "id", "778" );
+        filterNodeIs( orArray.get( 1 ), "LE", "id", "777" );
+        filterNodeIs( orArray.get( 2 ), "LIKE", "name", "4711*" );
+        filterNodeIs( orArray.get( 3 ), "NLIKE", "name", "*0815" );
+
+        assertThat( jsonMapper.readValue( json, DtoPageRequest.class ) ).isEqualTo( request );
+    }
+
+    private static void filterNodeIs( final JsonNode node, final String operation, final String attribute,
+            final String... values ) {
+        assertThat( node.propertyNames() ).containsExactly( operation );
+        final var filterNode = node.get( operation );
+        assertThat( filterNode.propertyNames() ).containsExactly( attribute );
+        assertThat( filterNode.get( attribute )
+                .valueStream()
+                .map( JsonNode::stringValue ) ).containsExactly( values );
     }
 
     @Test

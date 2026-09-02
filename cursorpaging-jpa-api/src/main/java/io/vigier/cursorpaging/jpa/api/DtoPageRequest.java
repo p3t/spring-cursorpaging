@@ -58,7 +58,7 @@ public class DtoPageRequest {
     @JsonSubTypes( { @Type( value = DtoAndFilter.class, name = "AND" ), @Type( value = DtoOrFilter.class, name = "OR" ),
             @Type( value = DtoEqFilter.class, name = "EQ" ), @Type( value = DtoNeFilter.class, name = "NE" ),
             @Type( value = DtoLikeFilter.class, name = "LIKE" ),
-            @Type( value = DtoNotLikeFilter.class, name = "NOT_LIKE" ), @Type( value = DtoGtFilter.class, name = "GT" ),
+            @Type( value = DtoNotLikeFilter.class, name = "NLIKE" ), @Type( value = DtoGtFilter.class, name = "GT" ),
             @Type( value = DtoGeFilter.class, name = "GE" ), @Type( value = DtoLtFilter.class, name = "LT" ),
             @Type( value = DtoLeFilter.class, name = "LE" ) } )
     public interface DtoFilterElement {
@@ -203,7 +203,7 @@ public class DtoPageRequest {
     @NoArgsConstructor
     @EqualsAndHashCode( callSuper = true )
     @SuperBuilder
-    @JsonTypeName( "NOT_LIKE" )
+    @JsonTypeName( "NLIKE" )
     public static class DtoNotLikeFilter extends DtoFilter {
 
         @Override
