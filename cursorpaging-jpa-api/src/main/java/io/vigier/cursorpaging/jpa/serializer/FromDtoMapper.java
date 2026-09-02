@@ -31,15 +31,17 @@ import org.springframework.core.convert.ConverterNotFoundException;
 @RequiredArgsConstructor( staticName = "of" )
 class FromDtoMapper<E> {
 
-    private static final Map<Cursor.FilterType, FilterType> FILTER_TYPE_MAP = Map.of( //
-            Cursor.FilterType.EQ, FilterType.EQUAL_TO, //
-            Cursor.FilterType.GT, FilterType.GREATER_THAN, //
-            Cursor.FilterType.LT, FilterType.LESS_THAN, //
-            Cursor.FilterType.LIKE, FilterType.LIKE, //
-            Cursor.FilterType.GE, FilterType.GREATER_THAN_OR_EQUAL_TO, //
-            Cursor.FilterType.LE, FilterType.LESS_THAN_OR_EQUAL_TO, //
-            Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL_TO, //
-            Cursor.FilterType.ALWAYS, FilterType.ALWAYS //
+    private static final Map<Cursor.FilterType, FilterType> FILTER_TYPE_MAP = Map.ofEntries( //
+            Map.entry( Cursor.FilterType.EQ, FilterType.EQUAL_TO ), //
+            Map.entry( Cursor.FilterType.NE, FilterType.NOT_EQUAL_TO ), //
+            Map.entry( Cursor.FilterType.GT, FilterType.GREATER_THAN ), //
+            Map.entry( Cursor.FilterType.LT, FilterType.LESS_THAN ), //
+            Map.entry( Cursor.FilterType.LIKE, FilterType.LIKE ), //
+            Map.entry( Cursor.FilterType.NOT_LIKE, FilterType.NOT_LIKE ), //
+            Map.entry( Cursor.FilterType.GE, FilterType.GREATER_THAN_OR_EQUAL_TO ), //
+            Map.entry( Cursor.FilterType.LE, FilterType.LESS_THAN_OR_EQUAL_TO ), //
+            Map.entry( Cursor.FilterType.UNRECOGNIZED, FilterType.EQUAL_TO ), //
+            Map.entry( Cursor.FilterType.ALWAYS, FilterType.ALWAYS ) //
     );
 
     private final Cursor.PageRequest request;

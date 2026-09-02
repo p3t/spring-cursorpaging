@@ -175,7 +175,8 @@ On serialization the rule's name and parameters are stored; on deserialization t
 }
 ```
 
-Supported filter types in the DTO: `EQ`, `LIKE`, `GT`, `GE`, `LT`, `LE`, nested via `AND` / `OR`.
+Supported filter types in the DTO: `EQ`, `NE`, `LIKE`, `NOT_LIKE`, `GT`, `GE`, `LT`, `LE`, nested via
+`AND` / `OR`. `NE` with several values means "not in", just as `EQ` with several values means "in".
 
 Convert to a `PageRequest`:
 

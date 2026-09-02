@@ -56,9 +56,11 @@ public class DtoPageRequest {
 
     @JsonTypeInfo( use = Id.NAME, include = As.WRAPPER_OBJECT )
     @JsonSubTypes( { @Type( value = DtoAndFilter.class, name = "AND" ), @Type( value = DtoOrFilter.class, name = "OR" ),
-            @Type( value = DtoEqFilter.class, name = "EQ" ), @Type( value = DtoLikeFilter.class, name = "LIKE" ),
-            @Type( value = DtoGtFilter.class, name = "GT" ), @Type( value = DtoGeFilter.class, name = "GE" ),
-            @Type( value = DtoLtFilter.class, name = "LT" ), @Type( value = DtoLeFilter.class, name = "LE" ) } )
+            @Type( value = DtoEqFilter.class, name = "EQ" ), @Type( value = DtoNeFilter.class, name = "NE" ),
+            @Type( value = DtoLikeFilter.class, name = "LIKE" ),
+            @Type( value = DtoNotLikeFilter.class, name = "NOT_LIKE" ), @Type( value = DtoGtFilter.class, name = "GT" ),
+            @Type( value = DtoGeFilter.class, name = "GE" ), @Type( value = DtoLtFilter.class, name = "LT" ),
+            @Type( value = DtoLeFilter.class, name = "LE" ) } )
     public interface DtoFilterElement {
 
     }
@@ -87,7 +89,9 @@ public class DtoPageRequest {
         @JsonAnySetter
         public void setAttribute( final String name, final Object value ) {
             this.attribute = name;
-            this.values = value instanceof final List<?> l ? l.stream().map( Objects::toString ).toList() : List.of();
+            this.values = value instanceof final List<?> l ? l.stream()
+                    .map( Objects::toString )
+                    .toList() : List.of();
         }
     }
 
@@ -100,7 +104,25 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).equalTo( values );
+            return Filters.attribute( attribute )
+                    .equalTo( values );
+        }
+    }
+
+    /**
+     * Not-equal filter; with more than one value it becomes a "not in" condition.
+     */
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode( callSuper = true )
+    @SuperBuilder
+    @JsonTypeName( "NE" )
+    public static class DtoNeFilter extends DtoFilter {
+
+        @Override
+        public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+            return Filters.attribute( attribute )
+                    .notEqualTo( values );
         }
     }
 
@@ -113,7 +135,8 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).greaterThan( values );
+            return Filters.attribute( attribute )
+                    .greaterThan( values );
         }
     }
 
@@ -126,7 +149,8 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).greaterThanOrEqualTo( values );
+            return Filters.attribute( attribute )
+                    .greaterThanOrEqualTo( values );
         }
     }
 
@@ -139,7 +163,8 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).lessThan( values );
+            return Filters.attribute( attribute )
+                    .lessThan( values );
         }
 
     }
@@ -153,7 +178,8 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).lessThanOrEqualTo( values );
+            return Filters.attribute( attribute )
+                    .lessThanOrEqualTo( values );
         }
 
     }
@@ -167,7 +193,23 @@ public class DtoPageRequest {
 
         @Override
         public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
-            return Filters.attribute( attribute ).like( values );
+            return Filters.attribute( attribute )
+                    .like( values );
+        }
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode( callSuper = true )
+    @SuperBuilder
+    @JsonTypeName( "NOT_LIKE" )
+    public static class DtoNotLikeFilter extends DtoFilter {
+
+        @Override
+        public Filter create( final Attribute attribute, final List<? extends Comparable<?>> values ) {
+            return Filters.attribute( attribute )
+                    .notLike( values );
         }
 
     }
@@ -228,7 +270,9 @@ public class DtoPageRequest {
 
         @Override
         protected DtoFilterList create( final List<DtoFilterElement> filters ) {
-            return DtoAndFilter.builder().filters( filters ).build();
+            return DtoAndFilter.builder()
+                    .filters( filters )
+                    .build();
         }
     }
 
@@ -240,7 +284,9 @@ public class DtoPageRequest {
 
         @Override
         protected DtoFilterList create( final List<DtoFilterElement> filters ) {
-            return DtoOrFilter.builder().filters( filters ).build();
+            return DtoOrFilter.builder()
+                    .filters( filters )
+                    .build();
         }
     }
 
@@ -254,7 +300,10 @@ public class DtoPageRequest {
 
         @JsonAnySetter
         public void setContent( final Map<String, List<DtoFilterElement>> filters ) {
-            setFilters( filters.entrySet().iterator().next().getValue() );
+            setFilters( filters.entrySet()
+                    .iterator()
+                    .next()
+                    .getValue() );
         }
     }
 
@@ -285,7 +334,8 @@ public class DtoPageRequest {
     public <T> PageRequest<T> toPageRequest( final Function<String, Attribute> attributeProvider ) {
         return PageRequest.create( b -> {
             orderBy.forEach( ( name, order ) -> b.sort( attributeProvider.apply( name ), order ) );
-            b.pageSize( pageSize ).enableTotalCount( withTotalCount );
+            b.pageSize( pageSize )
+                    .enableTotalCount( withTotalCount );
             b.filters( (FilterList) filterOf( filterBy, attributeProvider ) );
         } );
     }
@@ -295,14 +345,21 @@ public class DtoPageRequest {
             final Attribute attribute = attributeProvider.apply( filter.getAttribute() );
             return filter.create( attribute, filter.getValues() );
         } else if ( f instanceof final DtoAndFilter list ) {
-            return Filters.and( list.getFilters().stream().map( e -> filterOf( e, attributeProvider ) ).toList() );
+            return Filters.and( list.getFilters()
+                    .stream()
+                    .map( e -> filterOf( e, attributeProvider ) )
+                    .toList() );
         } else if ( f instanceof final DtoOrFilter list ) {
-            return Filters.or( list.getFilters().stream().map( e -> filterOf( e, attributeProvider ) ).toList() );
+            return Filters.or( list.getFilters()
+                    .stream()
+                    .map( e -> filterOf( e, attributeProvider ) )
+                    .toList() );
         }
-        throw new IllegalStateException( "Unknown filter element: " + (f != null ? f.getClass().getName() : "null") );
+        throw new IllegalStateException( "Unknown filter element: " + (f != null ? f.getClass()
+                .getName() : "null") );
     }
 
     public void addOrderByIfAbsent( final String name, final Order order ) {
-        orderBy.computeIfAbsent( name, k -> order );
+        orderBy.computeIfAbsent( name, _ -> order );
     }
 }

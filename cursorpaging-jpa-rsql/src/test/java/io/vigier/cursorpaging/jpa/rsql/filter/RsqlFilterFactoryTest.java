@@ -1,5 +1,6 @@
 package io.vigier.cursorpaging.jpa.rsql.filter;
 
+import cz.jirutka.rsql.parser.ast.RSQLOperators;
 import io.vigier.cursorpaging.jpa.Filter;
 import io.vigier.cursorpaging.jpa.QueryElement;
 import io.vigier.cursorpaging.jpa.filter.AndFilter;
@@ -17,8 +18,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.convert.ConversionFailedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith( MockitoExtension.class )
@@ -42,9 +45,26 @@ class RsqlFilterFactoryTest {
                 Arguments.of( "age=ge=18", "age", Integer.class, FilterType.GREATER_THAN_OR_EQUAL_TO, List.of( 18 ) ),
                 Arguments.of( "age=lt=50", "age", Integer.class, FilterType.LESS_THAN, List.of( 50 ) ),
                 Arguments.of( "age=le=65", "age", Integer.class, FilterType.LESS_THAN_OR_EQUAL_TO, List.of( 65 ) ),
+                // negated comparisons
+                Arguments.of( "name!=John", "name", String.class, FilterType.NOT_EQUAL_TO, List.of( "John" ) ),
+                Arguments.of( "age!=42", "age", Integer.class, FilterType.NOT_EQUAL_TO, List.of( 42 ) ),
+                // alternative (FIQL) symbols for the comparison operators
+                Arguments.of( "age>30", "age", Integer.class, FilterType.GREATER_THAN, List.of( 30 ) ),
+                Arguments.of( "age>=18", "age", Integer.class, FilterType.GREATER_THAN_OR_EQUAL_TO, List.of( 18 ) ),
+                Arguments.of( "age<50", "age", Integer.class, FilterType.LESS_THAN, List.of( 50 ) ),
+                Arguments.of( "age<=65", "age", Integer.class, FilterType.LESS_THAN_OR_EQUAL_TO, List.of( 65 ) ),
                 // in operator
                 Arguments.of( "name=in=(Alice,Bob,Charlie)", "name", String.class, FilterType.EQUAL_TO,
                         List.of( "Alice", "Bob", "Charlie" ) ),
+                // out (not-in) operator
+                Arguments.of( "name=out=(Alice,Bob)", "name", String.class, FilterType.NOT_EQUAL_TO,
+                        List.of( "Alice", "Bob" ) ),
+                // wildcards are translated into LIKE patterns
+                Arguments.of( "name==Jo*", "name", String.class, FilterType.LIKE, List.of( "Jo%" ) ),
+                Arguments.of( "name==*ohn*", "name", String.class, FilterType.LIKE, List.of( "%ohn%" ) ),
+                Arguments.of( "name!=Jo*", "name", String.class, FilterType.NOT_LIKE, List.of( "Jo%" ) ),
+                // an escaped asterisk stays a literal one
+                Arguments.of( "name==Jo\\*hn", "name", String.class, FilterType.EQUAL_TO, List.of( "Jo*hn" ) ),
                 // integer type conversion
                 Arguments.of( "age==42", "age", Integer.class, FilterType.EQUAL_TO, List.of( 42 ) ),
                 // dotted / embedded attribute paths
@@ -56,14 +76,16 @@ class RsqlFilterFactoryTest {
 
     @ParameterizedTest
     @MethodSource( "rsqlExpressions" )
-    void shouldParseSimpleRsqlExpression( final String rsql, final String expectedName,
-            final Class<?> expectedType, final FilterType expectedOp, final List<Object> expectedValues ) {
+    void shouldParseSimpleRsqlExpression( final String rsql, final String expectedName, final Class<?> expectedType,
+            final FilterType expectedOp, final List<Object> expectedValues ) {
         final QueryElement result = factory.toFilter( rsql );
 
         assertThat( result ).isInstanceOf( Filter.class );
         final Filter filter = (Filter) result;
-        assertThat( filter.attribute().name() ).isEqualTo( expectedName );
-        assertThat( filter.attribute().type() ).isEqualTo( expectedType );
+        assertThat( filter.attribute()
+                .name() ).isEqualTo( expectedName );
+        assertThat( filter.attribute()
+                .type() ).isEqualTo( expectedType );
         assertThat( filter.operation() ).isEqualTo( expectedOp );
         assertThat( values( filter ) ).isEqualTo( expectedValues );
     }
@@ -78,13 +100,17 @@ class RsqlFilterFactoryTest {
         final AndFilter andFilter = (AndFilter) result;
         assertThat( andFilter.filters() ).hasSize( 2 );
 
-        final Filter nameFilter = (Filter) andFilter.filters().getFirst();
-        assertThat( nameFilter.attribute().name() ).isEqualTo( "name" );
+        final Filter nameFilter = (Filter) andFilter.filters()
+                .getFirst();
+        assertThat( nameFilter.attribute()
+                .name() ).isEqualTo( "name" );
         assertThat( nameFilter.operation() ).isEqualTo( FilterType.EQUAL_TO );
         assertThat( values( nameFilter ) ).containsExactly( "John" );
 
-        final Filter ageFilter = (Filter) andFilter.filters().get( 1 );
-        assertThat( ageFilter.attribute().name() ).isEqualTo( "age" );
+        final Filter ageFilter = (Filter) andFilter.filters()
+                .get( 1 );
+        assertThat( ageFilter.attribute()
+                .name() ).isEqualTo( "age" );
         assertThat( ageFilter.operation() ).isEqualTo( FilterType.GREATER_THAN );
         assertThat( values( ageFilter ) ).containsExactly( 25 );
     }
@@ -99,12 +125,16 @@ class RsqlFilterFactoryTest {
         final OrFilter orFilter = (OrFilter) result;
         assertThat( orFilter.filters() ).hasSize( 2 );
 
-        final Filter first = (Filter) orFilter.filters().getFirst();
-        assertThat( first.attribute().name() ).isEqualTo( "name" );
+        final Filter first = (Filter) orFilter.filters()
+                .getFirst();
+        assertThat( first.attribute()
+                .name() ).isEqualTo( "name" );
         assertThat( values( first ) ).containsExactly( "Alice" );
 
-        final Filter second = (Filter) orFilter.filters().get( 1 );
-        assertThat( second.attribute().name() ).isEqualTo( "name" );
+        final Filter second = (Filter) orFilter.filters()
+                .get( 1 );
+        assertThat( second.attribute()
+                .name() ).isEqualTo( "name" );
         assertThat( values( second ) ).containsExactly( "Bob" );
     }
 
@@ -119,13 +149,18 @@ class RsqlFilterFactoryTest {
         final AndFilter andFilter = (AndFilter) result;
         assertThat( andFilter.filters() ).hasSize( 2 );
 
-        assertThat( andFilter.filters().getFirst() ).isInstanceOf( OrFilter.class );
-        final OrFilter orPart = (OrFilter) andFilter.filters().getFirst();
+        assertThat( andFilter.filters()
+                .getFirst() ).isInstanceOf( OrFilter.class );
+        final OrFilter orPart = (OrFilter) andFilter.filters()
+                .getFirst();
         assertThat( orPart.filters() ).hasSize( 2 );
 
-        assertThat( andFilter.filters().get( 1 ) ).isInstanceOf( Filter.class );
-        final Filter agePart = (Filter) andFilter.filters().get( 1 );
-        assertThat( agePart.attribute().name() ).isEqualTo( "age" );
+        assertThat( andFilter.filters()
+                .get( 1 ) ).isInstanceOf( Filter.class );
+        final Filter agePart = (Filter) andFilter.filters()
+                .get( 1 );
+        assertThat( agePart.attribute()
+                .name() ).isEqualTo( "age" );
         assertThat( agePart.operation() ).isEqualTo( FilterType.GREATER_THAN );
     }
 
@@ -140,19 +175,26 @@ class RsqlFilterFactoryTest {
         final AndFilter andFilter = (AndFilter) result;
         assertThat( andFilter.filters() ).hasSize( 3 );
 
-        final Filter nameFilter = (Filter) andFilter.filters().getFirst();
-        assertThat( nameFilter.attribute().name() ).isEqualTo( "name" );
+        final Filter nameFilter = (Filter) andFilter.filters()
+                .getFirst();
+        assertThat( nameFilter.attribute()
+                .name() ).isEqualTo( "name" );
         assertThat( nameFilter.operation() ).isEqualTo( FilterType.EQUAL_TO );
         assertThat( values( nameFilter ) ).containsExactly( "John" );
 
-        final Filter ageFilter = (Filter) andFilter.filters().get( 1 );
-        assertThat( ageFilter.attribute().name() ).isEqualTo( "age" );
+        final Filter ageFilter = (Filter) andFilter.filters()
+                .get( 1 );
+        assertThat( ageFilter.attribute()
+                .name() ).isEqualTo( "age" );
         assertThat( ageFilter.operation() ).isEqualTo( FilterType.GREATER_THAN_OR_EQUAL_TO );
         assertThat( values( ageFilter ) ).containsExactly( 18 );
 
-        final Filter auditFilter = (Filter) andFilter.filters().get( 2 );
-        assertThat( auditFilter.attribute().name() ).isEqualTo( "auditInfo.createdAt" );
-        assertThat( auditFilter.attribute().type() ).isEqualTo( Instant.class );
+        final Filter auditFilter = (Filter) andFilter.filters()
+                .get( 2 );
+        assertThat( auditFilter.attribute()
+                .name() ).isEqualTo( "auditInfo.createdAt" );
+        assertThat( auditFilter.attribute()
+                .type() ).isEqualTo( Instant.class );
         assertThat( auditFilter.operation() ).isEqualTo( FilterType.GREATER_THAN );
         assertThat( values( auditFilter ) ).containsExactly( Instant.parse( "2024-01-01T00:00:00Z" ) );
     }
@@ -160,21 +202,21 @@ class RsqlFilterFactoryTest {
     // -- Unsupported / invalid RSQL --
 
     @Test
-    void shouldThrowForUnsupportedOperator() {
-        assertThatThrownBy( () -> factory.toFilter( "name!=John" ) ).isInstanceOf( UnsupportedOperationException.class )
-                .hasMessageContaining( "Operator not supported" );
+    void shouldSupportAllDefaultOperators() {
+        assertThat( RSQLOperators.defaultOperators() ).isNotEmpty()
+                .allSatisfy( //
+                        op -> assertThatCode( () -> factory.toFilter( "name" + op.getSymbol() //
+                                + (op.isMultiValue() ? "(A,B)" : "A") ) ).doesNotThrowAnyException() );
     }
 
     @Test
-    void shouldRejectNotInOperator() {
-        assertThatThrownBy( () -> factory.toFilter( "name=out=(A,B)" ) ).isInstanceOf(
-                UnsupportedOperationException.class ).hasMessageContaining( "Operator not supported" );
+    void shouldNotTreatWildcardsOnNonStringAttributesAsPattern() {
+        assertThatThrownBy( () -> factory.toFilter( "age==4*2" ) ).isInstanceOf( ConversionFailedException.class );
     }
 
     @Test
     void shouldRejectInvalidRsql() {
-        assertThatThrownBy( () -> factory.toFilter( "==invalid" ) ).isInstanceOf(
-                RsqlSyntaxException.class );
+        assertThatThrownBy( () -> factory.toFilter( "==invalid" ) ).isInstanceOf( RsqlSyntaxException.class );
     }
 
     // -- Helpers --
@@ -183,7 +225,10 @@ class RsqlFilterFactoryTest {
      * Narrows the wildcard-typed value list so that AssertJ's {@code containsExactly} can infer types.
      */
     private static List<Object> values( final Filter filter ) {
-        return filter.values().stream().map( v -> (Object) v ).toList();
+        return filter.values()
+                .stream()
+                .map( v -> (Object) v )
+                .toList();
     }
 
 }

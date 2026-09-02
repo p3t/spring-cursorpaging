@@ -23,9 +23,11 @@ class ToDtoMapper<E> {
 
     private static final Map<FilterType, Cursor.FilterType> TYPE_MAP = Map.of( //
             FilterType.EQUAL_TO, Cursor.FilterType.EQ, //
+            FilterType.NOT_EQUAL_TO, Cursor.FilterType.NE, //
             FilterType.GREATER_THAN, Cursor.FilterType.GT, //
             FilterType.LESS_THAN, Cursor.FilterType.LT, //
             FilterType.LIKE, Cursor.FilterType.LIKE, //
+            FilterType.NOT_LIKE, Cursor.FilterType.NOT_LIKE, //
             FilterType.LESS_THAN_OR_EQUAL_TO, Cursor.FilterType.LE, //
             FilterType.GREATER_THAN_OR_EQUAL_TO, Cursor.FilterType.GE, //
             FilterType.ALWAYS, Cursor.FilterType.ALWAYS //

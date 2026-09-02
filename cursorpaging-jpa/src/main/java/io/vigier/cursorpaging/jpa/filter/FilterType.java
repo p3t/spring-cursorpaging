@@ -13,11 +13,20 @@ import lombok.RequiredArgsConstructor;
 public enum FilterType implements FilterOperation {
 
     EQUAL_TO( FilterType::equalTo ),
+    /**
+     * Negation of {@link #EQUAL_TO}: with a single value a {@code <> value}, with multiple values a
+     * {@code not in (values)} condition (mirroring the {@code EQUAL_TO}/{@code in} handling).
+     */
+    NOT_EQUAL_TO( FilterType::notEqualTo ),
     GREATER_THAN( FilterType::greaterThan ),
     GREATER_THAN_OR_EQUAL_TO( FilterType::greaterThanOrEqualTo ),
     LESS_THAN( FilterType::lessThan ),
     LESS_THAN_OR_EQUAL_TO( FilterType::lessThanOrEqualTo ),
     LIKE( FilterType::like ),
+    /**
+     * Negation of {@link #LIKE}: matches when the attribute is like none of the given patterns.
+     */
+    NOT_LIKE( FilterType::notLike ),
     ALWAYS( FilterType::always ) {
         @Override
         public boolean isEmpty( final Filter filter ) {
@@ -73,6 +82,16 @@ public enum FilterType implements FilterOperation {
             return qb.cb().and( predicates.toArray( Predicate[]::new ) );
         }
         return predicates.getFirst();
+    }
+
+    private static Predicate notEqualTo( final QueryBuilder qb, final Attribute attribute,
+            final List<? extends Comparable<?>> values ) {
+        return qb.cb().not( equalTo( qb, attribute, values ) );
+    }
+
+    private static Predicate notLike( final QueryBuilder qb, final Attribute attribute,
+            final List<? extends Comparable<?>> values ) {
+        return qb.cb().not( like( qb, attribute, values ) );
     }
 
     private static Predicate like( final QueryBuilder qb, final Attribute attribute,
