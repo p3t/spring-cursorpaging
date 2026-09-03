@@ -9,22 +9,21 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.resilience.annotation.Retryable;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Configuration
 @TestConfiguration( proxyBeanMethods = false )
-@Testcontainers
 @Slf4j
 public class PostgreSqlTestConfiguration {
 
     @Bean
     @ServiceConnection
     @SneakyThrows
-    PostgreSQLContainer<?> postgresContainer() {
-        final PostgreSQLContainer<?> container = new PostgreSQLContainer<>(
-                DockerImageName.parse( "postgres:latest" ) ).withPassword( "secret" ).withUsername( "admin" );
+    PostgreSQLContainer postgresContainer() {
+        final PostgreSQLContainer container = new PostgreSQLContainer(
+                DockerImageName.parse( "postgres:latest" ) ).withPassword( "secret" )
+                .withUsername( "admin" );
         container.start();
 
         waitForConnectionReady( container );
@@ -33,7 +32,7 @@ public class PostgreSqlTestConfiguration {
     }
 
     @Retryable( includes = SQLException.class, maxRetries = 5, delay = 1000 )
-    private static void waitForConnectionReady( final PostgreSQLContainer<?> container ) throws SQLException {
+    private static void waitForConnectionReady( final PostgreSQLContainer container ) throws SQLException {
         final String jdbcUrl = container.getJdbcUrl();
         try ( final Connection con = container.createConnection( jdbcUrl.substring( jdbcUrl.indexOf( '?' ) ) ) ) {
             if ( !con.isValid( 1000 ) ) {
