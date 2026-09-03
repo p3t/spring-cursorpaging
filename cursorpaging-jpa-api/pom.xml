@@ -123,8 +123,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <sourcepath>${delombok.output};${project.build.directory}/generated-sources/protobuf</sourcepath>
+        </configuration>
       </plugin>
-
       <plugin>
         <groupId>io.github.ascopes</groupId>
         <artifactId>protobuf-maven-plugin</artifactId>

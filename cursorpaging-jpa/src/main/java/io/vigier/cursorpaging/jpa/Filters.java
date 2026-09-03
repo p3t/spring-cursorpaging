@@ -20,7 +20,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter equalTo( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .equalTo( attribute.verify( value ) ) );
         }
 
         /**
@@ -30,7 +31,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter equalTo( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).equalTo( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .equalTo( attribute.verify( values ) ) );
         }
 
         /**
@@ -40,7 +42,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter in( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .in( attribute.verify( values ) ) );
         }
 
         /**
@@ -50,7 +53,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter in( final Comparable<?>... values ) {
-            return Filter.create( f -> f.attribute( attribute ).in( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .in( attribute.verify( values ) ) );
         }
 
         /**
@@ -60,7 +64,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notEqualTo( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).notEqualTo( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notEqualTo( attribute.verify( value ) ) );
         }
 
         /**
@@ -70,7 +75,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notEqualTo( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).notEqualTo( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notEqualTo( attribute.verify( values ) ) );
         }
 
         /**
@@ -80,7 +86,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notIn( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).notIn( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notIn( attribute.verify( values ) ) );
         }
 
         /**
@@ -90,7 +97,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notIn( final Comparable<?>... values ) {
-            return Filter.create( f -> f.attribute( attribute ).notIn( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notIn( attribute.verify( values ) ) );
         }
 
         /**
@@ -100,7 +108,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notLike( final String... values ) {
-            return Filter.create( f -> f.attribute( attribute ).notLike( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notLike( attribute.verify( values ) ) );
         }
 
         /**
@@ -110,7 +119,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter notLike( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).notLike( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .notLike( attribute.verify( values ) ) );
         }
 
         /**
@@ -120,7 +130,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter like( final String... values ) {
-            return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .like( attribute.verify( values ) ) );
         }
 
         /**
@@ -130,7 +141,8 @@ public final class Filters {
          * @return the filter for the operation
          */
         public Filter like( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).like( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .like( attribute.verify( values ) ) );
         }
 
         /**
@@ -140,7 +152,8 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter greaterThan( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThan( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .greaterThan( attribute.verify( value ) ) );
         }
 
         /**
@@ -150,7 +163,8 @@ public final class Filters {
          * @return the filter
          */
         public Filter greaterThan( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThan( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .greaterThan( attribute.verify( values ) ) );
         }
 
         /**
@@ -160,7 +174,8 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter greaterThanOrEqualTo( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThanOrEqualTo( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .greaterThanOrEqualTo( attribute.verify( value ) ) );
         }
 
         /**
@@ -170,7 +185,8 @@ public final class Filters {
          * @return the filter
          */
         public Filter greaterThanOrEqualTo( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).greaterThanOrEqualTo( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .greaterThanOrEqualTo( attribute.verify( values ) ) );
         }
 
         /**
@@ -180,7 +196,8 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter lessThan( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .lessThan( attribute.verify( value ) ) );
         }
 
         /**
@@ -190,15 +207,30 @@ public final class Filters {
          * @return A filter for the operation
          */
         public Filter lessThan( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThan( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .lessThan( attribute.verify( values ) ) );
         }
 
+        /**
+         * Filter to select all values less-than or equal to the given one.
+         *
+         * @param value The value to compare to
+         * @return A filter for the operation
+         */
         public Filter lessThanOrEqualTo( final Comparable<?> value ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThanOrEqualTo( attribute.verify( value ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .lessThanOrEqualTo( attribute.verify( value ) ) );
         }
 
+        /**
+         * Less than or equal to with multiple values means lessThanOrEqualTo the minimum of all values
+         *
+         * @param values values to compare
+         * @return A filter for the operation
+         */
         public Filter lessThanOrEqualTo( final List<? extends Comparable<?>> values ) {
-            return Filter.create( f -> f.attribute( attribute ).lessThanOrEqualTo( attribute.verify( values ) ) );
+            return Filter.create( f -> f.attribute( attribute )
+                    .lessThanOrEqualTo( attribute.verify( values ) ) );
         }
     }
 
@@ -245,6 +277,9 @@ public final class Filters {
 
     /**
      * Starts filter-creation for the provided attribute-path
+     *
+     * @param path the attribute-path to filter on
+     * @return the filter creator for the operation
      */
     public static FilterCreator attribute( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return attribute( Attribute.of( path ) );
@@ -252,6 +287,9 @@ public final class Filters {
 
     /**
      * Starts filter-creation for the provided attribute
+     *
+     * @param attribute the attribute to filter on
+     * @return the filter creator for the operation
      */
     public static FilterCreator attribute( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return attribute( Attribute.of( attribute ) );
@@ -259,6 +297,9 @@ public final class Filters {
 
     /**
      * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
+     *
+     * @param attribute the attribute to filter on (ignoring the case of the value)
+     * @return the filter creator for the operation
      */
     public static FilterCreator ignoreCase( final Attribute attribute ) {
         return FilterCreator.create( attribute.withIgnoreCase() );
@@ -266,6 +307,9 @@ public final class Filters {
 
     /**
      * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
+     *
+     * @param path the attribute-path to filter on (ignoring the case of the value)
+     * @return the filter creator for the operation
      */
     public static FilterCreator ignoreCase( final jakarta.persistence.metamodel.Attribute<?, ?>... path ) {
         return ignoreCase( Attribute.of( path ) );
@@ -273,6 +317,9 @@ public final class Filters {
 
     /**
      * Starts filter-creation for the provided attributes, ignoring the case in the subsequent operation.
+     *
+     * @param attribute the attribute to filter on (ignoring the case of the value)
+     * @return the filter creator for the operation
      */
     public static FilterCreator ignoreCase( final SingularAttribute<?, ? extends Comparable<?>> attribute ) {
         return ignoreCase( Attribute.of( attribute ) );
@@ -324,6 +371,7 @@ public final class Filters {
      * @return a filter when added filtering all results
      */
     public static Filter filterAll() {
-        return Filter.create( b -> b.always().values( false ) );
+        return Filter.create( b -> b.always()
+                .values( false ) );
     }
 }
