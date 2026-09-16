@@ -19,11 +19,11 @@
   <properties>
     <java.version>25</java.version>
     <mapstruct.version>1.6.3</mapstruct.version>
-    <lombok.version>1.18.46</lombok.version>
+    <lombok.version>1.18.48</lombok.version>
     <cursorpage.version>0-SNAPSHOT</cursorpage.version>
     <testcontainers.version>1.19.8</testcontainers.version>
-    <byte-buddy.version>1.18.12</byte-buddy.version>
-    <hibernate.version>7.4.6.Final</hibernate.version>
+    <byte-buddy.version>1.18.13</byte-buddy.version>
+    <hibernate.version>7.4.7.Final</hibernate.version>
     <protobuf-java.version>4.35.1</protobuf-java.version>
     <argLine/>
   </properties>
@@ -110,7 +110,7 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>3.1.0</version>
+      <version>3.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
