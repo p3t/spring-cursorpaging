@@ -321,7 +321,7 @@ public class PageRequest<E> {
      */
     public boolean isFirstPage() {
         for ( final Position position : positions ) {
-            if ( position.hasValue() || position.hasNextValue() ) {
+            if ( position.hasValue() ) {
                 return false;
             }
         }
