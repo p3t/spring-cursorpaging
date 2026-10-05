@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyset Conditions</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --code-bg: #f6f8fa; --head-bg: #eef1f4; --page-sep: #8c959f;
+    --b1: #0969da; --b2: #1a7f37; --b3: #9a6700; --b4: #8250df; --first: #59636e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #3d444d;
+      --code-bg: #161b22; --head-bg: #1c2128; --page-sep: #656c76;
+      --b1: #4493f8; --b2: #3fb950; --b3: #d29922; --b4: #ab7df8; --first: #9198a1;
+    }
+  }
+  body { background: var(--bg); color: var(--fg); margin: 0;
+         font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6em; margin: 0 0 .3em; }
+  h2 { font-size: 1.25em; margin: 2em 0 .5em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.05em; margin: 1.5em 0 .4em; }
+  p, li { color: var(--fg); }
+  .muted { color: var(--muted); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+        padding: 12px 14px; overflow-x: auto; line-height: 1.45; }
+  pre code { background: none; padding: 0; }
+  .cmt { color: var(--muted); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; margin: .4em 0 1em; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 4px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--head-bg); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.null { color: var(--muted); font-style: italic; }
+  tr.page-start td { border-top: 2px solid var(--page-sep); }
+  tr.cursor td { font-weight: 600; }
+  .b { display: inline-block; min-width: 1.4em; padding: 0 .35em; border-radius: 999px; text-align: center;
+       color: #fff; font-weight: 600; font-size: 12px; line-height: 1.6; }
+  .b1 { background: var(--b1); } .b2 { background: var(--b2); }
+  .b3 { background: var(--b3); } .b4 { background: var(--b4); }
+  .b0 { background: var(--first); }
+  pre .b { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Keyset conditions in <code>CursorPageRepositoryImpl.addPositionQuery</code></h1>
+<p class="muted">How the next page is selected from the values of the last record of the current page, including
+  <code>null</code> values.</p>
+
+<p>For the positions <code>A, B, ID</code> the condition for the next page has one OR-term per position:</p>
+<pre><code>   (A-term)
+OR (A = :a AND B-term)
+OR (A = :a AND B = :b AND ID-term)</code></pre>
+<p>If a cursor value is <code>null</code>, the tie condition is <code>IS NULL</code> instead of
+  <code>= :value</code>. Null values follow the database ordering (PostgreSQL): <strong>ASC puts nulls last,
+  DESC puts nulls first</strong>. A reversed request flips the order and with it the null placement, so the same
+  rules apply.</p>
+
+<h2>The code and its branches</h2>
+<pre><code>for ( final var position : request.positions() ) {
+    final var attribute = position.attribute();
+    if ( position.hasValue() ) {
+        cqb.orWhere( and( valueConditions, switch ( position.order() ) {
+            <span class="cmt">// <span class="b b1">1</span> value, ASC: bigger values follow, and nulls (last) too</span>
+            case ASC -> cqb.cb()
+                    .or( cqb.greaterThan( attribute, position.value() ),
+                            cqb.isNull( attribute ) );
+            <span class="cmt">// <span class="b b2">2</span> value, DESC: smaller values follow, nulls (first) are already done</span>
+            case DESC -> cqb.lessThan( attribute, position.value() );
+        } ) );
+        valueConditions.add( cqb.equalTo( attribute, position.value() ) );
+    } else {
+        if ( position.order() == Order.DESC ) {
+            <span class="cmt">// <span class="b b3">3</span> null, DESC: nulls are first, every value follows</span>
+            cqb.orWhere( and( valueConditions, cqb.cb()
+                    .not( cqb.isNull( attribute ) ) ) );
+        }
+        <span class="cmt">// <span class="b b4">4</span> null, ASC: nulls are last, nothing follows - no OR-term, only the tie condition</span>
+        valueConditions.add( cqb.isNull( attribute ) );
+    }
+}</code></pre>
+
+<div class="scroll">
+<table>
+  <tr><th>Branch</th><th>Cursor value</th><th>Order</th><th>OR-term for the position</th><th>Tie condition added</th></tr>
+  <tr><td><span class="b b1">1</span></td><td>value <code>v</code></td><td>ASC</td><td><code>X &gt; v OR X IS NULL</code></td><td><code>X = v</code></td></tr>
+  <tr><td><span class="b b2">2</span></td><td>value <code>v</code></td><td>DESC</td><td><code>X &lt; v</code></td><td><code>X = v</code></td></tr>
+  <tr><td><span class="b b3">3</span></td><td><code>null</code></td><td>DESC</td><td><code>X IS NOT NULL</code></td><td><code>X IS NULL</code></td></tr>
+  <tr><td><span class="b b4">4</span></td><td><code>null</code></td><td>ASC</td><td>none</td><td><code>X IS NULL</code></td></tr>
+</table>
+</div>
+
+<h2>Example data</h2>
+<p>All examples use this data and a page size of 2. IDs 2 and 8 share the same <code>(A, B)</code>, so
+  <code>ID</code> decides between them.</p>
+<table>
+  <tr><th>ID</th><th>A</th><th>B</th></tr>
+  <tr><td class="num">1</td><td class="num">9</td><td class="num">1</td></tr>
+  <tr><td class="num">2</td><td class="num">9</td><td class="null">null</td></tr>
+  <tr><td class="num">3</td><td class="null">null</td><td class="num">5</td></tr>
+  <tr><td class="num">4</td><td class="num">3</td><td class="null">null</td></tr>
+  <tr><td class="num">5</td><td class="num">9</td><td class="num">4</td></tr>
+  <tr><td class="num">6</td><td class="null">null</td><td class="num">2</td></tr>
+  <tr><td class="num">7</td><td class="null">null</td><td class="null">null</td></tr>
+  <tr><td class="num">8</td><td class="num">9</td><td class="null">null</td></tr>
+</table>
+
+<!-- ============================================================================================== -->
+<h2>Example 1: <code>sortBy(A:desc, B:desc, ID:desc)</code></h2>
+<p>All positions are DESC, so nulls come first in <code>A</code> and in <code>B</code>. The last column shows
+  which OR-term selected the record and the branch that built that term. <strong>Bold</strong> rows are the last
+  record of a page, which becomes the cursor for the next page.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Page</th><th>ID</th><th>A</th><th>B</th><th>Selected by</th></tr>
+  <tr class="page-start"><td>1</td><td class="num">7</td><td class="null">null</td><td class="null">null</td><td><span class="b b0">&ndash;</span> first page, no condition</td></tr>
+  <tr class="cursor"><td>1</td><td class="num">3</td><td class="null">null</td><td class="num">5</td><td><span class="b b0">&ndash;</span> first page, no condition</td></tr>
+  <tr class="page-start"><td>2</td><td class="num">6</td><td class="null">null</td><td class="num">2</td><td>B-term <span class="b b2">2</span> <code>A IS NULL AND B &lt; 5</code></td></tr>
+  <tr class="cursor"><td>2</td><td class="num">8</td><td class="num">9</td><td class="null">null</td><td>A-term <span class="b b3">3</span> <code>A IS NOT NULL</code></td></tr>
+  <tr class="page-start"><td>3</td><td class="num">2</td><td class="num">9</td><td class="null">null</td><td>ID-term <span class="b b2">2</span> <code>A = 9 AND B IS NULL AND ID &lt; 8</code></td></tr>
+  <tr class="cursor"><td>3</td><td class="num">5</td><td class="num">9</td><td class="num">4</td><td>B-term <span class="b b3">3</span> <code>A = 9 AND B IS NOT NULL</code></td></tr>
+  <tr class="page-start"><td>4</td><td class="num">1</td><td class="num">9</td><td class="num">1</td><td>B-term <span class="b b2">2</span> <code>A = 9 AND B &lt; 4</code></td></tr>
+  <tr><td>4</td><td class="num">4</td><td class="num">3</td><td class="null">null</td><td>A-term <span class="b b2">2</span> <code>A &lt; 9</code></td></tr>
+</table>
+</div>
+
+<h3>Page 2, cursor <code>(A=null, B=5, ID=3)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="null">null</td><td><span class="b b3">3</span></td><td><code>A IS NOT NULL</code></td></tr>
+  <tr><td>B desc</td><td class="num">5</td><td><span class="b b2">2</span></td><td><code>A IS NULL AND B &lt; 5</code></td></tr>
+  <tr><td>ID desc</td><td class="num">3</td><td><span class="b b2">2</span></td><td><code>A IS NULL AND B = 5 AND ID &lt; 3</code></td></tr>
+</table>
+<p class="muted">ID 7 is not selected again: <code>B &lt; 5</code> is not true for a <code>null</code> B.</p>
+
+<h3>Page 3, cursor <code>(A=9, B=null, ID=8)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="num">9</td><td><span class="b b2">2</span></td><td><code>A &lt; 9</code></td></tr>
+  <tr><td>B desc</td><td class="null">null</td><td><span class="b b3">3</span></td><td><code>A = 9 AND B IS NOT NULL</code></td></tr>
+  <tr><td>ID desc</td><td class="num">8</td><td><span class="b b2">2</span></td><td><code>A = 9 AND B IS NULL AND ID &lt; 8</code></td></tr>
+</table>
+<p class="muted">This is the transition from a <code>null</code> to a value (#295): after the null B values of
+  <code>A = 9</code>, the values of B follow.</p>
+
+<h3>Page 4, cursor <code>(A=9, B=4, ID=5)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="num">9</td><td><span class="b b2">2</span></td><td><code>A &lt; 9</code></td></tr>
+  <tr><td>B desc</td><td class="num">4</td><td><span class="b b2">2</span></td><td><code>A = 9 AND B &lt; 4</code></td></tr>
+  <tr><td>ID desc</td><td class="num">5</td><td><span class="b b2">2</span></td><td><code>A = 9 AND B = 4 AND ID &lt; 5</code></td></tr>
+</table>
+<p class="muted">Page 4 returns only 2 records although 3 (page size + 1) were requested, so there is no next page.</p>
+
+<!-- ============================================================================================== -->
+<h2>Example 1.2: reversing Example 1</h2>
+<p>To go back from a page, its request is reversed with <code>PageRequest.toReversed()</code>. Every position
+  flips its order, so <code>sortBy(A:desc, B:desc, ID:desc)</code> becomes <code>A:asc, B:asc, ID:asc</code>, and
+  the nulls move from first to last. The cursor becomes the <em>first</em> record of the current page (the
+  <code>nextValue</code> stored with the position), so the query returns the records before it. The content of a
+  reversed page is reversed again, so it is shown in the original order.</p>
+<p>Going back from page 4 of Example 1 (IDs 1, 4) uses the reversed request of page 4 with the cursor
+  <code>ID 1 = (A=9, B=1)</code>. In the table, the records are listed in query order; <strong>bold</strong> rows
+  are the last record of a query result and become the cursor for the next step back.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Returns page</th><th>ID</th><th>A</th><th>B</th><th>Selected by</th></tr>
+  <tr class="page-start"><td>3</td><td class="num">5</td><td class="num">9</td><td class="num">4</td><td>B-term <span class="b b1">1</span> <code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr class="cursor"><td>3</td><td class="num">2</td><td class="num">9</td><td class="null">null</td><td>B-term <span class="b b1">1</span> <code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr class="page-start"><td>2</td><td class="num">8</td><td class="num">9</td><td class="null">null</td><td>ID-term <span class="b b1">1</span> <code>A = 9 AND B IS NULL AND (ID &gt; 2 OR ID IS NULL)</code></td></tr>
+  <tr class="cursor"><td>2</td><td class="num">6</td><td class="null">null</td><td class="num">2</td><td>A-term <span class="b b1">1</span> <code>A &gt; 9 OR A IS NULL</code></td></tr>
+  <tr class="page-start"><td>1</td><td class="num">3</td><td class="null">null</td><td class="num">5</td><td>B-term <span class="b b1">1</span> <code>A IS NULL AND (B &gt; 2 OR B IS NULL)</code></td></tr>
+  <tr><td>1</td><td class="num">7</td><td class="null">null</td><td class="null">null</td><td>B-term <span class="b b1">1</span> <code>A IS NULL AND (B &gt; 2 OR B IS NULL)</code></td></tr>
+</table>
+</div>
+<p>After reversing the content, the pages are <code>3 = (2, 5)</code>, <code>2 = (6, 8)</code> and
+  <code>1 = (7, 3)</code>, the same as in Example 1.</p>
+
+<h3>Back to page 3, cursor <code>(A=9, B=1, ID=1)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A asc</td><td class="num">9</td><td><span class="b b1">1</span></td><td><code>A &gt; 9 OR A IS NULL</code></td></tr>
+  <tr><td>B asc</td><td class="num">1</td><td><span class="b b1">1</span></td><td><code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr><td>ID asc</td><td class="num">1</td><td><span class="b b1">1</span></td><td><code>A = 9 AND B = 1 AND (ID &gt; 1 OR ID IS NULL)</code></td></tr>
+</table>
+<p class="muted">The query also returns ID 8 as the extra record (page size + 1), so there is a page before.</p>
+
+<h3>Back to page 2, cursor <code>(A=9, B=null, ID=2)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A asc</td><td class="num">9</td><td><span class="b b1">1</span></td><td><code>A &gt; 9 OR A IS NULL</code></td></tr>
+  <tr><td>B asc</td><td class="null">null</td><td><span class="b b4">4</span></td><td>none, nulls are last within <code>A = 9</code></td></tr>
+  <tr><td>ID asc</td><td class="num">2</td><td><span class="b b1">1</span></td><td><code>A = 9 AND B IS NULL AND (ID &gt; 2 OR ID IS NULL)</code></td></tr>
+</table>
+<p class="muted">The nulls of <code>B</code> were first in Example 1 and are last now, so branch
+  <span class="b b3">3</span> of the forward direction turns into branch <span class="b b4">4</span>.</p>
+
+<h3>Back to page 1, cursor <code>(A=null, B=2, ID=6)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A asc</td><td class="null">null</td><td><span class="b b4">4</span></td><td>none, nulls are last</td></tr>
+  <tr><td>B asc</td><td class="num">2</td><td><span class="b b1">1</span></td><td><code>A IS NULL AND (B &gt; 2 OR B IS NULL)</code></td></tr>
+  <tr><td>ID asc</td><td class="num">6</td><td><span class="b b1">1</span></td><td><code>A IS NULL AND B = 2 AND (ID &gt; 6 OR ID IS NULL)</code></td></tr>
+</table>
+<p class="muted">Only 2 records are returned although 3 (page size + 1) were requested, so there is no page before
+  page 1.</p>
+
+<!-- ============================================================================================== -->
+<h2>Example 2: <code>sortBy(A:desc, B:asc, ID:desc)</code></h2>
+<p><code>A</code> is DESC, so its nulls come first. <code>B</code> is ASC, so its nulls come last within the same
+  <code>A</code>. <code>ID</code> is DESC and only decides between records with the same <code>(A, B)</code>, like
+  IDs 8 and 2. This order uses all four branches.</p>
+
+<div class="scroll">
+<table>
+  <tr><th>Page</th><th>ID</th><th>A</th><th>B</th><th>Selected by</th></tr>
+  <tr class="page-start"><td>1</td><td class="num">6</td><td class="null">null</td><td class="num">2</td><td><span class="b b0">&ndash;</span> first page, no condition</td></tr>
+  <tr class="cursor"><td>1</td><td class="num">3</td><td class="null">null</td><td class="num">5</td><td><span class="b b0">&ndash;</span> first page, no condition</td></tr>
+  <tr class="page-start"><td>2</td><td class="num">7</td><td class="null">null</td><td class="null">null</td><td>B-term <span class="b b1">1</span> <code>A IS NULL AND (B &gt; 5 OR B IS NULL)</code></td></tr>
+  <tr class="cursor"><td>2</td><td class="num">1</td><td class="num">9</td><td class="num">1</td><td>A-term <span class="b b3">3</span> <code>A IS NOT NULL</code></td></tr>
+  <tr class="page-start"><td>3</td><td class="num">5</td><td class="num">9</td><td class="num">4</td><td>B-term <span class="b b1">1</span> <code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr class="cursor"><td>3</td><td class="num">8</td><td class="num">9</td><td class="null">null</td><td>B-term <span class="b b1">1</span> <code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr class="page-start"><td>4</td><td class="num">2</td><td class="num">9</td><td class="null">null</td><td>ID-term <span class="b b2">2</span> <code>A = 9 AND B IS NULL AND ID &lt; 8</code></td></tr>
+  <tr><td>4</td><td class="num">4</td><td class="num">3</td><td class="null">null</td><td>A-term <span class="b b2">2</span> <code>A &lt; 9</code></td></tr>
+</table>
+</div>
+
+<h3>Page 2, cursor <code>(A=null, B=5, ID=3)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="null">null</td><td><span class="b b3">3</span></td><td><code>A IS NOT NULL</code></td></tr>
+  <tr><td>B asc</td><td class="num">5</td><td><span class="b b1">1</span></td><td><code>A IS NULL AND (B &gt; 5 OR B IS NULL)</code></td></tr>
+  <tr><td>ID desc</td><td class="num">3</td><td><span class="b b2">2</span></td><td><code>A IS NULL AND B = 5 AND ID &lt; 3</code></td></tr>
+</table>
+<p class="muted">ID 6 is not selected again: <code>B &gt; 5</code> is not true for B = 2. ID 7 follows because
+  the nulls of the ASC position <code>B</code> come last within <code>A IS NULL</code>.</p>
+
+<h3>Page 3, cursor <code>(A=9, B=1, ID=1)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="num">9</td><td><span class="b b2">2</span></td><td><code>A &lt; 9</code></td></tr>
+  <tr><td>B asc</td><td class="num">1</td><td><span class="b b1">1</span></td><td><code>A = 9 AND (B &gt; 1 OR B IS NULL)</code></td></tr>
+  <tr><td>ID desc</td><td class="num">1</td><td><span class="b b2">2</span></td><td><code>A = 9 AND B = 1 AND ID &lt; 1</code></td></tr>
+</table>
+
+<h3>Page 4, cursor <code>(A=9, B=null, ID=8)</code></h3>
+<table>
+  <tr><th>Position</th><th>Cursor value</th><th>Branch</th><th>OR-term</th></tr>
+  <tr><td>A desc</td><td class="num">9</td><td><span class="b b2">2</span></td><td><code>A &lt; 9</code></td></tr>
+  <tr><td>B asc</td><td class="null">null</td><td><span class="b b4">4</span></td><td>none, nulls are last within <code>A = 9</code></td></tr>
+  <tr><td>ID desc</td><td class="num">8</td><td><span class="b b2">2</span></td><td><code>A = 9 AND B IS NULL AND ID &lt; 8</code></td></tr>
+</table>
+<p class="muted">Page 4 returns only 2 records although 3 (page size + 1) were requested, so there is no next page.</p>
+
+</main>
+</body>
+</html>

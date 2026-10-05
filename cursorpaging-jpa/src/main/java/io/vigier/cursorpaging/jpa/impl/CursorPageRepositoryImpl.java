@@ -90,21 +90,26 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
             //   (a > :a) OR (a = :a AND b > :b) OR (a = :a AND b = :b AND id > :id)
             // Null values follow the database ordering (PostgreSQL): ASC => nulls last, DESC => nulls first.
             // A reversed request flips the order and with it the null placement, so the same rules apply.
+            // The branches (1) to (4) are explained with examples in doc-files/CursorPageRepositoryImpl.html
             for ( final var position : request.positions() ) {
                 final var attribute = position.attribute();
                 if ( position.hasValue() ) {
                     cqb.orWhere( and( valueConditions, switch ( position.order() ) {
+                        // (1) value, ASC: bigger values follow, and nulls (last) too
                         case ASC -> cqb.cb()
                                 .or( cqb.greaterThan( attribute, position.value() ),
-                                        cqb.isNull( attribute ) ); // nulls are last
+                                        cqb.isNull( attribute ) );
+                        // (2) value, DESC: smaller values follow, nulls (first) are already done
                         case DESC -> cqb.lessThan( attribute, position.value() );
                     } ) );
                     valueConditions.add( cqb.equalTo( attribute, position.value() ) );
                 } else {
                     if ( position.order() == Order.DESC ) {
+                        // (3) null, DESC: nulls are first, every value follows
                         cqb.orWhere( and( valueConditions, cqb.cb()
-                                .not( cqb.isNull( attribute ) ) ) ); // nulls are first
+                                .not( cqb.isNull( attribute ) ) ) );
                     }
+                    // (4) null, ASC: nulls are last, nothing follows - no OR-term, only the tie condition
                     valueConditions.add( cqb.isNull( attribute ) );
                 }
             }
