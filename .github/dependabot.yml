@@ -15,6 +15,10 @@ updates:
         update-types: [ "patch" ]
         applies-to: version-updates
     labels: [ "dependencies" ]
+    ignore:
+      # Maven 3.10 adds maven-metadata-local.xml to the central-publishing bundle, which fails the Central validation
+      - dependency-name: "org.apache.maven:apache-maven"
+        versions: [ ">= 3.10.0" ]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
