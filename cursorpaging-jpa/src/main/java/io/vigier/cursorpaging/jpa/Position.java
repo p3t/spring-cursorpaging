@@ -34,7 +34,8 @@ public class Position {
     private final Comparable<?> value;
 
     /**
-     * The position-value from where on the next results should be queried I.e. the first value on the next page.
+     * The first value on the next page. Used to reverse the direction: the reversed position starts from this value
+     * (see {@link #toReversed()}), so that the reversed page ends with the last record of the current page.
      */
     private final Comparable<?> nextValue;
 
@@ -95,10 +96,6 @@ public class Position {
         return value != null;
     }
 
-    public boolean hasNextValue() {
-        return nextValue != null;
-    }
-
     /**
      * Will create a new {@link Position} taking over the attribute-values from the given entity.
      *
@@ -106,8 +103,7 @@ public class Position {
      * @return the new {@link Position}.
      */
     public Position positionOf( final Object entity, final Object nextEntity ) {
-        return toBuilder().value( attribute.valueOf( entity ) ).nextValue( attribute.valueOf( nextEntity ) )
-                .build();
+        return toBuilder().value( attribute.valueOf( entity ) ).nextValue( attribute.valueOf( nextEntity ) ).build();
     }
 
     /**
@@ -116,12 +112,8 @@ public class Position {
      * @return the new reversed position
      */
     public Position toReversed() {
-        // maybe switch nextValue and value?
         final var theValue = value();
-        return toBuilder().reversed( true )
-                .value( nextValue )
-                .nextValue( theValue )
-                .order( order == Order.ASC ? Order.DESC : Order.ASC )
-                .build();
+        return toBuilder().reversed( true ).value( nextValue ).nextValue( theValue )
+                .order( order == Order.ASC ? Order.DESC : Order.ASC ).build();
     }
 }

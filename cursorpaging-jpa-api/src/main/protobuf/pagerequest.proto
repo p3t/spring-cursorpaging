@@ -67,4 +67,5 @@ message PageRequest {
   optional FilterList filters = 3;
   repeated Rule filter_rules = 4;
   optional int64 total_count = 5;
+  bool first_page = 6;
 }

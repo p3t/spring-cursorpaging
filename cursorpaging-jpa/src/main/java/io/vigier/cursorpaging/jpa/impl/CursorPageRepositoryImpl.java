@@ -34,6 +34,7 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
      * @param domainClass   the domain class.
      * @param entityManager the entity manager.
      */
+    @SuppressWarnings( "unused" )
     public CursorPageRepositoryImpl( final Class<E> domainClass, final EntityManager entityManager ) {
         this( JpaEntityInformationSupport.getEntityInformation( domainClass, entityManager ), entityManager );
     }
@@ -60,16 +61,19 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
         addPositionQuery( request, cqb );
 
-        cqb.andWhere( request.filters().toPredicate( cqb ) );
+        cqb.andWhere( request.filters()
+                .toPredicate( cqb ) );
 
-        request.positions().forEach( position -> cqb.orderBy( position.attribute(), position.order() ) );
+        request.positions()
+                .forEach( position -> cqb.orderBy( position.attribute(), position.order() ) );
 
-        final var results = entityManager.createQuery( cqb.query().distinct( true ) )
+        final var results = entityManager.createQuery( cqb.query()
+                        .distinct( true ) )
                 .setMaxResults( getMaxResultSize( request ) )
                 .getResultList();
 
-        final PageRequest<E> self = request.enableTotalCount() && request.totalCount().isEmpty() ? request.copy(
-                b -> b.totalCount( count( request ) ) ) : request;
+        final PageRequest<E> self = request.enableTotalCount() && request.totalCount()
+                .isEmpty() ? request.copy( b -> b.totalCount( count( request ) ) ) : request;
 
         return Page.create( b -> b.content( toContent( results, self ) ) //
                 .self( self ) //
@@ -82,45 +86,32 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
 
         if ( !request.isFirstPage() ) {
 
-            // Example: The "from value to null case":
-            //            ID                                   | date
-            // (pos) ->   33b13398-fcfe-4845-a6e6-cfdfae34d0b2 | 2025-07-04 13:17:30.247433 +00:00
-            //            18de3439-1bfa-40fb-bdff-4061097019e8 | null
-            //            41084f1b-03f9-4ac9-8b4d-0318ce8bae66 | null
-            // date is the first position-attribute, ID the second.
-            // The position must use the ID from the next value because the date will be null (cannot be used anymore)
-            // if the ID with 33 was used, the next page would skip the 18 record.
-            // Using (always) the next value would be wrong for the selection within a block of records with the same value.
-
-            var fromValueToNullCase = false;
-
+            // Keyset condition on the values of the last record of the current page:
+            //   (a > :a) OR (a = :a AND b > :b) OR (a = :a AND b = :b AND id > :id)
+            // Null values follow the database ordering (PostgreSQL): ASC => nulls last, DESC => nulls first.
+            // A reversed request flips the order and with it the null placement, so the same rules apply.
+            // The branches (1) to (4) are explained with examples in doc-files/CursorPageRepositoryImpl.html
             for ( final var position : request.positions() ) {
-                if ( position.hasNextValue() ) {
-                    if ( fromValueToNullCase ) {
-                        cqb.orWhere( and( valueConditions, switch ( position.order() ) {
-                            case ASC -> cqb.greaterThanOrEqualTo( position.attribute(), position.nextValue() );
-                            case DESC -> cqb.lessThanOrEqualTo( position.attribute(), position.nextValue() );
-                        } ) );
-                    } else {
-                        cqb.orWhere( and( valueConditions, switch ( position.order() ) {
-                            case ASC -> cqb.greaterThan( position.attribute(), position.value() );
-                            case DESC -> cqb.lessThan( position.attribute(), position.value() );
-                        } ) );
-                    }
-                    valueConditions.add( cqb.equalTo( position.attribute(), position.value() ) );
-
-                    if ( position.order() == Order.ASC ) {
-                        cqb.orWhere( cqb.isNull( position.attribute() ) ); // nulls ara last
-                    }
-                    fromValueToNullCase = false;
+                final var attribute = position.attribute();
+                if ( position.hasValue() ) {
+                    cqb.orWhere( and( valueConditions, switch ( position.order() ) {
+                        // (1) value, ASC: bigger values follow, and nulls (last) too
+                        case ASC -> cqb.cb()
+                                .or( cqb.greaterThan( attribute, position.value() ),
+                                        cqb.isNull( attribute ) );
+                        // (2) value, DESC: smaller values follow, nulls (first) are already done
+                        case DESC -> cqb.lessThan( attribute, position.value() );
+                    } ) );
+                    valueConditions.add( cqb.equalTo( attribute, position.value() ) );
                 } else {
-                    fromValueToNullCase = position.hasValue();
-                    valueConditions.add( cqb.isNull( position.attribute() ) );
                     if ( position.order() == Order.DESC ) {
-                        cqb.orWhere( cqb.cb().not( cqb.isNull( position.attribute() ) ) ); // nulls are first
+                        // (3) null, DESC: nulls are first, every value follows
+                        cqb.orWhere( and( valueConditions, cqb.cb()
+                                .not( cqb.isNull( attribute ) ) ) );
                     }
+                    // (4) null, ASC: nulls are last, nothing follows - no OR-term, only the tie condition
+                    valueConditions.add( cqb.isNull( attribute ) );
                 }
-
             }
         }
     }
@@ -137,9 +128,11 @@ public class CursorPageRepositoryImpl<E> implements CursorPageRepository<E> {
         final CriteriaQueryBuilder<E, Long> cqb = CriteriaQueryBuilder.forCount( entityInformation.getJavaType(),
                 entityManager );
 
-        request.filters().forEach( filter -> cqb.andWhere( filter.toPredicate( cqb ) ) );
+        request.filters()
+                .forEach( filter -> cqb.andWhere( filter.toPredicate( cqb ) ) );
 
-        return entityManager.createQuery( cqb.query() ).getSingleResult();
+        return entityManager.createQuery( cqb.query() )
+                .getSingleResult();
     }
 
     private int getMaxResultSize( final PageRequest<E> request ) {

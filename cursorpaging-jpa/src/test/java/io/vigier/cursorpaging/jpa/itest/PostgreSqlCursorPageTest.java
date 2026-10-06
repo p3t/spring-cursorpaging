@@ -25,17 +25,17 @@ import io.vigier.cursorpaging.jpa.itest.repository.DataRecordRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.NoTagFilterRule;
 import io.vigier.cursorpaging.jpa.itest.repository.SecurityClassRepository;
 import io.vigier.cursorpaging.jpa.itest.repository.TagRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,9 +73,6 @@ class PostgreSqlCursorPageTest {
     private TestDataPersister testDataPersister;
     @Autowired
     private TagRepository tagRepository;
-    @PersistenceContext
-    private EntityManager entityManager;
-
 
     @Test
     void contextLoads() {
@@ -96,8 +93,8 @@ class PostgreSqlCursorPageTest {
         testDataPersister.deleteAll();
     }
 
-    private TestData defaultData() {
-        return testDataPersister.persist( TestData.create( td -> td.recordCount( 100 ) ) );
+    private void defaultData() {
+        testDataPersister.persist( TestData.create( td -> td.recordCount( 100 ) ) );
     }
 
     private TestData defaultData( final int count ) {
@@ -116,11 +113,8 @@ class PostgreSqlCursorPageTest {
         assertThat( firstPage.getContent() ).hasSize( 10 );
         // Result should be sorted by ID...
         final var resultIdList = firstPage.getContent().stream().map( DataRecord::getId ).toList();
-        final var allIdsSorted = all.stream()
-                .map( DataRecord::getId )
-                .sorted( Comparator.comparing( UUID::toString ) )
-                .limit( 10 )
-                .toList();
+        final var allIdsSorted = all.stream().map( DataRecord::getId ).sorted( Comparator.comparing( UUID::toString ) )
+                .limit( 10 ).toList();
         assertThat( resultIdList ).containsExactlyElementsOf( allIdsSorted );
     }
 
@@ -145,10 +139,9 @@ class PostgreSqlCursorPageTest {
     void shouldFetchPagesOrderedByCreatedDesc() {
         defaultData( 15 );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) ).asc( DataRecord_.id ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
         final var secondPage = dataRecordRepository.loadPage( firstPage.next().orElseThrow().withPageSize( 10 ) );
@@ -156,21 +149,16 @@ class PostgreSqlCursorPageTest {
         assertThat( firstPage ).isNotNull();
         assertThat( secondPage ).isNotNull();
 
-        final var all = dataRecordRepository.findAll()
-                .stream()
-                .sorted( Comparator.comparing( DataRecord::getAuditInfo )
-                        .reversed()
-                        .thenComparing( r -> r.getId().toString() ) )
+        final var all = dataRecordRepository.findAll().stream().sorted(
+                        Comparator.comparing( DataRecord::getAuditInfo ).reversed().thenComparing( r -> r.getId().toString() ) )
                 .toList();
 
-        log.debug( "First page: {}", firstPage.content()
-                .stream()
-                .map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
-                .toList() );
-        log.debug( "Second page: {}", secondPage.content()
-                .stream()
-                .map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
-                .toList() );
+        log.debug( "First page: {}",
+                firstPage.content().stream().map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
+                        .toList() );
+        log.debug( "Second page: {}",
+                secondPage.content().stream().map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() )
+                        .toList() );
         log.debug( "All : {}",
                 all.stream().map( r -> r.getName() + " -> " + r.getAuditInfo().getCreatedAt() ).toList() );
 
@@ -193,8 +181,7 @@ class PostgreSqlCursorPageTest {
 
         final var firstPage = dataRecordRepository.loadPage( request );
         final var secondPage = dataRecordRepository.loadPage( firstPage.next( 10 ).orElseThrow() );
-        final var all = dataRecordRepository.findAll()
-                .stream()
+        final var all = dataRecordRepository.findAll().stream()
                 .sorted( Comparator.comparing( DataRecord::getName ).thenComparing( r -> r.getId().toString() ) )
                 .toList();
 
@@ -230,9 +217,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( DataRecord_.id ) );
 
         final var pages = loadAll( request, 5, 5, 1 );
 
@@ -254,9 +241,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( DataRecord_.id ) );
 
         final var pages = loadAll( request, 5, 5, 1 );
 
@@ -277,10 +264,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 50 )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 50 ).asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) ).asc( DataRecord_.id ) );
 
         final var pages = loadAll( request, 50, 50, 10 );
 
@@ -301,10 +287,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) ).asc( DataRecord_.id ) );
 
         final var pages = loadAll( request, 5, 5, 1 );
 
@@ -349,9 +334,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 10 ).asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( DataRecord_.id ) );
 
         final var page = dataRecordRepository.loadPage( request );
 
@@ -368,10 +353,9 @@ class PostgreSqlCursorPageTest {
 
         testDataPersister.persist( testData );
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 10 )
-                .asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
-                .asc( DataRecord_.id )
-                .pageSize( 10 ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 10 ).asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( DataRecord_.id ).pageSize( 10 ) );
 
         final var page1 = dataRecordRepository.loadPage( request );
         final var page2 = dataRecordRepository.loadPage( page1.next().orElseThrow() );
@@ -404,6 +388,83 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldPageDescThroughNullValuesNullsFirst() {
+        final var now = Instant.parse( "2026-01-01T00:00:00Z" );
+        final TestData testData = TestData.create( td -> td.recordCount( 0 ) );
+        testData.generateRecords( 1,
+                b -> b.name( "r1" ).auditInfo( AuditInfo.create( now, now.minusSeconds( 172_800 ) ) ) );
+        testData.generateRecords( 1,
+                b -> b.name( "r2" ).auditInfo( AuditInfo.create( now, now.minusSeconds( 86_400 ) ) ) );
+        testData.generateRecords( 1, b -> b.name( "r3" ).auditInfo( AuditInfo.create( now, null ) ) );
+        testData.generateRecords( 1, b -> b.name( "r4" ).auditInfo( AuditInfo.create( now, now ) ) );
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 1 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .desc( DataRecord_.id ) );
+
+        // DESC => NULLS FIRST (PostgreSQL default), then newest to oldest
+        assertThat( loadAllNames( request ) ).containsExactly( "r3", "r4", "r2", "r1" );
+    }
+
+    @Test
+    void shouldPageDescThroughNullValuesNullsFirstWithMixedOrders() {
+        final var now = Instant.parse( "2026-01-01T00:00:00Z" );
+        final TestData testData = TestData.create( td -> td.recordCount( 0 ) );
+        testData.generateRecords( 1,
+                b -> b.name( "r1" ).auditInfo( AuditInfo.create( now, now.minusSeconds( 172_800 ) ) ) );
+        testData.generateRecords( 1,
+                b -> b.name( "r2" ).auditInfo( AuditInfo.create( now, now.minusSeconds( 86_400 ) ) ) );
+        testData.generateRecords( 1, b -> b.name( "r3" ).auditInfo( AuditInfo.create( now, null ) ) );
+        testData.generateRecords( 1, b -> b.name( "r4" ).auditInfo( AuditInfo.create( now, now ) ) );
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 1 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                        .asc( DataRecord_.id ) );
+
+        assertThat( loadAllNames( request ) ).containsExactly( "r3", "r4", "r2", "r1" );
+    }
+
+    @Test
+    void shouldPageDescThroughNullValuesOfSecondaryAttribute() {
+        final var now = Instant.parse( "2026-01-01T00:00:00Z" );
+        final TestData testData = TestData.create( td -> td.recordCount( 0 ) );
+        testData.generateRecords( 1, b -> b.name( "a" ).auditInfo( AuditInfo.create( now, null ) ) );
+        testData.generateRecords( 1, b -> b.name( "a" ).auditInfo( AuditInfo.create( now, now ) ) );
+        testData.generateRecords( 1, b -> b.name( "b" ).auditInfo( AuditInfo.create( now, null ) ) );
+        testData.generateRecords( 1, b -> b.name( "b" ).auditInfo( AuditInfo.create( now, now ) ) );
+        testDataPersister.persist( testData );
+
+        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 1 ).asc( DataRecord_.name )
+                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) ).asc( DataRecord_.id ) );
+
+        // within each name: DESC => NULLS FIRST (PostgreSQL default)
+        assertThat( loadAll( request, r -> r.getName() + ":" + (r.getAuditInfo().getModifiedAt() == null ? "null"
+                                                                                                         : "set") ) ).containsExactly(
+                "a:null", "a:set", "b:null", "b:set" );
+    }
+
+    private List<String> loadAllNames( final PageRequest<DataRecord> request ) {
+        return loadAll( request, DataRecord::getName );
+    }
+
+    private List<String> loadAll( final PageRequest<DataRecord> request, final Function<DataRecord, String> label ) {
+        var next = Optional.of( request );
+        final List<String> names = new ArrayList<>();
+        // guard against endless loops if the cursor never advances past the null value
+        for ( int i = 0; next.isPresent() && i < 10; ++i ) {
+            final var page = dataRecordRepository.loadPage( next.get() );
+            if ( page.getContent().isEmpty() ) {
+                break;
+            }
+            page.getContent().forEach( r -> names.add( label.apply( r ) ) );
+            next = page.next();
+        }
+        return names;
+    }
+
+    @Test
     void shouldUseDefaultPageSize() {
         final PageRequest<DataRecord> request = PageRequest.create( b -> b.asc( DataRecord_.id ) );
         assertThat( request.pageSize() ).isEqualTo( PageRequest.DEFAULT_PAGE_SIZE );
@@ -412,10 +473,9 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFilterResults() {
         defaultData();
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id )
-                .filter( attribute( DataRecord_.name ).equalTo( "Alpha" ) ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id ).filter( attribute( DataRecord_.name ).equalTo( "Alpha" ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
@@ -428,10 +488,9 @@ class PostgreSqlCursorPageTest {
     void shouldFilterResultsWithInPredicate() {
         defaultData();
         final Filter nameIsAlphaOrBravo = Filter.create( b -> b.attribute( DataRecord_.name ).in( "Alpha", "Bravo" ) );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id )
-                .filter( nameIsAlphaOrBravo ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id ).filter( nameIsAlphaOrBravo ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
@@ -516,9 +575,8 @@ class PostgreSqlCursorPageTest {
         final var status = List.of( Status.DRAFT, Status.ACTIVE );
 
         final var page1 = dataRecordRepository.loadPage( PageRequest.create(
-                r -> r.asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                        .pageSize( 5 )
-                        .filter( Filters.and( attribute( DataRecord_.name ).in( names ),
+                r -> r.asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) ).pageSize( 5 ).filter(
+                        Filters.and( attribute( DataRecord_.name ).in( names ),
                                 attribute( DataRecord_.status ).in( status ) ) ) ) );
         assertThat( page1 ).allMatch( r -> names.contains( r.getName() ) && status.contains( r.getStatus() ) );
 
@@ -569,9 +627,9 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldReturnTotalCountWhenNoFilterPresent() {
         defaultData( 42 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id ) );
 
         final var count = dataRecordRepository.count( request );
 
@@ -581,10 +639,10 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldReturnZeroCountWhenNoRecordsMatches() {
         defaultData( 42 );
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id )
-                .filter( attribute( DataRecord_.name ).equalTo( "name-does-not-exist" ) ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id )
+                        .filter( attribute( DataRecord_.name ).equalTo( "name-does-not-exist" ) ) );
 
         final var count = dataRecordRepository.count( request );
 
@@ -624,13 +682,10 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldFilterWithOrCondition() {
         final var data = defaultData( 100 );
-        final long countPublicAccess = data.records()
-                .stream()
-                .filter( r -> r.getSecurityClass().getLevel() == 0 )
+        final long countPublicAccess = data.records().stream().filter( r -> r.getSecurityClass().getLevel() == 0 )
                 .count();
-        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( 5 )
-                .asc( DataRecord_.id )
-                .filter( Filters.or( attribute( DataRecord_.securityClass, SecurityClass_.level ).equalTo( 0 ),
+        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( 5 ).asc( DataRecord_.id ).filter(
+                Filters.or( attribute( DataRecord_.securityClass, SecurityClass_.level ).equalTo( 0 ),
                         attribute( DataRecord_.integrityClass, SecurityClass_.level ).equalTo( 0 ) ) ) );
 
         final var page = dataRecordRepository.loadPage( request.withPageSize( 200 ) );
@@ -644,14 +699,12 @@ class PostgreSqlCursorPageTest {
         final int countDraft = (int) all.stream().filter( r -> r.getStatus() == Status.DRAFT ).count();
         final int countActive = (int) all.stream().filter( r -> r.getStatus() == Status.ACTIVE ).count();
 
-        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( DataRecord_.status ).equalTo( Status.DRAFT ) ) ) );
 
         assertThat( page ).hasSize( countDraft );
 
-        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( DataRecord_.status ).in( Status.DRAFT, Status.ACTIVE ) ) ) );
 
         assertThat( page2 ).hasSize( countDraft + countActive );
@@ -747,15 +800,13 @@ class PostgreSqlCursorPageTest {
         final int countPublic = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 0 ).count();
         final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
 
-        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( DataRecord_.securityClass ).equalTo(
                         securityClassRepository.findByName( "public" ) ) ) ) );
 
         assertThat( page ).hasSize( countPublic );
 
-        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( DataRecord_.securityClass ).in( securityClassRepository.findByName( "public" ),
                         securityClassRepository.findByName( "standard" ) ) ) ) );
 
@@ -769,14 +820,12 @@ class PostgreSqlCursorPageTest {
         final int countStandard = (int) all.stream().filter( r -> r.getSecurityClass().getLevel() == 1 ).count();
 
         final var attributeSecurityClassLevel = Attribute.of( DataRecord_.securityClass, SecurityClass_.level );
-        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( attributeSecurityClassLevel ).equalTo( 0 ) ) ) );
 
         assertThat( page ).hasSize( countPublic );
 
-        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( attributeSecurityClassLevel ).in( 0, 1 ) ) ) );
 
         assertThat( page2 ).hasSize( countPublic + countStandard );
@@ -788,11 +837,9 @@ class PostgreSqlCursorPageTest {
         final var redTag = tagRepository.findByName( "red" );
         final var greenTag = tagRepository.findByName( "green" );
         final int redOrGreenCount = (int) all.stream()
-                .filter( r -> r.getTags().contains( greenTag ) || r.getTags().contains( redTag ) )
-                .count();
+                .filter( r -> r.getTags().contains( greenTag ) || r.getTags().contains( redTag ) ).count();
 
-        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
                 .filter( attribute( DataRecord_.tags, Tag_.name ).in( "green", "red" ) ) ) );
 
         assertThat( page ).hasSize( redOrGreenCount );
@@ -824,20 +871,18 @@ class PostgreSqlCursorPageTest {
     @Test
     void shouldUseMoreComplicateFilterRulesForAclChecks() {
         defaultData();
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 100 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id )
-                .filter( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 100 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id ).filter( new AclCheckFilterRule( SUBJECT_READ_STANDARD, READ ) ) );
 
         final var firstPage = dataRecordRepository.loadPage( request );
 
         assertThat( firstPage ).isNotNull();
         assertThat( firstPage.getContent() ).allMatch( e -> e.getSecurityClass().getLevel() <= 1 );
 
-        final PageRequest<DataRecord> request2 = PageRequest.create( b -> b.pageSize( 100 )
-                .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
-                .asc( DataRecord_.id )
-                .filter( new AclCheckFilterRule( "does not exist", READ ) ) );
+        final PageRequest<DataRecord> request2 = PageRequest.create(
+                b -> b.pageSize( 100 ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                        .asc( DataRecord_.id ).filter( new AclCheckFilterRule( "does not exist", READ ) ) );
 
         final var shouldBeEmpty = dataRecordRepository.loadPage( request2 );
         assertThat( shouldBeEmpty ).isNotNull();
@@ -850,12 +895,9 @@ class PostgreSqlCursorPageTest {
         defaultData( NAMES.length * 2 );
         final var allWithoutTag = dataRecordRepository.findAll().stream().filter( r -> r.getTags().isEmpty() ).toList();
 
-        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 )
-                .asc( DataRecord_.id )
-                .filter( Rules.withParameter( "do-it", "true" )
-                        .where( DataRecord_.tags )
-                        .withParameter( "yet-another", List.of( "parameter" ) )
-                        .isEmpty() ) ) );
+        final var page = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 99 ).asc( DataRecord_.id )
+                .filter( Rules.withParameter( "do-it", "true" ).where( DataRecord_.tags )
+                        .withParameter( "yet-another", List.of( "parameter" ) ).isEmpty() ) ) );
 
         assertThat( page ).containsExactlyInAnyOrderElementsOf( allWithoutTag );
     }
@@ -875,8 +917,7 @@ class PostgreSqlCursorPageTest {
     void shouldCombineFilterByOrCondition() {
         final var all = defaultData( 99 ).records();
         final int expectedSize = (int) all.stream()
-                .filter( r -> r.getName().equals( NAME_ALPHA ) || r.getName().equals( NAME_BRAVO ) )
-                .count();
+                .filter( r -> r.getName().equals( NAME_ALPHA ) || r.getName().equals( NAME_BRAVO ) ).count();
         final var nameIsAlpha = attribute( DataRecord_.name ).equalTo( NAME_ALPHA );
         final var nameIsBravo = attribute( DataRecord_.name ).equalTo( NAME_BRAVO );
         final var request = PageRequest.<DataRecord>create(
@@ -896,8 +937,7 @@ class PostgreSqlCursorPageTest {
         final Tag green = tagRepository.findByName( "green" );
         final int expectedSize = (int) all.stream()
                 .filter( r -> (r.getName().equals( NAME_ALPHA ) && r.getTags().contains( red )) //
-                        || (r.getName().equals( NAME_BRAVO ) && r.getTags().contains( green )) )
-                .count();
+                        || (r.getName().equals( NAME_BRAVO ) && r.getTags().contains( green )) ).count();
         final var redAlpha = Filters.and( attribute( DataRecord_.name ).equalTo( NAME_ALPHA ),
                 attribute( DataRecord_.tags, Tag_.name ).equalTo( red.getName() ) );
         final var greenBravo = Filters.and( attribute( DataRecord_.name ).equalTo( NAME_BRAVO ),
@@ -943,18 +983,64 @@ class PostgreSqlCursorPageTest {
     }
 
     @Test
+    void shouldReverseDirectionOfCursorsWithNullValues() {
+        final var now = Instant.parse( "2026-01-01T00:00:00Z" );
+        final TestData testData = TestData.create( td -> td.recordCount( 0 ) );
+        final int recordCount = 9;
+        for ( int i = 1; i <= recordCount / 3; ++i ) {
+            final int n = i;
+            testData.generateRecords( 1,
+                    b -> b.name( "v" + n ).auditInfo( AuditInfo.create( now, now.plusSeconds( n ) ) ) );
+            testData.generateRecords( 1, b -> b.name( "n" + n ).auditInfo( AuditInfo.create( now, null ) ) );
+            testData.generateRecords( 1, b -> b.name( "n" + n ).auditInfo( AuditInfo.create( null, null ) ) );
+        }
+        testDataPersister.persist( testData );
+
+        for ( int pageSize = 1; pageSize <= 4; ++pageSize ) {
+            final int size = pageSize;
+            assertReversedPagesMatchPreviousPages( PageRequest.create(
+                    b -> b.pageSize( size ).asc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                            .asc( DataRecord_.id ) ), recordCount );
+            assertReversedPagesMatchPreviousPages( PageRequest.create(
+                    b -> b.pageSize( size ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                            .asc( DataRecord_.id ) ), recordCount );
+            // nulls within a secondary attribute (createdAt is the same for all records)
+            assertReversedPagesMatchPreviousPages( PageRequest.create(
+                    b -> b.pageSize( size ).desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.createdAt ) )
+                            .desc( Attribute.of( DataRecord_.auditInfo, AuditInfo_.modifiedAt ) )
+                            .desc( DataRecord_.id ) ), recordCount );
+        }
+    }
+
+    private void assertReversedPagesMatchPreviousPages( final PageRequest<DataRecord> request, final int recordCount ) {
+        final List<Page<DataRecord>> pages = new ArrayList<>();
+        final int expectedPageCount = (int) Math.ceil( (double) recordCount / request.pageSize() );
+        for ( var next = Optional.of( request ); next.isPresent() && pages.size() < expectedPageCount; ) {
+            final var page = dataRecordRepository.loadPage( next.get() );
+            pages.add( page );
+            next = page.next();
+        }
+        assertThat( pages.stream().mapToInt( Page::size ).sum() ).as( "all records forward with %s", request )
+                .isEqualTo( recordCount );
+
+        for ( int i = 1; i < pages.size(); ++i ) {
+            final var reversed = dataRecordRepository.loadPage( pages.get( i ).self().toReversed() );
+            assertThat( reversed.getContent() ).as( "page #%s reversed with %s", i, request )
+                    .containsExactlyElementsOf( pages.get( i - 1 ).getContent() );
+        }
+    }
+
+    @Test
     void shouldMixRulesWithFilters() {
         final var data = testDataPersister.persist( td -> td.recordCount( 10 ).recordNames( NAME_ALPHA, NAME_BRAVO ) )
                 .records();
         final var recordsWithSecClass0 = data.stream()
-                .filter( r -> r.getSecurityClass().getLevel() == 0 && r.getName().startsWith( "A" ) )
-                .toList();
+                .filter( r -> r.getSecurityClass().getLevel() == 0 && r.getName().startsWith( "A" ) ).toList();
 
-        final PageRequest<DataRecord> request = PageRequest.create( b -> b.pageSize( 5 )
-                .asc( DataRecord_.name )
-                .asc( DataRecord_.id )
-                .filter( Filters.and( Filters.attribute( DataRecord_.name ).like( "A%" ),
-                        new OnlyPublicFilterRule() ) ) );
+        final PageRequest<DataRecord> request = PageRequest.create(
+                b -> b.pageSize( 5 ).asc( DataRecord_.name ).asc( DataRecord_.id ).filter(
+                        Filters.and( Filters.attribute( DataRecord_.name ).like( "A%" ),
+                                new OnlyPublicFilterRule() ) ) );
         final var page = dataRecordRepository.loadPage( request );
         assertThat( page ).hasSize( recordsWithSecClass0.size() )
                 .allSatisfy( r -> assertThat( r.getName() ).startsWith( "A" ) )
@@ -970,7 +1056,7 @@ class PostgreSqlCursorPageTest {
         final var recordsWithoutRedTag = new LinkedList<DataRecord>();
         final var recordsWithoutAnyTag = new LinkedList<DataRecord>();
         final var recordsWithRedTag = new LinkedList<DataRecord>();
-        final var alphaBrovoRecordsWithoutRedTag = new LinkedList<DataRecord>();
+        final var alphaBravoRecordsWithoutRedTag = new LinkedList<DataRecord>();
 
         data.records().forEach( r -> {
             if ( r.getTags().isEmpty() ) {
@@ -981,7 +1067,7 @@ class PostgreSqlCursorPageTest {
             } else {
                 recordsWithoutRedTag.add( r );
                 if ( List.of( NAME_ALPHA, NAME_BRAVO ).contains( r.getName() ) ) {
-                    alphaBrovoRecordsWithoutRedTag.add( r );
+                    alphaBravoRecordsWithoutRedTag.add( r );
                 }
             }
         } );
@@ -989,43 +1075,38 @@ class PostgreSqlCursorPageTest {
         assertThat( recordsWithoutRedTag ).isNotEmpty();
         assertThat( recordsWithRedTag ).isNotEmpty();
 
-        final var request = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
-                .asc( DataRecord_.name )
-                .asc( DataRecord_.id )
-                .filter( NoTagFilterRule.of( List.of( TAG_RED ) ) )
-                .enableTotalCount( true ) );
+        final var request = PageRequest.<DataRecord>create(
+                b -> b.pageSize( recordCount ).asc( DataRecord_.name ).asc( DataRecord_.id )
+                        .filter( NoTagFilterRule.of( List.of( TAG_RED ) ) ).enableTotalCount( true ) );
         final var page = dataRecordRepository.loadPage( request );
 
         final long expectedSize1 = recordsWithoutRedTag.size();
         assertThat( page ).hasSize( recordsWithoutRedTag.size() ).allSatisfy( r -> {
-            assertThat( r.getTags() ).doesNotContain( redTag );
+            assertThat( redTag ).isNotIn( r.getTags() );
             assertThat( r.getName() ).isNotEqualTo( TAG_RED );
         } );
         assertThat( page.getTotalCount() ).isPresent().get().isEqualTo( expectedSize1 );
 
-        final var requestForNoTags = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
-                .asc( DataRecord_.name )
-                .asc( DataRecord_.id )
-                .filter( NoTagFilterRule.of( List.of() ) )
-                .enableTotalCount( true ) );
+        final var requestForNoTags = PageRequest.<DataRecord>create(
+                b -> b.pageSize( recordCount ).asc( DataRecord_.name ).asc( DataRecord_.id )
+                        .filter( NoTagFilterRule.of( List.of() ) ).enableTotalCount( true ) );
         final var page2 = dataRecordRepository.loadPage( requestForNoTags );
 
         final long expectedSize2 = recordsWithoutAnyTag.size();
         assertThat( page2 ).hasSize( recordsWithoutAnyTag.size() );
         assertThat( page2.getTotalCount() ).isPresent().get().isEqualTo( expectedSize2 );
 
-        // now we mix filters with ruled
-        final var request3 = PageRequest.<DataRecord>create( b -> b.pageSize( recordCount )
-                .asc( DataRecord_.name )
-                .asc( DataRecord_.id )
-                .filter( Filters.and( NoTagFilterRule.of( List.of( TAG_RED ) ),
-                        Filters.attribute( DataRecord_.name ).in( NAME_ALPHA, NAME_BRAVO ) ) )
-                .enableTotalCount( true ) );
+        // now we mix filters with rules
+        final var request3 = PageRequest.<DataRecord>create(
+                b -> b.pageSize( recordCount ).asc( DataRecord_.name ).asc( DataRecord_.id ).filter(
+                                Filters.and( NoTagFilterRule.of( List.of( TAG_RED ) ),
+                                        Filters.attribute( DataRecord_.name ).in( NAME_ALPHA, NAME_BRAVO ) ) )
+                        .enableTotalCount( true ) );
         final var page3 = dataRecordRepository.loadPage( request3 );
-        assertThat( page3 ).hasSize( alphaBrovoRecordsWithoutRedTag.size() )
-                .allSatisfy( r -> assertThat( r.getTags() ).doesNotContain( redTag ) )
+        assertThat( page3 ).hasSize( alphaBravoRecordsWithoutRedTag.size() )
+                .allSatisfy( r -> assertThat( redTag ).isNotIn( r.getTags() ) )
                 .allSatisfy( r -> assertThat( r.getName() ).isIn( NAME_ALPHA, NAME_BRAVO ) );
-        final long expectedSize3 = alphaBrovoRecordsWithoutRedTag.size();
+        final long expectedSize3 = alphaBravoRecordsWithoutRedTag.size();
         assertThat( page3.getTotalCount() ).isPresent().get().isEqualTo( expectedSize3 );
     }
 
@@ -1045,17 +1126,15 @@ class PostgreSqlCursorPageTest {
         assertThat( result1.getContent() ).isEmpty();
         assertThat( result1.getTotalCount() ).isPresent().get().isEqualTo( 0L );
 
-        final var result2 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
-                .asc( DataRecord_.id )
-                .filter( Filter.create( FilterBuilder::always ) )
-                .enableTotalCount( true ) ) );
+        final var result2 = dataRecordRepository.loadPage( PageRequest.create(
+                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filter.create( FilterBuilder::always ) )
+                        .enableTotalCount( true ) ) );
         assertThat( result2.getContent() ).isEmpty();
         assertThat( result2.getTotalCount() ).isPresent().get().isEqualTo( 0L );
 
-        final var result3 = dataRecordRepository.loadPage( PageRequest.create( b -> b.pageSize( 10 )
-                .asc( DataRecord_.id )
-                .filter( Filter.create( f -> f.always().values( true ) ) )
-                .enableTotalCount( true ) ) );
+        final var result3 = dataRecordRepository.loadPage( PageRequest.create(
+                b -> b.pageSize( 10 ).asc( DataRecord_.id ).filter( Filter.create( f -> f.always().values( true ) ) )
+                        .enableTotalCount( true ) ) );
         assertThat( result3.getContent() ).isNotEmpty();
         assertThat( result3.getTotalCount() ).isPresent().get().isEqualTo( (long) all.size() );
     }
