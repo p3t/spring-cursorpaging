@@ -7,15 +7,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
@@ -46,7 +47,6 @@ public class PageRequest<E> {
      * asc/dsc) is provided, and that it cannot happen, that all positions can contain null-values (are nullable columns
      * in the DB)!
      */
-    @Singular( "position" )
     private final List<Position> positions;
 
     /**
@@ -69,24 +69,19 @@ public class PageRequest<E> {
     private final Long totalCount;
 
     /**
+     * Marks the request for the first page (default). A request for a following page (a cursor) is created with
+     * {@code false}, as its position values can be {@code null}.
+     */
+    @Getter( AccessLevel.NONE )
+    @Builder.Default
+    private final boolean firstPage = true;
+
+    /**
      * Adding some short-cut builder methods to create a request
      *
      * @param <E> the entity type
      */
     public static class PageRequestBuilder<E> {
-
-        /**
-         * Shortcut for creating a position for an attribute given a certain order
-         *
-         * @param attribute the attribute used to create a position (ascending ordered)
-         * @return the builder
-         * @deprecated : Use {@linkplain #sort(SingularAttribute, Order)}
-         */
-        @Deprecated( forRemoval = true, since = "1.1.0" )
-        public PageRequestBuilder<E> firstPage( final Order order,
-                final SingularAttribute<? super E, ? extends Comparable<?>> attribute ) {
-            return sort( attribute, order );
-        }
 
         /**
          * Shortcut for adding a position spec of an attribute in ascending order
@@ -156,8 +151,7 @@ public class PageRequest<E> {
         }
 
         public PageRequestBuilder<E> sort( final Attribute attribute, final Order order ) {
-            return addPosition( Position.create( b -> b.attribute( attribute )
-                    .order( order ) ) );
+            return addPosition( Position.create( b -> b.attribute( attribute ).order( order ) ) );
         }
 
         /**
@@ -200,9 +194,23 @@ public class PageRequest<E> {
             return this;
         }
 
+        public PageRequestBuilder<E> position( final Position pos ) {
+            return addPosition( pos );
+        }
+
+        public PageRequestBuilder<E> positions( final Collection<Position> positions ) {
+            positions.forEach( this::addPosition );
+            return this;
+        }
+
+
         private PageRequestBuilder<E> addPosition( final Position pos ) {
             if ( this.positions == null ) {
                 this.positions = new ArrayList<>( 3 );
+            }
+            if ( pos.hasValue() ) {
+                this.firstPage$set = true;
+                this.firstPage$value = false;
             }
             this.positions.add( pos );
             return this;
@@ -210,16 +218,27 @@ public class PageRequest<E> {
     }
 
     public PageRequest( final List<Position> positions, final FilterList filters, final int pageSize,
-            final boolean enableTotalCount, final Long totalCount ) {
+            final boolean enableTotalCount, final Long totalCount, final boolean firstPage ) {
         if ( positions == null || positions.isEmpty() ) {
             throw new IllegalArgumentException(
                     "Cannot create page-request, at least one order-attribute (asc/desc) for determine the position of the page start is required" );
+        }
+        final boolean hasNoPosition = positions.stream().noneMatch( Position::hasValue );
+        if ( firstPage && !hasNoPosition ) {
+            throw new IllegalArgumentException( "Cannot create page-request for the first page with position values" );
+        }
+        if ( !firstPage && hasNoPosition ) {
+            throw new IllegalArgumentException(
+                    "Cannot create page-request for a following page, all positions " + positions.stream()
+                            .map( p -> p.attribute().name() ).toList()
+                            + " have null values: the positions do not address a unique record. Add a unique, not nullable attribute (e.g. the id) as last position" );
         }
         this.positions = positions;
         this.filters = filters;
         this.pageSize = pageSize;
         this.enableTotalCount = enableTotalCount;
         this.totalCount = totalCount;
+        this.firstPage = firstPage;
     }
 
     /**
@@ -242,10 +261,8 @@ public class PageRequest<E> {
      * @return A new page-request with existing and customized attributes
      */
     public PageRequest<E> copy( final Consumer<PageRequestBuilder<E>> c ) {
-        final PageRequestBuilder<E> builder = PageRequest.<E>builder()
-                .totalCount( totalCount )
-                .enableTotalCount( enableTotalCount )
-                .pageSize( pageSize );
+        final PageRequestBuilder<E> builder = PageRequest.<E>builder().totalCount( totalCount )
+                .enableTotalCount( enableTotalCount ).pageSize( pageSize ).firstPage( firstPage );
         c.accept( builder );
         if ( !builder.filters$set && !filters.isEmpty() ) {
             builder.filters( filters );
@@ -263,8 +280,7 @@ public class PageRequest<E> {
      * @return A copy of the page-request where the total-count is removed and the enable flag is set accordingly
      */
     public PageRequest<E> withEnableTotalCount( final boolean enable ) {
-        return copy( b -> b.enableTotalCount( enable )
-                .totalCount( null ) );
+        return copy( b -> b.enableTotalCount( enable ).totalCount( null ) );
     }
 
     /**
@@ -298,39 +314,27 @@ public class PageRequest<E> {
      * @return A new {@code PageRequest} with the positions set to the values of the provided entity
      */
     public PageRequest<E> positionOf( @Nonnull final E entity, @Nonnull final E nextEntity ) {
-        return create( b -> b.positions( positions.stream()
-                        .map( p -> p.positionOf( entity, nextEntity ) )
-                        .toList() )
-                .pageSize( this.pageSize )
-                .totalCount( this.totalCount )
-                .filters( this.filters )
-                .enableTotalCount( this.enableTotalCount ) );
+        return create( b -> b.positions( positions.stream().map( p -> p.positionOf( entity, nextEntity ) ).toList() )
+                .pageSize( this.pageSize ).totalCount( this.totalCount ).filters( this.filters )
+                .enableTotalCount( this.enableTotalCount ).firstPage( false ) );
     }
 
     public PageRequest<E> toReversed() {
-        return copy( b -> b.positions( positions.stream()
-                .map( Position::toReversed )
-                .toList() ) );
+        return copy( b -> b.positions( positions.stream().map( Position::toReversed ).toList() ) );
     }
 
     /**
-     * Checks if any position in the request has a value. If there is no value in any position, it is assumed that this
-     * is a request for the first page
+     * Checks if this is a request for the first page. Requests created for a following page (see
+     * {@link #positionOf(Object, Object)}) are never a first page, even if position values are {@code null}.
      *
      * @return {@code true} if the request is for the first page, {@code false} otherwise
      */
     public boolean isFirstPage() {
-        for ( final Position position : positions ) {
-            if ( position.hasValue() ) {
-                return false;
-            }
-        }
-        return true;
+        return firstPage;
     }
 
     public boolean isReversed() {
-        return positions.getFirst()
-                .reversed();
+        return positions.getFirst().reversed();
     }
 
     /**
@@ -368,8 +372,7 @@ public class PageRequest<E> {
      * @return a present {@linkplain Filter} containing the attribute or an empty optional if no filter is found
      */
     public Optional<Filter> firstFilterWith( final Attribute attribute ) {
-        return firstFilterWith( ele -> ele instanceof final Filter f && f.attributes()
-                .stream()
+        return firstFilterWith( ele -> ele instanceof final Filter f && f.attributes().stream()
                 .anyMatch( a -> a.equals( attribute ) ) ).map( Filter.class::cast );
     }
 
@@ -382,10 +385,9 @@ public class PageRequest<E> {
      * found
      */
     public Optional<FilterList> firstFilterListWith( final Attribute attribute ) {
-        return firstFilterWith( ele -> ele instanceof final FilterList fl && fl.filters()
-                .stream()
-                .anyMatch( a -> a instanceof final Filter f && f.attribute()
-                        .equals( attribute ) ) ).map( FilterList.class::cast );
+        return firstFilterWith( ele -> ele instanceof final FilterList fl && fl.filters().stream()
+                .anyMatch( a -> a instanceof final Filter f && f.attribute().equals( attribute ) ) ).map(
+                FilterList.class::cast );
     }
 
 }

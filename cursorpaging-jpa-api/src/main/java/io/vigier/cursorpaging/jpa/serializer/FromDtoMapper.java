@@ -58,12 +58,10 @@ class FromDtoMapper<E> {
     }
 
     public PageRequest<E> map() {
-        return PageRequest.<E>builder()
-                .positions( positions() )
-                .filters( filters() ) //
-                .pageSize( request.getPageSize() )
-                .enableTotalCount( request.hasTotalCount() )
+        return PageRequest.<E>builder().positions( positions() ).filters( filters() ) //
+                .pageSize( request.getPageSize() ).enableTotalCount( request.hasTotalCount() )
                 .totalCount( request.hasTotalCount() ? request.getTotalCount() : null ) //
+                .firstPage( request.getFirstPage() ) //
                 .build();
     }
 
@@ -71,21 +69,15 @@ class FromDtoMapper<E> {
         final var factory = ruleFactories.get( rule.getName() );
         if ( factory != null ) {
             final Map<String, List<String>> parameters = new HashMap<>();
-            rule.getParametersList()
-                    .forEach( p -> parameters.put( p.getName(), p.getValuesList()
-                            .stream()
-                            .map( Value::getValue )
-                            .toList() ) );
+            rule.getParametersList().forEach(
+                    p -> parameters.put( p.getName(), p.getValuesList().stream().map( Value::getValue ).toList() ) );
             return factory.apply( parameters );
         }
         return null;
     }
 
     private Collection<Position> positions() {
-        return request.getPositionsList()
-                .stream()
-                .map( this::positionOf )
-                .toList();
+        return request.getPositionsList().stream().map( this::positionOf ).toList();
     }
 
     private FilterList filters() {
@@ -95,18 +87,9 @@ class FromDtoMapper<E> {
     private FilterList fromFilterListDto( final Cursor.FilterList dto ) {
         final List<QueryElement> filters = new LinkedList<>();
 
-        filters.addAll( dto.getFiltersList()
-                .stream()
-                .map( this::fromFilterDto )
-                .toList() );
-        filters.addAll( dto.getFilterListsList()
-                .stream()
-                .map( this::fromFilterListDto )
-                .toList() );
-        filters.addAll( dto.getRulesList()
-                .stream()
-                .map( this::filterRuleOf )
-                .toList() );
+        filters.addAll( dto.getFiltersList().stream().map( this::fromFilterDto ).toList() );
+        filters.addAll( dto.getFilterListsList().stream().map( this::fromFilterListDto ).toList() );
+        filters.addAll( dto.getRulesList().stream().map( this::filterRuleOf ).toList() );
 
         return switch ( dto.getType() ) {
             case AND, UNRECOGNIZED -> AndFilter.of( filters );
@@ -117,11 +100,7 @@ class FromDtoMapper<E> {
     private Filter fromFilterDto( final Cursor.Filter dto ) {
         final var attribute = attributeOf( dto.getAttribute() );
         final var values = valueListOf( attribute, dto.getValuesList() );
-        return Filter.builder()
-                .attribute( attribute )
-                .values( values )
-                .type( getFilterType( dto ) )
-                .build();
+        return Filter.builder().attribute( attribute ).values( values ).type( getFilterType( dto ) ).build();
     }
 
     private FilterType getFilterType( final Cursor.Filter dto ) {
@@ -130,20 +109,16 @@ class FromDtoMapper<E> {
 
     private List<? extends Comparable<?>> valueListOf( final Attribute attribute,
             final List<Cursor.Value> valuesList ) {
-        return valuesList.stream()
-                .map( v -> {
-                    final Comparable<?> converted = valueOf( attribute, v );
-                    log.trace( "Converted: {} into {} (value={})", v.getClass()
-                            .getSimpleName(), (converted != null ? converted.getClass()
-                                                                   .getSimpleName() : null), converted );
-                    return converted;
-                } )
-                .toList();
+        return valuesList.stream().map( v -> {
+            final Comparable<?> converted = valueOf( attribute, v );
+            log.trace( "Converted: {} into {} (value={})", v.getClass().getSimpleName(),
+                    (converted != null ? converted.getClass().getSimpleName() : null), converted );
+            return converted;
+        } ).toList();
     }
 
     private <T extends Comparable<? super T>> T valueOf( final Attribute attribute, final Cursor.Value value ) {
-        if ( value.getValue()
-                .isEmpty() ) {
+        if ( value.getValue().isEmpty() ) {
             return null;
         }
         try {
@@ -151,24 +126,19 @@ class FromDtoMapper<E> {
         } catch ( final ConverterNotFoundException e ) {
             throw new SerializerException(
                     "Cannot convert value: '%s' (type: %s) to type: '%s' for attribute: %s".formatted( value.getValue(),
-                            value.getValue()
-                                    .getClass()
-                                    .getName(), attribute.type(), attribute.name() ), e );
+                            value.getValue().getClass().getName(), attribute.type(), attribute.name() ), e );
         }
     }
 
     private Position positionOf( final Cursor.Position position ) {
         final var attribute = attributeOf( position.getAttribute() );
 
-        return Position.create( b -> b.attribute( attribute )
-                .value( valueOf( attribute, position.getValue() ) )
-                .nextValue( valueOf( attribute, position.getNextValue() ) )
-                .order( switch ( position.getOrder() ) {
+        return Position.create( b -> b.attribute( attribute ).value( valueOf( attribute, position.getValue() ) )
+                .nextValue( valueOf( attribute, position.getNextValue() ) ).order( switch ( position.getOrder() ) {
                     case ASC -> Order.ASC;
                     case DESC -> Order.DESC;
                     case UNRECOGNIZED -> throw new IllegalArgumentException( "Unrecognized order" );
-                } )
-                .reversed( position.getReversed() ) );
+                } ).reversed( position.getReversed() ) );
     }
 
     private Attribute attributeOf( final Cursor.Attribute attribute ) {

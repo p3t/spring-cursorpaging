@@ -45,10 +45,9 @@ class PageLinksTest {
     }
 
     private final RequestSerializerFactory requestSerializerFactory = RequestSerializerFactory.create(
-            b -> b.serializer( RequestSerializer.create( TestEntity.class )
-                    .apply( r -> r //
-                            .use( Attribute.of( "id", String.class ) ) //
-                            .use( Attribute.of( "name", String.class ) ) ) ) );
+            b -> b.serializer( RequestSerializer.create( TestEntity.class ).apply( r -> r //
+                    .use( Attribute.of( "id", String.class ) ) //
+                    .use( Attribute.of( "name", String.class ) ) ) ) );
 
     @Test
     void shouldGenerateLinksWithoutTemplate() {
@@ -94,12 +93,10 @@ class PageLinksTest {
 
     @Test
     void shouldGenerateLinksWithAlwaysFilter() {
-        final Page<TestEntity> page = Page.create( p -> p.content( List.of() )
-                .entityType( TestEntity.class )
-                .self( PageRequest.create( r -> r.asc( Attribute.of( "id", String.class ) )
-                        .filter( Filters.filterAll() )
-                        .pageSize( 0 )
-                        .totalCount( 0L ) ) ) );
+        final Page<TestEntity> page = Page.create( p -> p.content( List.of() ).entityType( TestEntity.class )
+                .self( PageRequest.create(
+                        r -> r.asc( Attribute.of( "id", String.class ) ).filter( Filters.filterAll() ).pageSize( 0 )
+                                .totalCount( 0L ) ) ) );
         final var links = PageLinks.of( Controller.class, requestSerializerFactory );
         final Link selfLink = links.self( page )
                 .on( ( cursor, controller ) -> controller.getEntities( cursor, null, List.of( "A", "B" ) ) );
@@ -108,16 +105,11 @@ class PageLinksTest {
     }
 
     private static Page<TestEntity> createPage() {
-        return Page.create( p -> p.content( List.of( new TestEntity( "1", "One" ) ) )
-                .self( PageRequest.create( r -> r.asc( Attribute.of( "id", String.class ) )
-                        .pageSize( 1 )
-                        .totalCount( 2L ) ) )
+        return Page.create( p -> p.content( List.of( new TestEntity( "1", "One" ) ) ).self( PageRequest.create(
+                        r -> r.asc( Attribute.of( "id", String.class ) ).pageSize( 1 ).totalCount( 2L ) ) )
                 .next( PageRequest.create( r -> r.position( Position.create(
-                                pos -> pos.attribute( Attribute.of( "id", String.class ) )
-                                        .value( 1 )
-                                        .order( Order.ASC ) ) )
-                        .pageSize( 1 )
-                        .totalCount( 2L ) ) ) //
+                                pos -> pos.attribute( Attribute.of( "id", String.class ) ).value( 1 ).order( Order.ASC ) ) )
+                        .firstPage( false ).pageSize( 1 ).totalCount( 2L ) ) ) //
                 .entityType( TestEntity.class ) );
     }
 }

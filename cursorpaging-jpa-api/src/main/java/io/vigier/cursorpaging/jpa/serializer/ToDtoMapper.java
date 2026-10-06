@@ -48,7 +48,8 @@ class ToDtoMapper<E> {
         final var builder = Cursor.PageRequest.newBuilder()
                 .addAllPositions( positions() )
                 .setPageSize( pageRequest.pageSize() )
-                .setFilters( filters() );
+                .setFilters( filters() )
+                .setFirstPage( pageRequest.isFirstPage() );
         pageRequest.totalCount()
                 .ifPresent( builder::setTotalCount );
         return builder.build();
